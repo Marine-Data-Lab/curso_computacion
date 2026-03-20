@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestiona tu Empresa — Simulador de Pesca Sustentable</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#010c18;--void:#030f1e;--deep:#071a30;--navy:#0c2a4a;
+  --ocean:#0e3d6e;--mid:#1460a8;--blue:#1976d2;--sky:#2196f3;
+  --foam:#64b5f6;--mist:#90caf9;--pearl:#e3f2fd;
+  --gold:#ffd740;--amber:#ffab40;--coral:#ff6e40;--red:#f44336;
+  --green:#26a69a;--lime:#69f0ae;--purple:#ab47bc;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--ink);color:var(--pearl);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
+#bg{position:fixed;inset:0;z-index:0;
+  background:radial-gradient(ellipse 80% 60% at 10% 90%,rgba(14,61,110,.55) 0%,transparent 70%),
+    radial-gradient(ellipse 60% 50% at 90% 10%,rgba(20,96,168,.3) 0%,transparent 60%),
+    linear-gradient(180deg,#010c18 0%,#030f1e 50%,#071a30 100%);overflow:hidden;}
+.wave{position:absolute;bottom:0;left:-10%;right:-10%;height:70px;border-radius:50%;animation:wv 10s ease-in-out infinite;background:rgba(33,150,243,.05);}
+.wave:nth-child(2){height:90px;animation-delay:-4s;animation-duration:13s;background:rgba(14,61,110,.07);bottom:8px;}
+.wave:nth-child(3){height:55px;animation-delay:-7s;animation-duration:8s;background:rgba(100,181,246,.03);bottom:18px;}
+@keyframes wv{0%,100%{transform:translateX(0) scaleY(1);}50%{transform:translateX(35px) scaleY(1.3);}}
+.bubble{position:absolute;border-radius:50%;background:rgba(100,181,246,.12);animation:rise linear infinite;}
+@keyframes rise{0%{transform:translateY(100vh);opacity:0;}10%{opacity:.8;}90%{opacity:.2;}100%{transform:translateY(-60px);opacity:0;}}
+#app{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:24px 18px 80px;}
+header{display:flex;align-items:flex-end;justify-content:space-between;padding:32px 0 28px;border-bottom:1px solid rgba(100,181,246,.15);margin-bottom:28px;flex-wrap:wrap;gap:16px;}
+.brand-eyebrow{font-size:.7rem;letter-spacing:4px;text-transform:uppercase;color:var(--foam);opacity:.55;margin-bottom:6px;}
+.brand-name{font-family:'Fraunces',serif;font-size:clamp(2.2rem,5vw,3.6rem);font-weight:900;line-height:1;letter-spacing:-1.5px;
+  background:linear-gradient(135deg,#fff 0%,var(--mist) 40%,var(--sky) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.brand-sub{font-size:.82rem;color:var(--foam);opacity:.6;margin-top:4px;font-weight:300;letter-spacing:.5px;}
+.header-stats{display:flex;gap:14px;flex-wrap:wrap;}
+.hstat{background:rgba(12,42,74,.6);border:1px solid rgba(100,181,246,.18);border-radius:12px;padding:12px 18px;backdrop-filter:blur(10px);text-align:center;min-width:105px;}
+.hstat-label{font-size:.62rem;letter-spacing:2px;text-transform:uppercase;color:var(--foam);opacity:.5;margin-bottom:4px;}
+.hstat-val{font-family:'Fraunces',serif;font-size:1.45rem;font-weight:700;}
+.hstat-val.money{color:var(--gold);}.hstat-val.rep{color:var(--lime);}.hstat-val.season{color:var(--foam);}.hstat-val.year{color:var(--amber);}
+.alert{display:flex;align-items:flex-start;gap:12px;background:rgba(7,26,48,.7);border:1px solid rgba(100,181,246,.22);border-left:3px solid var(--sky);border-radius:12px;padding:14px 18px;margin-bottom:22px;backdrop-filter:blur(8px);font-size:.9rem;line-height:1.55;color:var(--mist);transition:all .4s;}
+.alert .aicon{font-size:1.2rem;flex-shrink:0;margin-top:1px;}
+.alert.warn{border-left-color:var(--amber);background:rgba(255,171,64,.07);}
+.alert.danger{border-left-color:var(--red);background:rgba(244,67,54,.08);animation:blink 1.8s infinite;}
+.alert.success{border-left-color:var(--lime);background:rgba(105,240,174,.06);}
+.alert.event{border-left-color:var(--purple);background:rgba(171,71,188,.08);}
+@keyframes blink{0%,100%{border-left-color:var(--red);}50%{border-left-color:rgba(244,67,54,.2);}}
+.season-bar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:20px;background:linear-gradient(135deg,rgba(12,42,74,.7),rgba(7,26,48,.8));border:1px solid rgba(100,181,246,.18);border-radius:16px;padding:18px 26px;margin-bottom:22px;backdrop-filter:blur(12px);}
+.season-num{font-size:.68rem;letter-spacing:3px;text-transform:uppercase;color:var(--foam);opacity:.5;}
+.season-name{font-family:'Fraunces',serif;font-size:1.8rem;font-weight:700;line-height:1.1;margin-top:2px;}
+.season-icon-big{font-size:3.5rem;text-align:center;filter:drop-shadow(0 0 12px rgba(100,181,246,.4));}
+.season-meta{text-align:right;}
+.season-species{font-size:.78rem;color:var(--foam);opacity:.7;margin-bottom:4px;}
+.species-chips{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
+.chip{font-size:.72rem;padding:3px 10px;border-radius:20px;background:rgba(33,150,243,.15);border:1px solid rgba(33,150,243,.3);color:var(--mist);}
+.chip.featured{background:rgba(255,215,64,.15);border-color:rgba(255,215,64,.4);color:var(--gold);font-weight:600;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-bottom:18px;}
+@media(max-width:760px){.grid2,.grid3{grid-template-columns:1fr;}}
+.card{background:rgba(7,26,48,.6);border:1px solid rgba(100,181,246,.13);border-radius:16px;padding:20px 22px;backdrop-filter:blur(10px);}
+.card-title{font-size:.68rem;letter-spacing:2.5px;text-transform:uppercase;color:var(--foam);opacity:.5;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.card-title::after{content:'';flex:1;height:1px;background:rgba(100,181,246,.12);}
+.sp-table{width:100%;border-collapse:collapse;}
+.sp-table th{font-size:.62rem;letter-spacing:2px;text-transform:uppercase;color:var(--foam);opacity:.4;padding:4px 8px;text-align:right;border-bottom:1px solid rgba(100,181,246,.1);}
+.sp-table th:first-child{text-align:left;}
+.sp-table td{padding:9px 8px;font-size:.84rem;vertical-align:middle;border-bottom:1px solid rgba(100,181,246,.06);}
+.sp-table td:not(:first-child){text-align:right;}
+.sp-table tr:last-child td{border-bottom:none;}
+.sp-name{display:flex;align-items:center;gap:8px;font-weight:500;}
+.sp-badge{font-size:.6rem;padding:2px 7px;border-radius:8px;background:rgba(255,215,64,.18);color:var(--gold);border:1px solid rgba(255,215,64,.3);font-weight:600;}
+.sp-badge.veda{background:rgba(244,67,54,.18);color:#ef9a9a;border-color:rgba(244,67,54,.3);}
+.sp-badge.risk{background:rgba(255,171,64,.15);color:var(--amber);border-color:rgba(255,171,64,.3);}
+.qty-input{width:80px;background:rgba(1,12,24,.7);border:1px solid rgba(100,181,246,.25);color:var(--pearl);border-radius:6px;padding:5px 8px;font-family:'DM Sans',sans-serif;font-size:.84rem;text-align:right;outline:none;transition:border-color .2s;}
+.qty-input:focus{border-color:var(--sky);}
+.qty-input:disabled{opacity:.3;cursor:not-allowed;}
+.pos{color:var(--lime);}.neg{color:#ef9a9a;}.neu{color:var(--foam);opacity:.65;}
+.risk-grid{display:flex;flex-direction:column;gap:8px;}
+.risk-item{display:flex;align-items:center;gap:12px;background:rgba(1,12,24,.4);border-radius:10px;padding:10px 14px;border:1px solid rgba(100,181,246,.08);}
+.risk-icon{font-size:1.4rem;flex-shrink:0;}
+.risk-info{flex:1;}
+.risk-name{font-size:.83rem;font-weight:500;}
+.risk-desc{font-size:.73rem;color:var(--foam);opacity:.55;margin-top:1px;}
+.risk-impact{font-size:.72rem;padding:3px 10px;border-radius:8px;font-weight:600;}
+.risk-impact.low{background:rgba(105,240,174,.1);color:var(--lime);}
+.risk-impact.med{background:rgba(255,171,64,.12);color:var(--amber);}
+.risk-impact.high{background:rgba(244,67,54,.12);color:#ef9a9a;}
+.reg-list{display:flex;flex-direction:column;gap:8px;}
+.reg-item{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-radius:10px;background:rgba(1,12,24,.4);border:1px solid rgba(100,181,246,.08);font-size:.82rem;line-height:1.4;}
+.reg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.reg-dot.active{background:var(--red);box-shadow:0 0 6px var(--red);}
+.reg-dot.ok{background:var(--green);box-shadow:0 0 6px var(--green);}
+.reg-dot.warn{background:var(--amber);}
+.fin-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(100,181,246,.07);font-size:.85rem;}
+.fin-row:last-child{border-bottom:none;padding-bottom:0;}
+.fin-label{color:var(--mist);opacity:.7;}
+.fin-val{font-family:'Fraunces',serif;font-size:1rem;font-weight:700;}
+.fin-total{margin-top:10px;padding-top:12px;border-top:1px solid rgba(100,181,246,.2);display:flex;justify-content:space-between;align-items:center;}
+.fin-total-label{font-size:.78rem;letter-spacing:1.5px;text-transform:uppercase;opacity:.5;}
+.fin-total-val{font-family:'Fraunces',serif;font-size:1.6rem;font-weight:900;}
+.sl-group{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.sl-item{margin-bottom:2px;}
+.sl-label{font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--foam);opacity:.55;margin-bottom:7px;display:flex;justify-content:space-between;}
+.sl-label span{color:var(--gold);font-family:'Fraunces',serif;font-size:.95rem;font-weight:700;opacity:1;}
+input[type=range]{width:100%;-webkit-appearance:none;height:5px;border-radius:3px;background:rgba(100,181,246,.12);outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--sky);border:2px solid var(--mist);box-shadow:0 0 8px rgba(33,150,243,.5);cursor:pointer;transition:transform .2s;}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.3);}
+.btn-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;}
+.btn{flex:1;min-width:120px;padding:13px 22px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;letter-spacing:.3px;cursor:pointer;border:none;transition:all .2s;position:relative;overflow:hidden;}
+.btn::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,.07);opacity:0;transition:opacity .2s;}
+.btn:hover::after{opacity:1;}
+.btn:active{transform:scale(.97);}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none;}
+.btn-primary{background:linear-gradient(135deg,var(--mid),var(--sky));color:#fff;box-shadow:0 4px 24px rgba(33,150,243,.4);}
+.btn-secondary{background:rgba(100,181,246,.1);border:1px solid rgba(100,181,246,.28);color:var(--foam);}
+.btn-danger{background:rgba(244,67,54,.12);border:1px solid rgba(244,67,54,.3);color:#ef9a9a;}
+select{background:rgba(1,12,24,.8);border:1px solid rgba(100,181,246,.22);color:var(--pearl);border-radius:8px;padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:.85rem;outline:none;cursor:pointer;width:100%;transition:border-color .2s;}
+select:focus{border-color:var(--sky);}
+select option{background:#071a30;}
+.prog-bar{height:6px;background:rgba(100,181,246,.1);border-radius:3px;overflow:hidden;margin-top:4px;}
+.prog-fill{height:100%;border-radius:3px;transition:width .9s cubic-bezier(.4,0,.2,1);}
+.tabs{display:flex;gap:3px;background:rgba(3,15,30,.5);border-radius:11px;padding:4px;margin-bottom:20px;}
+.tab{flex:1;padding:9px 6px;border:none;border-radius:8px;background:transparent;color:rgba(144,202,249,.45);font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:500;cursor:pointer;transition:all .2s;}
+.tab.active{background:rgba(33,150,243,.2);color:var(--mist);box-shadow:0 0 14px rgba(33,150,243,.18);}
+.hist-header{display:grid;grid-template-columns:48px 1fr 85px 85px 85px 95px;gap:6px;padding:6px 8px;font-size:.6rem;letter-spacing:2px;text-transform:uppercase;opacity:.4;border-bottom:1px solid rgba(100,181,246,.12);margin-bottom:4px;}
+.hist-row{display:grid;grid-template-columns:48px 1fr 85px 85px 85px 95px;gap:6px;padding:8px;font-size:.82rem;border-bottom:1px solid rgba(100,181,246,.05);animation:slideIn .35s ease;}
+@keyframes slideIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;}}
+.hist-scroll{max-height:280px;overflow-y:auto;}
+.hist-scroll::-webkit-scrollbar{width:3px;}
+.hist-scroll::-webkit-scrollbar-thumb{background:rgba(100,181,246,.25);border-radius:2px;}
+.chart-wrap{height:140px;position:relative;margin-top:10px;}
+.chart-wrap svg{width:100%;height:100%;}
+.overlay{position:fixed;inset:0;z-index:200;background:rgba(1,12,24,.93);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(12px);animation:fadeIn .4s ease;}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+.overlay-box{background:linear-gradient(145deg,rgba(7,26,48,.97),rgba(3,15,30,.99));border:1px solid rgba(100,181,246,.22);border-radius:24px;padding:48px 44px;text-align:center;max-width:520px;width:93%;box-shadow:0 40px 100px rgba(0,0,0,.7),0 0 50px rgba(33,150,243,.08);}
+.ol-emoji{font-size:4.5rem;margin-bottom:16px;display:block;}
+.ol-title{font-family:'Fraunces',serif;font-size:2.4rem;font-weight:900;margin-bottom:12px;line-height:1;}
+.ol-msg{font-size:.93rem;line-height:1.65;color:var(--mist);opacity:.8;margin-bottom:24px;}
+.ol-score{font-family:'Fraunces',serif;font-size:4rem;font-weight:900;background:linear-gradient(135deg,var(--gold),var(--foam));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;}
+.ol-score-label{font-size:.72rem;letter-spacing:2.5px;text-transform:uppercase;opacity:.4;margin-top:4px;}
+.ol-table{width:100%;border-collapse:collapse;margin:18px 0 24px;font-size:.82rem;text-align:left;}
+.ol-table td{padding:7px 10px;border-bottom:1px solid rgba(100,181,246,.08);}
+.ol-table td:last-child{text-align:right;font-weight:600;}
+.event-overlay{position:fixed;inset:0;z-index:150;background:rgba(1,12,24,.88);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);animation:fadeIn .3s ease;}
+.event-box{background:linear-gradient(135deg,rgba(7,26,48,.96),rgba(3,15,30,.98));border:1px solid rgba(171,71,188,.4);border-radius:20px;padding:36px 36px 28px;text-align:center;max-width:440px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 30px rgba(171,71,188,.1);}
+.event-icon{font-size:3.5rem;margin-bottom:12px;display:block;}
+.event-type{font-size:.68rem;letter-spacing:3px;text-transform:uppercase;color:var(--purple);margin-bottom:6px;}
+.event-title{font-family:'Fraunces',serif;font-size:1.7rem;font-weight:700;margin-bottom:10px;}
+.event-desc{font-size:.88rem;line-height:1.6;color:var(--mist);opacity:.8;margin-bottom:20px;}
+.event-effects{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:20px;}
+.effect-tag{font-size:.75rem;padding:5px 12px;border-radius:20px;font-weight:500;}
+.effect-tag.bad{background:rgba(244,67,54,.15);color:#ef9a9a;border:1px solid rgba(244,67,54,.3);}
+.effect-tag.good{background:rgba(105,240,174,.1);color:var(--lime);border:1px solid rgba(105,240,174,.3);}
+.effect-tag.neu{background:rgba(100,181,246,.1);color:var(--foam);border:1px solid rgba(100,181,246,.25);}
+.rep-ring{width:80px;height:80px;border-radius:50%;background:conic-gradient(var(--lime) 0% calc(var(--pct)*1%),rgba(100,181,246,.1) 0%);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 20px rgba(105,240,174,.2);}
+.rep-inner{width:60px;height:60px;border-radius:50%;background:var(--void);display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.rep-num{font-family:'Fraunces',serif;font-size:1.1rem;font-weight:700;color:var(--lime);line-height:1;}
+.rep-label-sm{font-size:.55rem;opacity:.5;letter-spacing:1px;text-transform:uppercase;}
+footer{text-align:center;margin-top:40px;font-size:.72rem;opacity:.25;letter-spacing:1px;}
+</style>
+</head>
+<body>
+<div id="bg">
+  <div class="wave"></div><div class="wave"></div><div class="wave"></div>
+</div>
+
+<!-- EVENT MODAL -->
+<div class="event-overlay" id="event-overlay" style="display:none">
+  <div class="event-box">
+    <span class="event-icon" id="ev-icon">🌀</span>
+    <div class="event-type" id="ev-type">Evento</div>
+    <div class="event-title" id="ev-title">Título</div>
+    <div class="event-desc" id="ev-desc">Descripción</div>
+    <div class="event-effects" id="ev-effects"></div>
+    <button class="btn btn-primary" style="width:100%" onclick="closeEvent()">Entendido — Continuar</button>
+  </div>
+</div>
+
+<!-- GAME OVER -->
+<div class="overlay" id="end-overlay" style="display:none">
+  <div class="overlay-box">
+    <span class="ol-emoji" id="ol-emoji">🌊</span>
+    <div class="ol-title" id="ol-title">Fin</div>
+    <div class="ol-msg" id="ol-msg"></div>
+    <table class="ol-table" id="ol-table"></table>
+    <div class="ol-score" id="ol-score">0</div>
+    <div class="ol-score-label">puntuación final</div>
+    <div class="btn-row" style="margin-top:24px;justify-content:center">
+      <button class="btn btn-primary" onclick="initGame()">🔄 Nueva Empresa</button>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+<header>
+  <div class="brand">
+    <div class="brand-eyebrow">Simulador · Pesca Sustentable</div>
+    <div class="brand-name">Gestiona tu Empresa</div>
+    <div class="brand-sub">Toma decisiones · Cuida el mar · Prospera</div>
+  </div>
+  <div class="header-stats">
+    <div class="hstat"><div class="hstat-label">Capital</div><div class="hstat-val money" id="hstat-capital">$50,000</div></div>
+    <div class="hstat"><div class="hstat-label">Reputación</div><div class="hstat-val rep" id="hstat-rep">70</div></div>
+    <div class="hstat"><div class="hstat-label">Temporada</div><div class="hstat-val season" id="hstat-season">1</div></div>
+    <div class="hstat"><div class="hstat-label">Año</div><div class="hstat-val year" id="hstat-year">1</div></div>
+  </div>
+</header>
+
+<div class="alert" id="alert-box">
+  <span class="aicon" id="alert-icon">🌊</span>
+  <span id="alert-text">Bienvenido a <strong>Gestiona tu Empresa</strong>. Eres el director de una empresa pesquera costera. Cada temporada decide cuánto pescar de cada especie, gestiona riesgos climáticos, cumple regulaciones y equilibra ganancias con sustentabilidad. ¡El mar es tu recurso más valioso!</span>
+</div>
+
+<div class="season-bar">
+  <div>
+    <div class="season-num" id="season-num">TEMPORADA 1 DE 20</div>
+    <div class="season-name" id="season-name">🌸 Primavera</div>
+    <div style="font-size:.78rem;color:var(--foam);opacity:.6;margin-top:4px" id="season-desc">Inicio de ciclo pesquero</div>
+  </div>
+  <div class="season-icon-big" id="season-big-icon">🌸</div>
+  <div class="season-meta">
+    <div class="season-species">Especie destacada esta temporada:</div>
+    <div class="species-chips" id="species-chips"></div>
+    <div style="margin-top:10px;font-size:.75rem;color:var(--foam);opacity:.55">
+      Cuota total disponible: <span id="total-quota" style="color:var(--gold);font-weight:600">—</span> ton
+    </div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('pesca')">🎣 Operaciones</button>
+  <button class="tab" onclick="showTab('empresa')">🏢 Empresa</button>
+  <button class="tab" onclick="showTab('mercado')">📊 Mercado</button>
+  <button class="tab" onclick="showTab('historial')">📜 Historial</button>
+</div>
+
+<!-- TAB PESCA -->
+<div id="tab-pesca">
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">🐟 Captura por Especie</div>
+      <table class="sp-table">
+        <thead><tr><th>Especie</th><th>Stock</th><th>$/ton</th><th>Capturar (ton)</th></tr></thead>
+        <tbody id="species-tbody"></tbody>
+      </table>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:18px">
+        <div class="card-title">⚖️ Regulaciones Activas</div>
+        <div class="reg-list" id="reg-list"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">⚠️ Riesgos esta Temporada</div>
+        <div class="risk-grid" id="risk-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:18px">
+    <div class="card-title">⚙️ Configuración Operativa</div>
+    <div class="sl-group">
+      <div class="sl-item">
+        <div class="sl-label">Intensidad de Pesca <span id="lbl-intensity">50%</span></div>
+        <input type="range" id="sl-intensity" min="10" max="100" value="50" oninput="document.getElementById('lbl-intensity').textContent=this.value+'%';renderFinPreview()">
+      </div>
+      <div class="sl-item">
+        <div class="sl-label">Control de Talla Mínima <span id="lbl-size">50%</span></div>
+        <input type="range" id="sl-size" min="0" max="100" value="50" oninput="document.getElementById('lbl-size').textContent=this.value+'%';renderFinPreview()">
+      </div>
+      <div class="sl-item">
+        <div class="sl-label">Presupuesto Seguridad <span id="lbl-safety">$5,000</span></div>
+        <input type="range" id="sl-safety" min="0" max="20000" step="500" value="5000" oninput="document.getElementById('lbl-safety').textContent='$'+parseInt(this.value).toLocaleString();renderFinPreview()">
+      </div>
+      <div class="sl-item">
+        <div class="sl-label">Inversión Comunidad <span id="lbl-comm">$2,000</span></div>
+        <input type="range" id="sl-comm" min="0" max="15000" step="500" value="2000" oninput="document.getElementById('lbl-comm').textContent='$'+parseInt(this.value).toLocaleString();renderFinPreview()">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px">
+      <div>
+        <div style="font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--foam);opacity:.55;margin-bottom:7px">Técnica de Pesca</div>
+        <select id="sel-tech" onchange="renderFinPreview()">
+          <option value="artisanal">🪝 Artesanal — bajo impacto</option>
+          <option value="semi" selected>🚤 Semi-industrial</option>
+          <option value="industrial">🚢 Industrial — alta captura</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-size:.72rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--foam);opacity:.55;margin-bottom:7px">Flota Activa</div>
+        <select id="sel-fleet" onchange="renderFinPreview()">
+          <option value="1">1 embarcación</option>
+          <option value="2" selected>2 embarcaciones</option>
+          <option value="3">3 embarcaciones</option>
+          <option value="4">4 embarcaciones</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">💰 Vista Previa Financiera</div>
+      <div id="fin-preview"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📈 Evolución del Capital</div>
+      <div class="chart-wrap"><svg id="chart-capital" viewBox="0 0 600 140" preserveAspectRatio="none"></svg></div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" id="btn-go" onclick="executeSeason()">⚓ Ejecutar Temporada</button>
+    <button class="btn btn-secondary" onclick="showTab('mercado')">📊 Ver Mercado</button>
+    <button class="btn btn-danger" onclick="if(confirm('¿Reiniciar la empresa?'))initGame()">↩ Reiniciar</button>
+  </div>
+</div>
+
+<!-- TAB EMPRESA -->
+<div id="tab-empresa" style="display:none">
+  <div class="grid2" style="margin-bottom:18px">
+    <div class="card">
+      <div class="card-title">🌊 Salud del Ecosistema</div>
+      <div id="eco-stats"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🐠 Stock por Especie</div>
+      <div id="stock-grid"></div>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">🏭 Estado de la Empresa</div>
+      <div id="assets-panel"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🌟 Reputación Empresarial</div>
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:14px">
+        <div class="rep-ring" id="rep-ring" style="--pct:70">
+          <div class="rep-inner"><div class="rep-num" id="rep-ring-num">70</div><div class="rep-label-sm">Rep.</div></div>
+        </div>
+        <div style="flex:1;font-size:.84rem;color:var(--mist);opacity:.75;line-height:1.6" id="rep-text"></div>
+      </div>
+      <div class="card-title">📉 Tendencia de Stock</div>
+      <div class="chart-wrap"><svg id="chart-stock" viewBox="0 0 600 140" preserveAspectRatio="none"></svg></div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB MERCADO -->
+<div id="tab-mercado" style="display:none">
+  <div class="card" style="margin-bottom:18px">
+    <div class="card-title">🌐 Precios de Mercado — Temporada Actual</div>
+    <div id="market-table"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">📰 Noticias del Mercado</div>
+    <div id="market-news" style="display:flex;flex-direction:column;gap:10px"></div>
+  </div>
+</div>
+
+<!-- TAB HISTORIAL -->
+<div id="tab-historial" style="display:none">
+  <div class="card">
+    <div class="card-title">📜 Registro de Temporadas</div>
+    <div class="hist-header">
+      <span>Temp.</span><span>Destac.</span>
+      <span style="text-align:right">Captura</span>
+      <span style="text-align:right">Ingresos</span>
+      <span style="text-align:right">Costos</span>
+      <span style="text-align:right">Balance</span>
+    </div>
+    <div class="hist-scroll" id="hist-scroll"></div>
+  </div>
+</div>
+
+<footer>Gestiona tu Empresa · Simulador Didáctico de Pesca Sustentable · Proyecto Educativo</footer>
+</div>
+
+<script>
+// ═══════════════════ DATA ═══════════════════
+const SEASONS_DATA=[
+  {name:'🌸 Primavera',icon:'🌸',desc:'Inicio del ciclo reproductivo',featured:'camarón',species:['camarón','almeja','calamar','sardina']},
+  {name:'☀️ Verano',icon:'☀️',desc:'Alta actividad pelágica',featured:'atún',species:['atún','sardina','pulpo','calamar']},
+  {name:'🍂 Otoño',icon:'🍂',desc:'Migración y cosecha principal',featured:'salmón',species:['salmón','camarón','almeja','pulpo']},
+  {name:'❄️ Invierno',icon:'❄️',desc:'Temporada de veda parcial',featured:'pulpo',species:['pulpo','calamar','almeja','sardina']},
+];
+const SPECIES={
+  camarón:{icon:'🦐',basePrice:3200,maxQuota:80,recovRate:.25,sensitivity:.8},
+  almeja: {icon:'🦪',basePrice:1800,maxQuota:60,recovRate:.18,sensitivity:.5},
+  calamar:{icon:'🦑',basePrice:1500,maxQuota:100,recovRate:.35,sensitivity:.4},
+  atún:   {icon:'🐟',basePrice:5500,maxQuota:50,recovRate:.12,sensitivity:.9},
+  sardina:{icon:'🐠',basePrice:800,maxQuota:200,recovRate:.45,sensitivity:.3},
+  pulpo:  {icon:'🐙',basePrice:4200,maxQuota:40,recovRate:.15,sensitivity:.7},
+  salmón: {icon:'🐡',basePrice:7800,maxQuota:30,recovRate:.10,sensitivity:1.0},
+};
+const EVENTS=[
+  {id:'storm',type:'🌪️ Riesgo Climático',icon:'🌀',title:'Tormenta Tropical',
+   desc:'Una tormenta afecta las rutas pesqueras. Las embarcaciones deben regresar antes de tiempo.',
+   effects:[{label:'−30% captura esta temporada',cls:'bad'},{label:'Costos extra +$3,000',cls:'bad'}],
+   apply:(s,G)=>{G.captureMultiplier*=.7;G.extraCosts+=3000;}},
+  {id:'disease',type:'🦠 Enfermedad',icon:'🦠',title:'Brote Bacteriano en Camarón',
+   desc:'Un brote de enfermedad diezma el banco de camarones. El precio sube por escasez.',
+   effects:[{label:'Stock camarón −25%',cls:'bad'},{label:'Precio camarón +20%',cls:'good'}],
+   apply:(s,G)=>{G.stocks.camarón=Math.max(10,G.stocks.camarón*.75);G.prices.camarón*=1.2;}},
+  {id:'ban',type:'⚖️ Regulación',icon:'🚫',title:'Veda de Emergencia: Salmón',
+   desc:'Niveles críticos de salmón obligan a la autoridad a decretar veda inmediata.',
+   effects:[{label:'Salmón VEDADO esta temporada',cls:'bad'},{label:'Multa $8,000 si se pesca',cls:'bad'}],
+   apply:(s,G)=>{G.vedas.salmón=true;}},
+  {id:'boom',type:'📈 Mercado',icon:'🌟',title:'Demanda Internacional',
+   desc:'Compradores asiáticos buscan pulpo y calamar. Los precios se disparan.',
+   effects:[{label:'Precio pulpo +40%',cls:'good'},{label:'Precio calamar +30%',cls:'good'}],
+   apply:(s,G)=>{G.prices.pulpo*=1.4;G.prices.calamar*=1.3;}},
+  {id:'algae',type:'🌿 Ambiental',icon:'🌿',title:'Marea Roja',
+   desc:'Una floración tóxica contamina la zona de almejas. Veda sanitaria inmediata.',
+   effects:[{label:'Almejas VEDADAS esta temporada',cls:'bad'},{label:'Calidad del agua −15',cls:'bad'}],
+   apply:(s,G)=>{G.vedas.almeja=true;G.waterQuality=Math.max(0,G.waterQuality-15);}},
+  {id:'subsidy',type:'💰 Apoyo Gubernamental',icon:'🏛️',title:'Subsidio Pesquero',
+   desc:'El gobierno apoya empresas sustentables. Si tu reputación es alta, recibes bono.',
+   effects:[{label:'Bono $10,000 si rep ≥ 70',cls:'good'},{label:'Reputación +5',cls:'good'}],
+   apply:(s,G)=>{if(G.reputation>=70)G.capital+=10000;G.reputation=Math.min(100,G.reputation+5);}},
+  {id:'strike',type:'👷 Social',icon:'✊',title:'Paro de Pescadores',
+   desc:'Los pescadores locales protestan por las cuotas. Dos semanas de paro.',
+   effects:[{label:'−20% capacidad de pesca',cls:'bad'},{label:'Reputación −5',cls:'bad'}],
+   apply:(s,G)=>{G.captureMultiplier*=.8;G.reputation=Math.max(0,G.reputation-5);}},
+  {id:'warm',type:'🌡️ Cambio Climático',icon:'🌡️',title:'Anomalía de Temperatura',
+   desc:'Agua más cálida desplaza bancos de peces. Sardina migra, atún más accesible.',
+   effects:[{label:'Sardina disponible −40%',cls:'bad'},{label:'Atún disponible +20%',cls:'good'}],
+   apply:(s,G)=>{G.stocks.sardina=Math.max(10,G.stocks.sardina*.6);G.stocks.atún=Math.min(100,G.stocks.atún*1.2);}},
+  {id:'inspection',type:'⚖️ Regulación',icon:'🔍',title:'Inspección Federal',
+   desc:'La CONAPESCA realiza inspección sorpresa. Equipos sin certificación reciben multa.',
+   effects:[{label:'Multa $4,000 si rep < 60',cls:'bad'},{label:'Imagen empresa evaluada',cls:'neu'}],
+   apply:(s,G)=>{if(G.reputation<60){G.capital-=4000;G.reputation=Math.max(0,G.reputation-3);}}},
+  {id:'tsunami',type:'🌊 Desastre Natural',icon:'🌊',title:'Alerta de Tsunami',
+   desc:'Alerta preventiva obliga a llevar la flota a puerto. Temporada reducida.',
+   effects:[{label:'−50% captura esta temporada',cls:'bad'},{label:'Sin daños a la flota',cls:'good'}],
+   apply:(s,G)=>{G.captureMultiplier*=.5;}},
+];
+const REGULATIONS=[
+  {dot:'ok',text:'Talla mínima legal: 15 cm para especies demersales. Penalización $5,000.'},
+  {dot:'ok',text:'Cuota anual por especie asignada por CONAPESCA. No exceder límite.'},
+  {dot:'warn',text:'Veda invernal: sardina restringida en enero. Permitida otras temporadas.'},
+  {dot:'active',text:'PROHIBICIÓN: Redes de arrastre de fondo a menos de 5 millas de la costa.'},
+  {dot:'ok',text:'Reporte de captura obligatorio ante autoridad pesquera cada temporada.'},
+  {dot:'ok',text:'Certificación sustentable: +12% en precio de venta con certificado vigente.'},
+];
+const MARKET_NEWS=[
+  'Demanda de mariscos frescos crece 18% en mercados de exportación este trimestre.',
+  'Nueva normativa requiere trazabilidad de origen en todos los productos del mar.',
+  'Consumidores prefieren productos con sello sustentable; margen premium del 15%.',
+  'Temporada de huracanes activa eleva costos de operación en el Pacífico.',
+  'Inversión en acuacultura complementaria puede reducir presión sobre recursos silvestres.',
+  'Precios del diésel marítimo aumentan 8%, impactando costos de flota.',
+  'Programa gubernamental apoya modernización de embarcaciones artesanales.',
+  'Estudios señalan colapso de stock de atún en 15 años sin medidas de manejo.',
+  'Precio internacional del pulpo alcanza máximos históricos por escasez en Europa.',
+  'Nueva zona de protección marina declarada en el Golfo de California.',
+];
+
+// ═══════════════════ STATE ═══════════════════
+let G={};
+let pendingEvent=null,eventCallback=null;
+
+function initGame(){
+  G={
+    season:1,year:1,capital:50000,reputation:70,
+    ecoHealth:100,waterQuality:100,biodiversity:100,
+    stocks:{camarón:85,almeja:80,calamar:90,atún:70,sardina:95,pulpo:75,salmón:65},
+    prices:{},vedas:{},captureMultiplier:1,extraCosts:0,
+    history:[],capitalHistory:[50000],
+    stockHistory:{camarón:[85],sardina:[95],atún:[70]},
+    totalCaught:0,totalRevenue:0,totalProfit:0,newsIndex:0,
+  };
+  Object.keys(SPECIES).forEach(k=>{G.prices[k]=SPECIES[k].basePrice*(.9+Math.random()*.2);});
+  document.getElementById('end-overlay').style.display='none';
+  document.getElementById('event-overlay').style.display='none';
+  document.getElementById('hist-scroll').innerHTML='';
+  ['sl-intensity','sl-size'].forEach(id=>document.getElementById(id).value=50);
+  document.getElementById('sl-safety').value=5000;
+  document.getElementById('sl-comm').value=2000;
+  document.getElementById('lbl-intensity').textContent='50%';
+  document.getElementById('lbl-size').textContent='50%';
+  document.getElementById('lbl-safety').textContent='$5,000';
+  document.getElementById('lbl-comm').textContent='$2,000';
+  document.getElementById('sel-tech').value='semi';
+  document.getElementById('sel-fleet').value='2';
+  renderAll();
+  showTab('pesca');
+  setAlert('🌊','Bienvenido a <strong>Gestiona tu Empresa</strong>. Eres el director de una empresa pesquera costera. Decide cuánto pescar de cada especie, gestiona riesgos climáticos, cumple con las regulaciones y equilibra ganancias con sustentabilidad del mar.','info');
+  spawnBubbles();
+}
+
+// ═══════════════════ RENDER ═══════════════════
+function renderAll(){
+  renderHeader();renderSeasonBar();renderSpeciesTable();
+  renderRegs();renderRisks();renderFinPreview();updateCharts();
+}
+
+function renderHeader(){
+  document.getElementById('hstat-capital').textContent='$'+Math.round(G.capital).toLocaleString();
+  document.getElementById('hstat-rep').textContent=Math.round(G.reputation);
+  document.getElementById('hstat-season').textContent=G.season;
+  document.getElementById('hstat-year').textContent=G.year;
+  const r=document.getElementById('rep-ring');
+  r.style.setProperty('--pct',Math.round(G.reputation));
+  document.getElementById('rep-ring-num').textContent=Math.round(G.reputation);
+  const rt=document.getElementById('rep-text');
+  if(rt){
+    if(G.reputation>=85)rt.textContent='🏆 Empresa líder en sustentabilidad. Acceso a mercados premium, subsidios y certificación vigente.';
+    else if(G.reputation>=65)rt.textContent='✅ Buena reputación. La comunidad confía en tus prácticas pesqueras responsables.';
+    else if(G.reputation>=40)rt.textContent='⚠️ Reputación regular. Algunas comunidades cuestionan tus métodos de captura.';
+    else rt.textContent='🚨 Reputación dañada. Las autoridades tienen tu empresa bajo vigilancia especial.';
+  }
+}
+
+function seasonIdx(){return(G.season-1)%4;}
+
+function renderSeasonBar(){
+  const si=seasonIdx(),sd=SEASONS_DATA[si];
+  document.getElementById('season-num').textContent=`TEMPORADA ${G.season} DE 20`;
+  document.getElementById('season-name').textContent=sd.name;
+  document.getElementById('season-big-icon').textContent=sd.icon;
+  document.getElementById('season-desc').textContent=sd.desc;
+  const chips=document.getElementById('species-chips');
+  chips.innerHTML=sd.species.map(sp=>{
+    const isF=sp===sd.featured,isV=G.vedas[sp];
+    return `<span class="chip${isV?'':isF?' featured':''}">${SPECIES[sp].icon} ${isV?'🚫 '+sp+' (VEDA)':isF?'⭐ '+sp:sp}</span>`;
+  }).join('');
+  const avail=sd.species.filter(sp=>!G.vedas[sp]);
+  const tq=avail.reduce((a,sp)=>a+Math.floor(SPECIES[sp].maxQuota*(G.stocks[sp]/100)),0);
+  document.getElementById('total-quota').textContent=tq;
+}
+
+function renderSpeciesTable(){
+  const si=seasonIdx(),sd=SEASONS_DATA[si];
+  const tbody=document.getElementById('species-tbody');
+  tbody.innerHTML='';
+  sd.species.forEach(sp=>{
+    const info=SPECIES[sp],price=G.prices[sp]||info.basePrice,stock=G.stocks[sp]||50;
+    const quota=Math.floor(info.maxQuota*(stock/100));
+    const isV=G.vedas[sp],isF=sp===sd.featured;
+    const sc=stock>60?'var(--lime)':stock>35?'var(--amber)':'#ef9a9a';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td>
+        <div class="sp-name">${info.icon} ${sp}
+          ${isF?'<span class="sp-badge">⭐ Destacada</span>':''}
+          ${isV?'<span class="sp-badge veda">🚫 Veda</span>':''}
+          ${stock<30&&!isV?'<span class="sp-badge risk">⚠️ Stock bajo</span>':''}
+        </div>
+        <div style="margin-top:4px">
+          <div class="prog-bar"><div class="prog-fill" style="width:${stock}%;background:${sc}"></div></div>
+        </div>
+      </td>
+      <td style="color:${sc};font-family:'Fraunces',serif;font-weight:700">${Math.round(stock)}%</td>
+      <td style="color:var(--gold)">$${Math.round(price).toLocaleString()}</td>
+      <td>${isV?`<span style="color:#ef9a9a;font-size:.78rem">VEDADA</span>`
+        :`<input class="qty-input" type="number" id="qty-${sp}" min="0" max="${quota}" value="0" placeholder="0" oninput="renderFinPreview()">
+          <div style="font-size:.65rem;color:var(--foam);opacity:.4;margin-top:2px">máx ${quota} ton</div>`}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderRegs(){
+  document.getElementById('reg-list').innerHTML=REGULATIONS.map(r=>
+    `<div class="reg-item"><div class="reg-dot ${r.dot}"></div><div>${r.text}</div></div>`).join('');
+}
+
+function renderRisks(){
+  const si=seasonIdx();
+  const risks=[
+    {icon:'🌀',name:'Tormenta',desc:'Posible mal tiempo en la zona de pesca',level:si===3?'high':'med',ll:si===3?'Alto':'Medio'},
+    {icon:'🦠',name:'Enfermedad',desc:'Brotes bacterianos en bancos pesqueros',level:'low',ll:'Bajo'},
+    {icon:'🌡️',name:'Temperatura anómala',desc:'Variación térmica desplaza peces',level:si===1?'high':'med',ll:si===1?'Alto':'Medio'},
+    {icon:'⛽',name:'Alza combustible',desc:'Diésel marítimo inestable',level:'high',ll:'Alto'},
+    {icon:'🔍',name:'Inspección pesquera',desc:'Revisión de documentación y cuotas',level:'low',ll:'Bajo'},
+  ].slice(0,3+si%2);
+  document.getElementById('risk-grid').innerHTML=risks.map(r=>
+    `<div class="risk-item"><span class="risk-icon">${r.icon}</span>
+      <div class="risk-info"><div class="risk-name">${r.name}</div><div class="risk-desc">${r.desc}</div></div>
+      <span class="risk-impact ${r.level}">${r.ll}</span></div>`).join('');
+}
+
+function getCapturePlan(){
+  const si=seasonIdx(),sd=SEASONS_DATA[si];
+  const tech=document.getElementById('sel-tech').value;
+  const fleet=parseInt(document.getElementById('sel-fleet').value);
+  const intensity=parseInt(document.getElementById('sl-intensity').value)/100;
+  const techMult={artisanal:.75,semi:1,industrial:1.35}[tech];
+  const plan={};
+  sd.species.forEach(sp=>{
+    if(G.vedas[sp]){plan[sp]=0;return;}
+    const inp=document.getElementById(`qty-${sp}`);
+    if(!inp){plan[sp]=0;return;}
+    const raw=Math.max(0,parseFloat(inp.value)||0);
+    const quota=Math.floor(SPECIES[sp].maxQuota*(G.stocks[sp]/100));
+    plan[sp]=Math.min(raw,quota)*techMult*fleet*intensity*(G.captureMultiplier||1);
+  });
+  return plan;
+}
+
+function renderFinPreview(){
+  const plan=getCapturePlan();
+  const safety=parseInt(document.getElementById('sl-safety').value)||0;
+  const comm=parseInt(document.getElementById('sl-comm').value)||0;
+  const fleet=parseInt(document.getElementById('sel-fleet').value);
+  const tech=document.getElementById('sel-tech').value;
+  const techCost={artisanal:2000,semi:4500,industrial:8000}[tech];
+  const fleetCost=fleet*techCost;
+  let revenue=0,totalTon=0;
+  const lines=[];
+  Object.entries(plan).forEach(([sp,ton])=>{
+    if(ton<=0)return;
+    const price=(G.prices[sp]||SPECIES[sp].basePrice)*(G.reputation>=80?1.12:1);
+    const rev=ton*price;revenue+=rev;totalTon+=ton;
+    lines.push({sp,ton,rev});
+  });
+  const totalCosts=fleetCost+safety+comm+(G.extraCosts||0);
+  const profit=revenue-totalCosts;
+  const el=document.getElementById('fin-preview');
+  el.innerHTML=`
+    ${lines.map(l=>`<div class="fin-row"><span class="fin-label">${SPECIES[l.sp].icon} ${l.sp} (${l.ton.toFixed(1)} ton)</span><span class="fin-val pos">+$${Math.round(l.rev).toLocaleString()}</span></div>`).join('')}
+    <div class="fin-row"><span class="fin-label">🚢 Costos de flota (${fleet} emb.)</span><span class="fin-val neg">−$${fleetCost.toLocaleString()}</span></div>
+    <div class="fin-row"><span class="fin-label">🛡️ Seguridad y seguros</span><span class="fin-val neg">−$${safety.toLocaleString()}</span></div>
+    <div class="fin-row"><span class="fin-label">🏘️ Inversión comunitaria</span><span class="fin-val neg">−$${comm.toLocaleString()}</span></div>
+    ${G.extraCosts>0?`<div class="fin-row"><span class="fin-label">⚠️ Costos por evento</span><span class="fin-val neg">−$${G.extraCosts.toLocaleString()}</span></div>`:''}
+    <div class="fin-total">
+      <span class="fin-total-label">Balance estimado</span>
+      <span class="fin-total-val" style="color:${profit>=0?'var(--lime)':'#ef9a9a'}">${profit>=0?'+':''}$${Math.round(profit).toLocaleString()}</span>
+    </div>
+    <div style="font-size:.74rem;color:var(--foam);opacity:.5;margin-top:8px">Total captura estimada: <strong style="color:var(--mist)">${totalTon.toFixed(1)} ton</strong>${G.reputation>=80?' · 🏅 +12% precio (certificado)':''}</div>`;
+}
+
+function renderEcoStats(){
+  const el=document.getElementById('eco-stats');
+  if(!el)return;
+  const bars=[
+    {l:'Salud del Ecosistema',v:G.ecoHealth,c:'var(--lime)',i:'🌊'},
+    {l:'Calidad del Agua',v:G.waterQuality,c:'var(--sky)',i:'💧'},
+    {l:'Biodiversidad',v:G.biodiversity,c:'#ce93d8',i:'🐠'},
+  ];
+  el.innerHTML=bars.map(b=>{
+    const col=b.v>60?b.c:b.v>35?'var(--amber)':'#ef9a9a';
+    return `<div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+        <span style="font-size:.83rem;color:var(--mist);opacity:.75">${b.i} ${b.l}</span>
+        <span style="font-family:'Fraunces',serif;font-weight:700;color:${col}">${Math.round(b.v)}%</span>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" style="width:${b.v}%;background:${col}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function renderStockGrid(){
+  const el=document.getElementById('stock-grid');
+  if(!el)return;
+  el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px">
+  ${Object.entries(G.stocks).map(([sp,v])=>{
+    const c=v>60?'var(--lime)':v>35?'var(--amber)':'#ef9a9a';
+    return `<div style="background:rgba(1,12,24,.4);border:1px solid rgba(100,181,246,.08);border-radius:10px;padding:10px 12px;text-align:center">
+      <div style="font-size:1.4rem">${SPECIES[sp].icon}</div>
+      <div style="font-size:.68rem;color:var(--foam);opacity:.55;margin:2px 0">${sp}</div>
+      <div style="font-family:'Fraunces',serif;font-size:1.1rem;font-weight:700;color:${c}">${Math.round(v)}%</div>
+      <div class="prog-bar"><div class="prog-fill" style="width:${v}%;background:${c}"></div></div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function renderAssets(){
+  const el=document.getElementById('assets-panel');
+  if(!el)return;
+  el.innerHTML=`
+    <div class="fin-row"><span class="fin-label">💰 Capital actual</span><span class="fin-val money">$${Math.round(G.capital).toLocaleString()}</span></div>
+    <div class="fin-row"><span class="fin-label">📦 Total capturado histórico</span><span class="fin-val neu">${G.totalCaught.toFixed(1)} ton</span></div>
+    <div class="fin-row"><span class="fin-label">💵 Ingresos acumulados</span><span class="fin-val pos">$${Math.round(G.totalRevenue).toLocaleString()}</span></div>
+    <div class="fin-row"><span class="fin-label">📈 Ganancia neta acumulada</span><span class="fin-val ${G.totalProfit>=0?'pos':'neg'}">${G.totalProfit>=0?'+':''}$${Math.round(G.totalProfit).toLocaleString()}</span></div>
+    <div class="fin-row"><span class="fin-label">🌟 Reputación empresarial</span><span class="fin-val rep">${Math.round(G.reputation)}/100</span></div>
+    <div class="fin-row"><span class="fin-label">📅 Temporadas completadas</span><span class="fin-val neu">${G.season-1}/20</span></div>`;
+}
+
+function renderMarket(){
+  const el=document.getElementById('market-table');
+  if(!el)return;
+  el.innerHTML=`<table class="sp-table" style="width:100%">
+    <thead><tr><th>Especie</th><th>Precio actual</th><th>Vs. base</th><th>Stock</th><th>Tendencia</th></tr></thead>
+    <tbody>${Object.entries(SPECIES).map(([sp,info])=>{
+      const cur=G.prices[sp]||info.basePrice,diff=(cur-info.basePrice)/info.basePrice*100;
+      const dc=diff>5?'var(--lime)':diff<-5?'#ef9a9a':'var(--foam)';
+      const stock=G.stocks[sp],sc=stock>60?'var(--lime)':stock>35?'var(--amber)':'#ef9a9a';
+      return `<tr>
+        <td><div class="sp-name">${info.icon} ${sp}</div></td>
+        <td style="color:var(--gold);font-family:'Fraunces',serif;font-weight:700">$${Math.round(cur).toLocaleString()}</td>
+        <td style="color:${dc}">${diff>=0?'+':''}${diff.toFixed(1)}%</td>
+        <td><div style="display:flex;align-items:center;gap:8px">
+          <div class="prog-bar" style="width:70px"><div class="prog-fill" style="width:${stock}%;background:${sc}"></div></div>
+          <span style="font-size:.78rem;color:${sc}">${Math.round(stock)}%</span>
+        </div></td>
+        <td>${diff>5?'📈':diff<-5?'📉':'➡️'}</td></tr>`;
+    }).join('')}</tbody></table>`;
+  const news=document.getElementById('market-news');
+  if(!news)return;
+  news.innerHTML=[0,1,2].map(i=>MARKET_NEWS[(G.newsIndex+i)%MARKET_NEWS.length]).map(n=>
+    `<div style="display:flex;gap:10px;background:rgba(1,12,24,.4);border-radius:10px;padding:12px 14px;border:1px solid rgba(100,181,246,.07)">
+      <span style="font-size:1rem">📰</span>
+      <span style="font-size:.83rem;color:var(--mist);opacity:.75;line-height:1.5">${n}</span></div>`).join('');
+}
+
+function updateCharts(){
+  drawLine('chart-capital',G.capitalHistory,'var(--gold)',600,140);
+  const svg=document.getElementById('chart-stock');
+  if(!svg)return;
+  const W=600,H=140,pad=12;
+  const dl=(data,color)=>{
+    if(data.length<2)return'';
+    const pts=data.map((v,i)=>[pad+(i/Math.max(data.length-1,1))*(W-2*pad),H-pad-(v/100)*(H-2*pad)]);
+    return `<path d="${pts.map((p,i)=>i===0?`M${p[0]},${p[1]}`:`L${p[0]},${p[1]}`).join(' ')}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round"/>`;
+  };
+  svg.innerHTML=dl(G.stockHistory.camarón,'var(--amber)')+dl(G.stockHistory.sardina,'var(--sky)')+dl(G.stockHistory.atún,'var(--lime)')+
+    `<text x="${W-6}" y="18" fill="var(--amber)" font-size="10" text-anchor="end">camarón</text>
+     <text x="${W-6}" y="30" fill="var(--sky)" font-size="10" text-anchor="end">sardina</text>
+     <text x="${W-6}" y="42" fill="var(--lime)" font-size="10" text-anchor="end">atún</text>`;
+}
+
+function drawLine(id,data,color,W,H){
+  const svg=document.getElementById(id);if(!svg||data.length<2)return;
+  const pad=12,mn=Math.min(...data),mx=Math.max(...data),range=mx-mn||1;
+  const pts=data.map((v,i)=>[pad+(i/Math.max(data.length-1,1))*(W-2*pad),H-pad-((v-mn)/range)*(H-2*pad)]);
+  const path=pts.map((p,i)=>i===0?`M${p[0]},${p[1]}`:`L${p[0]},${p[1]}`).join(' ');
+  const gid='g'+id;
+  svg.innerHTML=`<defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="${color}" stop-opacity=".3"/>
+    <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+  </linearGradient></defs>
+  <path d="${path} L${pts[pts.length-1][0]},${H} L${pad},${H} Z" fill="url(#${gid})"/>
+  <path d="${path}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="${pts[pts.length-1][0]}" cy="${pts[pts.length-1][1]}" r="4" fill="${color}"/>`;
+}
+
+// ═══════════════════ EXECUTE SEASON ═══════════════════
+function executeSeason(){
+  document.getElementById('btn-go').disabled=true;
+  if(Math.random()<.45){
+    const eligible=EVENTS.filter(e=>{
+      if(e.id==='disease'&&G.stocks.camarón>55)return true;
+      if(e.id==='ban'&&G.stocks.salmón<40)return true;
+      if(e.id==='algae'&&G.ecoHealth<75)return true;
+      if(e.id==='subsidy'&&G.reputation>55)return true;
+      if(['storm','boom','strike','warm','inspection','tsunami'].includes(e.id))return true;
+      return false;
+    });
+    if(eligible.length>0){
+      showEvent(eligible[Math.floor(Math.random()*eligible.length)],()=>doExec());
+      return;
+    }
+  }
+  doExec();
+}
+
+function doExec(){
+  const si=seasonIdx(),sd=SEASONS_DATA[si];
+  const tech=document.getElementById('sel-tech').value;
+  const fleet=parseInt(document.getElementById('sel-fleet').value);
+  const intensity=parseInt(document.getElementById('sl-intensity').value)/100;
+  const sizeReg=parseInt(document.getElementById('sl-size').value)/100;
+  const safety=parseInt(document.getElementById('sl-safety').value)||0;
+  const comm=parseInt(document.getElementById('sl-comm').value)||0;
+  const techMult={artisanal:.75,semi:1,industrial:1.35}[tech];
+  const techImpact={artisanal:.3,semi:.65,industrial:1.0}[tech];
+  const techCost={artisanal:2000,semi:4500,industrial:8000}[tech];
+  const fleetCost=fleet*techCost;
+  let revenue=0,totalCaught=0,finesTotal=0;
+  const captureLog=[];
+
+  sd.species.forEach(sp=>{
+    if(G.vedas[sp])return;
+    const inp=document.getElementById(`qty-${sp}`);
+    if(!inp)return;
+    const raw=Math.max(0,parseFloat(inp.value)||0);
+    const quota=Math.floor(SPECIES[sp].maxQuota*(G.stocks[sp]/100));
+    const actual=Math.min(raw,quota)*techMult*fleet*intensity*(G.captureMultiplier||1);
+    let price=(G.prices[sp]||SPECIES[sp].basePrice);
+    if(G.reputation>=80)price*=1.12;
+    if(sizeReg<.3){finesTotal+=5000;}
+    const rev=actual*price;
+    revenue+=rev;totalCaught+=actual;
+    if(actual>0)captureLog.push({sp,actual,rev});
+    // Stock update
+    const pressure=(actual/SPECIES[sp].maxQuota)*techImpact*intensity;
+    const recovery=(1-G.stocks[sp]/100)*SPECIES[sp].recovRate*100;
+    G.stocks[sp]=Math.max(0,Math.min(100,G.stocks[sp]-pressure*15+recovery+sizeReg*3));
+  });
+
+  const totalCosts=fleetCost+safety+comm+(G.extraCosts||0)+finesTotal;
+  const profit=revenue-totalCosts;
+  G.capital+=profit;
+
+  // Eco
+  const ecoImpact=techImpact*intensity*fleet*.8;
+  G.ecoHealth=Math.max(0,Math.min(100,G.ecoHealth-ecoImpact+1.5));
+  G.waterQuality=Math.max(0,Math.min(100,G.waterQuality-ecoImpact*.5+1));
+  const avg=Object.values(G.stocks).reduce((a,b)=>a+b,0)/7;
+  G.biodiversity=Math.max(0,Math.min(100,avg*.9+G.ecoHealth*.1));
+
+  // Reputation
+  const rd=(comm/5000)*3+(sizeReg-.5)*4+(tech==='artisanal'?3:tech==='industrial'?-4:0)+(G.ecoHealth>70?1:-2)-(finesTotal>0?8:0);
+  G.reputation=Math.max(0,Math.min(100,G.reputation+rd));
+
+  G.totalCaught+=totalCaught;G.totalRevenue+=revenue;G.totalProfit+=profit;
+  G.capitalHistory.push(G.capital);
+  G.stockHistory.camarón.push(G.stocks.camarón);
+  G.stockHistory.sardina.push(G.stocks.sardina);
+  G.stockHistory.atún.push(G.stocks.atún);
+  G.newsIndex++;
+
+  Object.keys(G.prices).forEach(sp=>{G.prices[sp]*=(.92+Math.random()*.16);});
+
+  // History
+  const hrec={season:G.season,featured:sd.featured,totalCaught:totalCaught.toFixed(1),
+    revenue:Math.round(revenue),costs:Math.round(totalCosts),profit:Math.round(profit),captureLog};
+  G.history.unshift(hrec);
+  addHistoryRow(hrec);
+
+  // Fines message
+  if(finesTotal>0)setAlert('⚖️',`Infracción de talla mínima detectada. Multa de $${finesTotal.toLocaleString()} aplicada esta temporada.`,'danger');
+  else{
+    let msg,type='info';
+    if(profit>=15000){msg=`✅ Temporada excelente. Ingresos: $${Math.round(revenue).toLocaleString()}. Balance: +$${Math.round(profit).toLocaleString()}.`;type='success';}
+    else if(profit>=0){msg=`🌊 Temporada positiva. Balance: +$${Math.round(profit).toLocaleString()}. Capital: $${Math.round(G.capital).toLocaleString()}.`;}
+    else{msg=`⚠️ Temporada con pérdidas de $${Math.abs(Math.round(profit)).toLocaleString()}. Revisa costos y estrategia.`;type='warn';}
+    setAlert(type==='success'?'✅':type==='warn'?'⚠️':'🌊',msg,type);
+  }
+
+  G.captureMultiplier=1;G.extraCosts=0;G.vedas={};
+  G.season++;if(G.season%4===1)G.year++;
+
+  if(G.capital<=0){endGame('bankrupt');return;}
+  if(avg<20){endGame('collapse');return;}
+  if(G.season>20){endGame('complete');return;}
+
+  renderAll();
+  document.getElementById('btn-go').disabled=false;
+  document.querySelectorAll('.qty-input').forEach(i=>i.value=0);
+  showTab('pesca');
+}
+
+function addHistoryRow(h){
+  const sc=document.getElementById('hist-scroll');
+  const div=document.createElement('div');div.className='hist-row';
+  const pc=h.profit>=0?'pos':'neg';
+  div.innerHTML=`
+    <span style="font-family:'Fraunces',serif;color:var(--amber);font-weight:700">${h.season}</span>
+    <span>${SPECIES[h.featured]?.icon||''} ${h.featured}</span>
+    <span style="text-align:right;color:var(--mist)">${h.totalCaught} ton</span>
+    <span style="text-align:right" class="pos">$${h.revenue.toLocaleString()}</span>
+    <span style="text-align:right" class="neg">−$${h.costs.toLocaleString()}</span>
+    <span style="text-align:right" class="${pc}">${h.profit>=0?'+':''}$${h.profit.toLocaleString()}</span>`;
+  sc.insertBefore(div,sc.firstChild);
+}
+
+// ═══════════════════ EVENTS ═══════════════════
+function showEvent(evt,cb){
+  pendingEvent=evt;eventCallback=cb;
+  document.getElementById('ev-icon').textContent=evt.icon;
+  document.getElementById('ev-type').textContent=evt.type;
+  document.getElementById('ev-title').textContent=evt.title;
+  document.getElementById('ev-desc').textContent=evt.desc;
+  document.getElementById('ev-effects').innerHTML=evt.effects.map(e=>`<span class="effect-tag ${e.cls}">${e.label}</span>`).join('');
+  document.getElementById('event-overlay').style.display='flex';
+}
+function closeEvent(){
+  if(pendingEvent){
+    const s={captureMultiplier:G.captureMultiplier,extraCosts:G.extraCosts};
+    pendingEvent.apply(s,G);
+    G.captureMultiplier=s.captureMultiplier;G.extraCosts=s.extraCosts;
+  }
+  document.getElementById('event-overlay').style.display='none';
+  if(eventCallback){eventCallback();eventCallback=null;}
+  pendingEvent=null;
+}
+
+// ═══════════════════ END GAME ═══════════════════
+function endGame(reason){
+  const score=Math.round(G.capital/100+G.reputation*50+G.ecoHealth*30+G.totalProfit/200);
+  const avgs=Object.values(G.stocks).reduce((a,b)=>a+b,0)/7;
+  const cfgs={
+    bankrupt:{emoji:'💸',title:'¡Quiebra!',color:'#ef9a9a',
+      msg:'Tu empresa quedó sin capital. La sobreexplotación y los altos costos acabaron con tu negocio. La gestión financiera y la sustentabilidad van de la mano.'},
+    collapse:{emoji:'💀',title:'Colapso Ecológico',color:'#ef9a9a',
+      msg:'Los recursos pesqueros colapsaron. Sin peces, no hay empresa posible. La naturaleza siempre pone límites a la sobreexplotación.'},
+    complete:{
+      emoji:score>8000?'🏆':score>4000?'🌊':'⚖️',
+      title:score>8000?'¡Empresa Ejemplar!':score>4000?'Gestión Sostenida':'Resultados Mixtos',
+      color:score>8000?'var(--lime)':score>4000?'var(--foam)':'var(--amber)',
+      msg:score>8000?'Lograste equilibrar rentabilidad y sustentabilidad. Tu empresa es modelo en la industria pesquera. ¡El mar te lo agradece!':
+        score>4000?'20 temporadas completadas con resultados positivos. El mar y tu comunidad agradecen tu gestión.':
+        'Simulación completada, pero hay margen de mejora. Equilibra mejor las ganancias con la salud del ecosistema.'},
+  };
+  const c=cfgs[reason];
+  document.getElementById('ol-emoji').textContent=c.emoji;
+  document.getElementById('ol-title').textContent=c.title;
+  document.getElementById('ol-title').style.color=c.color;
+  document.getElementById('ol-msg').textContent=c.msg;
+  document.getElementById('ol-score').textContent=score.toLocaleString();
+  document.getElementById('ol-table').innerHTML=`
+    <tr><td>💰 Capital final</td><td style="color:var(--gold)">$${Math.round(G.capital).toLocaleString()}</td></tr>
+    <tr><td>📦 Total capturado</td><td style="color:var(--mist)">${G.totalCaught.toFixed(1)} ton</td></tr>
+    <tr><td>💵 Ingresos totales</td><td style="color:var(--lime)">$${Math.round(G.totalRevenue).toLocaleString()}</td></tr>
+    <tr><td>📈 Ganancia neta</td><td style="color:${G.totalProfit>=0?'var(--lime)':'#ef9a9a'}">${G.totalProfit>=0?'+':''}$${Math.round(G.totalProfit).toLocaleString()}</td></tr>
+    <tr><td>🌟 Reputación final</td><td style="color:var(--foam)">${Math.round(G.reputation)}/100</td></tr>
+    <tr><td>🌊 Salud ecosistema</td><td style="color:${G.ecoHealth>60?'var(--lime)':'#ef9a9a'}">${Math.round(G.ecoHealth)}%</td></tr>
+    <tr><td>🐟 Stock promedio</td><td style="color:${avgs>60?'var(--lime)':avgs>35?'var(--amber)':'#ef9a9a'}">${Math.round(avgs)}%</td></tr>`;
+  document.getElementById('end-overlay').style.display='flex';
+}
+
+// ═══════════════════ HELPERS ═══════════════════
+function setAlert(icon,html,type){
+  const box=document.getElementById('alert-box');
+  box.className='alert'+(type&&type!=='info'?' '+type:'');
+  document.getElementById('alert-icon').textContent=icon;
+  document.getElementById('alert-text').innerHTML=html;
+}
+function showTab(name){
+  ['pesca','empresa','mercado','historial'].forEach((t,i)=>{
+    document.getElementById('tab-'+t).style.display=t===name?'':'none';
+    document.querySelectorAll('.tab')[i].classList.toggle('active',t===name);
+  });
+  if(name==='empresa'){renderEcoStats();renderStockGrid();renderAssets();renderHeader();updateCharts();}
+  if(name==='mercado')renderMarket();
+}
+function spawnBubbles(){
+  const bg=document.getElementById('bg');
+  for(let i=0;i<14;i++){
+    const b=document.createElement('div');b.className='bubble';
+    const sz=Math.random()*7+2;
+    b.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;animation-duration:${14+Math.random()*20}s;animation-delay:${-Math.random()*25}s;`;
+    bg.appendChild(b);
+  }
+}
+
+initGame();
+</script>
+</body>
+</html>

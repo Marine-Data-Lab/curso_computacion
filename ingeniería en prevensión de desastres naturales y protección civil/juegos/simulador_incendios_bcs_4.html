@@ -1,0 +1,1775 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SimFuego BCS — Simulador de Dispersión de Incendios</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Barlow+Condensed:wght@300;400;600;700&display=swap');
+
+  :root {
+    --uabcs-azul: #003366;
+    --uabcs-azul-claro: #005aa7;
+    --uabcs-oro: #C8992A;
+    --uabcs-oro-claro: #E8B840;
+    --uabcs-rojo: #8B1A1A;
+    --bg-dark: #0a0e1a;
+    --bg-panel: #0d1425;
+    --bg-card: #111827;
+    --border: rgba(200,153,42,0.25);
+    --text-primary: #e8dcc8;
+    --text-muted: #7a8599;
+    --fire-core: #ff4500;
+    --fire-mid: #ff8c00;
+    --fire-edge: #ffd700;
+    --fire-ember: #ff6347;
+    --smoke: rgba(80,80,100,0.4);
+    --safe: #1a3a1a;
+    --burned: #2a1a0a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    font-family: 'Barlow Condensed', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  header {
+    background: linear-gradient(135deg, var(--uabcs-azul) 0%, #001a33 60%, #0a0e1a 100%);
+    border-bottom: 2px solid var(--uabcs-oro);
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 4px 30px rgba(200,153,42,0.15);
+    position: relative;
+  }
+  header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--uabcs-oro-claro), transparent);
+  }
+
+  .logo-uabcs {
+    width: 52px; height: 52px;
+    background: linear-gradient(135deg, var(--uabcs-oro) 0%, var(--uabcs-azul-claro) 100%);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px; font-weight: 700;
+    color: white;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+    border: 2px solid var(--uabcs-oro);
+    box-shadow: 0 0 20px rgba(200,153,42,0.3);
+  }
+
+  .header-text h1 {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 22px; font-weight: 700;
+    color: var(--uabcs-oro-claro);
+    letter-spacing: 2px;
+    line-height: 1;
+  }
+  .header-text p {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .header-badges {
+    margin-left: auto;
+    display: flex; gap: 8px; align-items: center;
+  }
+  .badge {
+    padding: 4px 10px;
+    border-radius: 3px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border: 1px solid;
+  }
+  .badge-proteccion { border-color: var(--uabcs-azul-claro); color: #5599dd; background: rgba(0,90,167,0.15); }
+  .badge-uabcs { border-color: var(--uabcs-oro); color: var(--uabcs-oro-claro); background: rgba(200,153,42,0.1); }
+
+  /* STATUS BAR */
+  .status-bar {
+    background: rgba(0,51,102,0.4);
+    border-bottom: 1px solid var(--border);
+    padding: 5px 20px;
+    display: flex; gap: 30px; align-items: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+  }
+  .status-item { display: flex; gap: 6px; align-items: center; }
+  .status-label { color: var(--text-muted); }
+  .status-value { color: var(--uabcs-oro-claro); font-weight: 600; }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; }
+  .dot-active { background: #22c55e; box-shadow: 0 0 6px #22c55e; animation: pulse 2s infinite; }
+  .dot-warn { background: var(--uabcs-oro); box-shadow: 0 0 6px var(--uabcs-oro); }
+  .dot-danger { background: #ef4444; box-shadow: 0 0 6px #ef4444; animation: pulse 1s infinite; }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* MAIN LAYOUT */
+  .app-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr 260px;
+    height: calc(100vh - 90px);
+    gap: 0;
+  }
+
+  /* PANELS */
+  .panel-left, .panel-right {
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 14px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .panel-right {
+    border-right: none;
+    border-left: 1px solid var(--border);
+  }
+
+  .section-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--uabcs-oro);
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+
+  /* CONTROLS */
+  .ctrl-group { display: flex; flex-direction: column; gap: 8px; }
+  .ctrl-row { display: flex; flex-direction: column; gap: 3px; }
+  .ctrl-label {
+    font-size: 11px; color: var(--text-muted);
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: 0.5px;
+  }
+  .ctrl-val { color: var(--uabcs-oro-claro); font-weight: 600; }
+
+  input[type=range] {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 4px;
+    background: linear-gradient(90deg, var(--uabcs-azul-claro), var(--uabcs-oro));
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    background: var(--uabcs-oro-claro);
+    border-radius: 50%;
+    border: 2px solid var(--uabcs-azul);
+    box-shadow: 0 0 8px rgba(200,153,42,0.5);
+  }
+
+  select {
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 6px 8px;
+    border-radius: 4px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    outline: none;
+    cursor: pointer;
+  }
+  select:focus { border-color: var(--uabcs-oro); }
+
+  /* BUTTONS */
+  .btn-group { display: flex; gap: 6px; }
+  .btn {
+    flex: 1;
+    padding: 8px 6px;
+    border-radius: 4px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: 1px solid;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--uabcs-azul), var(--uabcs-azul-claro));
+    border-color: var(--uabcs-azul-claro);
+    color: white;
+  }
+  .btn-primary:hover { box-shadow: 0 0 12px rgba(0,90,167,0.5); transform: translateY(-1px); }
+  .btn-danger {
+    background: linear-gradient(135deg, var(--uabcs-rojo), #b52222);
+    border-color: #cc3333;
+    color: white;
+  }
+  .btn-danger:hover { box-shadow: 0 0 12px rgba(200,50,50,0.5); transform: translateY(-1px); }
+  .btn-ghost {
+    background: transparent;
+    border-color: var(--border);
+    color: var(--text-muted);
+  }
+  .btn-ghost:hover { border-color: var(--uabcs-oro); color: var(--uabcs-oro-claro); }
+  .btn-gold {
+    background: linear-gradient(135deg, var(--uabcs-oro), #a37020);
+    border-color: var(--uabcs-oro-claro);
+    color: var(--uabcs-azul);
+  }
+  .btn-gold:hover { box-shadow: 0 0 12px rgba(200,153,42,0.5); transform: translateY(-1px); }
+
+  /* TERRAIN TYPE PILLS */
+  .terrain-pills { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+  .terrain-pill {
+    padding: 6px 4px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-muted);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .terrain-pill:hover, .terrain-pill.active {
+    border-color: var(--uabcs-oro);
+    color: var(--uabcs-oro-claro);
+    background: rgba(200,153,42,0.08);
+  }
+  .terrain-pill .t-emoji { font-size: 14px; display: block; margin-bottom: 2px; }
+
+  /* CANVAS AREA */
+  .canvas-area {
+    position: relative;
+    background: #0c1508;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+
+  #simCanvas {
+    cursor: crosshair;
+    display: block;
+    max-width: 100%; max-height: 100%;
+  }
+
+  .canvas-overlay {
+    position: absolute;
+    top: 10px; left: 10px; right: 10px;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    pointer-events: none;
+  }
+
+  .sim-timer {
+    background: rgba(10,14,26,0.85);
+    border: 1px solid var(--uabcs-oro);
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--uabcs-oro-claro);
+    text-shadow: 0 0 10px rgba(200,153,42,0.5);
+    letter-spacing: 2px;
+  }
+
+  .sim-alerts {
+    display: flex; flex-direction: column; gap: 4px; align-items: flex-end;
+  }
+  .alert-chip {
+    padding: 4px 10px;
+    border-radius: 3px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    animation: slideIn 0.3s ease;
+  }
+  @keyframes slideIn { from{transform:translateX(20px);opacity:0} to{transform:translateX(0);opacity:1} }
+  .alert-extreme { background: rgba(139,26,26,0.9); border: 1px solid #ef4444; color: #fca5a5; }
+  .alert-high { background: rgba(120,60,0,0.9); border: 1px solid var(--uabcs-oro); color: var(--uabcs-oro-claro); }
+  .alert-info { background: rgba(0,51,102,0.9); border: 1px solid var(--uabcs-azul-claro); color: #93c5fd; }
+
+  .canvas-hint {
+    position: absolute;
+    bottom: 12px; left: 50%; transform: translateX(-50%);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    background: rgba(10,14,26,0.7);
+    padding: 4px 12px;
+    border-radius: 20px;
+    pointer-events: none;
+  }
+
+  /* METRICS */
+  .metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .metric-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 10px;
+  }
+  .metric-val {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--uabcs-oro-claro);
+    line-height: 1;
+  }
+  .metric-unit { font-size: 11px; color: var(--text-muted); }
+  .metric-name { font-size: 10px; color: var(--text-muted); margin-top: 3px; letter-spacing: 0.5px; text-transform: uppercase; }
+  .metric-card.danger .metric-val { color: #f87171; }
+  .metric-card.warn .metric-val { color: var(--uabcs-oro-claro); }
+
+  /* LEGEND */
+  .legend { display: flex; flex-direction: column; gap: 5px; }
+  .legend-row { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text-muted); }
+  .legend-swatch { width: 14px; height: 14px; border-radius: 2px; flex-shrink: 0; }
+
+  /* DATA SOURCE PANEL */
+  .data-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(200,153,42,0.08);
+    font-size: 11px;
+  }
+  .data-key { color: var(--text-muted); font-family: 'IBM Plex Mono', monospace; font-size: 10px; }
+  .data-val { color: var(--uabcs-oro-claro); font-family: 'IBM Plex Mono', monospace; font-weight: 600; }
+
+  /* RISK GAUGE */
+  .risk-gauge {
+    text-align: center;
+    padding: 10px 0;
+  }
+  .risk-bar {
+    height: 14px;
+    border-radius: 7px;
+    background: linear-gradient(90deg, #16a34a, #eab308, #f97316, #ef4444);
+    position: relative;
+    margin: 8px 0;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .risk-indicator {
+    position: absolute;
+    top: -4px;
+    width: 6px; height: 22px;
+    background: white;
+    border-radius: 2px;
+    box-shadow: 0 0 8px rgba(255,255,255,0.7);
+    transition: left 0.5s ease;
+  }
+  .risk-labels {
+    display: flex; justify-content: space-between;
+    font-size: 9px; color: var(--text-muted);
+    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: 0.5px;
+  }
+  .risk-value-label {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 22px; font-weight: 700;
+    letter-spacing: 1px;
+  }
+
+  /* WIND COMPASS */
+  .compass-container { display: flex; align-items: center; justify-content: center; padding: 6px 0; }
+  canvas.compass { border-radius: 50%; }
+
+  /* PROGRESS */
+  .progress-bar {
+    height: 6px;
+    background: var(--bg-card);
+    border-radius: 3px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    margin-top: 4px;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--uabcs-azul-claro), var(--uabcs-oro));
+    transition: width 0.4s ease;
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* TOGGLE SWITCH */
+  .toggle-row { display: flex; justify-content: space-between; align-items: center; }
+  .toggle {
+    position: relative; width: 36px; height: 20px;
+    cursor: pointer;
+  }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: absolute; top:0; left:0; right:0; bottom:0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    transition: 0.3s;
+  }
+  .toggle-slider:before {
+    content:'';
+    position: absolute;
+    width: 14px; height: 14px;
+    left: 2px; top: 2px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    transition: 0.3s;
+  }
+  .toggle input:checked + .toggle-slider { border-color: var(--uabcs-oro); }
+  .toggle input:checked + .toggle-slider:before {
+    background: var(--uabcs-oro-claro);
+    transform: translateX(16px);
+  }
+
+  /* FRAME TAG */
+  .frame-tag {
+    position: absolute;
+    bottom: 10px; right: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: rgba(200,153,42,0.3);
+    pointer-events: none;
+    letter-spacing: 1px;
+  }
+
+  /* FIREFIGHTING UNITS */
+  .unit-type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+  .unit-type-btn {
+    padding: 7px 5px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-muted);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .unit-type-btn:hover { border-color: #22d3ee; color: #67e8f9; background: rgba(6,182,212,0.08); }
+  .unit-type-btn.active-unit {
+    border-color: #22d3ee;
+    color: #67e8f9;
+    background: rgba(6,182,212,0.15);
+    box-shadow: 0 0 8px rgba(34,211,238,0.3);
+  }
+  .unit-type-btn .u-emoji { font-size: 16px; display: block; margin-bottom: 2px; }
+  .unit-type-btn .u-range {
+    display: block;
+    font-size: 8px;
+    color: rgba(100,200,220,0.6);
+    margin-top: 1px;
+  }
+
+  .units-list { display: flex; flex-direction: column; gap: 4px; max-height: 160px; overflow-y: auto; }
+  .unit-item {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 5px 8px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    position: relative;
+    transition: border-color 0.2s;
+  }
+  .unit-item.active-suppressing { border-color: #22d3ee; box-shadow: 0 0 6px rgba(34,211,238,0.2); }
+  .unit-item.depleted { opacity: 0.4; border-color: rgba(100,100,100,0.3); }
+  .unit-emoji { font-size: 14px; }
+  .unit-info { flex: 1; }
+  .unit-name { color: var(--text-primary); font-size: 10px; font-weight: 600; }
+  .unit-status { color: var(--text-muted); font-size: 9px; }
+  .unit-capacity-bar { height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 2px; overflow: hidden; }
+  .unit-capacity-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #22d3ee, #0ea5e9); transition: width 0.5s; }
+  .unit-remove { color: #6b7280; cursor: pointer; font-size: 12px; line-height: 1; padding: 2px 4px; }
+  .unit-remove:hover { color: #ef4444; }
+
+  .stat-suppression {
+    display: flex; flex-direction: column; gap: 3px;
+    background: rgba(6,182,212,0.06);
+    border: 1px solid rgba(34,211,238,0.2);
+    border-radius: 4px;
+    padding: 8px 10px;
+    margin-top: 4px;
+  }
+  .stat-supp-row { display: flex; justify-content: space-between; font-size: 10px; font-family: 'IBM Plex Mono', monospace; }
+  .stat-supp-key { color: var(--text-muted); }
+  .stat-supp-val { color: #67e8f9; font-weight: 600; }
+
+  .mode-selector {
+    display: flex; gap: 4px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px;
+  }
+  .mode-btn {
+    flex: 1; padding: 5px 4px;
+    border-radius: 3px; border: none;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-muted);
+    transition: all 0.15s;
+  }
+  .mode-btn.active {
+    background: linear-gradient(135deg, #0e7490, #0284c7);
+    color: white;
+    box-shadow: 0 0 8px rgba(14,116,144,0.4);
+  }
+  .mode-btn:hover:not(.active) { color: #67e8f9; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-uabcs">UABCS</div>
+  <div class="header-text">
+    <h1>⚡ SIMFUEGO BCS</h1>
+    <p>Simulador de Dispersión de Incendios — Protección Civil Baja California Sur</p>
+  </div>
+  <div class="header-badges">
+    <span class="badge badge-proteccion">🛡 PROTECCIÓN CIVIL</span>
+    <span class="badge badge-uabcs">UABCS · IIT</span>
+  </div>
+</header>
+
+<div class="status-bar" id="statusBar">
+  <div class="status-item"><div class="status-dot dot-active" id="simDot"></div><span class="status-label">SISTEMA:</span><span class="status-value" id="simStatus">LISTO</span></div>
+  <div class="status-item"><span class="status-label">HORA:</span><span class="status-value" id="clockVal">00:00:00</span></div>
+  <div class="status-item"><span class="status-label">DATOS BCS:</span><span class="status-value">2024-01-01 · 72 REGISTROS</span></div>
+  <div class="status-item"><span class="status-label">VIENTO:</span><span class="status-value" id="statusWind">12.5 m/s</span></div>
+  <div class="status-item"><span class="status-label">TEMP:</span><span class="status-value" id="statusTemp">18.5°C</span></div>
+  <div class="status-item"><span class="status-label">HUMEDAD:</span><span class="status-value" id="statusHum">72%</span></div>
+</div>
+
+<div class="app-layout">
+
+  <!-- PANEL IZQUIERDO -->
+  <div class="panel-left">
+    
+    <div>
+      <div class="section-title">🔥 Control de Simulación</div>
+      <div class="btn-group">
+        <button class="btn btn-danger" id="btnStart" onclick="startSim()">▶ INICIAR</button>
+        <button class="btn btn-ghost" id="btnPause" onclick="pauseSim()">⏸</button>
+        <button class="btn btn-ghost" onclick="resetSim()">↺</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">🌿 Tipo de Vegetación</div>
+      <div class="terrain-pills">
+        <div class="terrain-pill active" onclick="setVeg(this,'chaparral',1.4)" data-veg="chaparral">
+          <span class="t-emoji">🌵</span>Chaparral
+        </div>
+        <div class="terrain-pill" onclick="setVeg(this,'matorral',1.2)" data-veg="matorral">
+          <span class="t-emoji">🌾</span>Matorral
+        </div>
+        <div class="terrain-pill" onclick="setVeg(this,'pinos',1.6)" data-veg="pinos">
+          <span class="t-emoji">🌲</span>Pinos
+        </div>
+        <div class="terrain-pill" onclick="setVeg(this,'pastizal',1.0)" data-veg="pastizal">
+          <span class="t-emoji">🟩</span>Pastizal
+        </div>
+        <div class="terrain-pill" onclick="setVeg(this,'mezquital',1.1)" data-veg="mezquital">
+          <span class="t-emoji">🌿</span>Mezquital
+        </div>
+        <div class="terrain-pill" onclick="setVeg(this,'urbano',0.5)" data-veg="urbano">
+          <span class="t-emoji">🏘</span>Urbano
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">💨 Parámetros Atmosféricos</div>
+      <div class="ctrl-group">
+        <div class="ctrl-row">
+          <div class="ctrl-label">Velocidad Viento<span class="ctrl-val" id="windVal">12.5 m/s</span></div>
+          <input type="range" id="windSpeed" min="0" max="30" value="12.5" step="0.5" oninput="updateParams()">
+        </div>
+        <div class="ctrl-row">
+          <div class="ctrl-label">Dirección Viento<span class="ctrl-val" id="windDirVal">NE (45°)</span></div>
+          <input type="range" id="windDir" min="0" max="360" value="45" step="5" oninput="updateParams()">
+        </div>
+        <div class="ctrl-row">
+          <div class="ctrl-label">Temperatura<span class="ctrl-val" id="tempVal">18.5°C</span></div>
+          <input type="range" id="tempCtrl" min="0" max="50" value="18.5" step="0.5" oninput="updateParams()">
+        </div>
+        <div class="ctrl-row">
+          <div class="ctrl-label">Humedad Relativa<span class="ctrl-val" id="humVal">72%</span></div>
+          <input type="range" id="humCtrl" min="0" max="100" value="72" oninput="updateParams()">
+        </div>
+        <div class="ctrl-row">
+          <div class="ctrl-label">Nubosidad<span class="ctrl-val" id="nubVal">45%</span></div>
+          <input type="range" id="nubCtrl" min="0" max="100" value="45" oninput="updateParams()">
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">📊 Cargar Datos BCS</div>
+      <div class="ctrl-row">
+        <div class="ctrl-label">Hora registro<span class="ctrl-val" id="horaSelVal">0:00</span></div>
+        <input type="range" id="horaSel" min="0" max="71" value="0" oninput="loadBCSData(this.value)">
+      </div>
+      <div style="margin-top:6px">
+        <select id="fechaSel" onchange="updateDateFilter()">
+          <option value="2024-01-01">2024-01-01</option>
+          <option value="2024-01-02">2024-01-02</option>
+          <option value="2024-01-03">2024-01-03</option>
+        </select>
+      </div>
+      <button class="btn btn-gold" style="width:100%;margin-top:8px;font-size:12px" onclick="applyBCSData()">⚡ APLICAR DATOS REALES BCS</button>
+    </div>
+
+    <div>
+      <div class="section-title">🖱 Modo de Cursor</div>
+      <div class="mode-selector">
+        <button class="mode-btn active" id="modeFireBtn" onclick="setDrawMode('fire')">🔥 Fuego</button>
+        <button class="mode-btn" id="modeBreakBtn" onclick="setDrawMode('break')">🚧 Corta</button>
+        <button class="mode-btn" id="modeUnitBtn" onclick="setDrawMode('unit')">🚒 Unidad</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">⚙️ Opciones</div>
+      <div class="ctrl-group">
+        <div class="toggle-row"><span style="font-size:11px;color:var(--text-muted)">Mostrar viento</span>
+          <label class="toggle"><input type="checkbox" id="showWind" checked onchange="redraw()"><div class="toggle-slider"></div></label>
+        </div>
+        <div class="toggle-row"><span style="font-size:11px;color:var(--text-muted)">Humo animado</span>
+          <label class="toggle"><input type="checkbox" id="showSmoke" checked><div class="toggle-slider"></div></label>
+        </div>
+        <div class="toggle-row"><span style="font-size:11px;color:var(--text-muted)">Radio supresión</span>
+          <label class="toggle"><input type="checkbox" id="showRadius" checked><div class="toggle-slider"></div></label>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CANVAS -->
+  <div class="canvas-area">
+    <canvas id="simCanvas"></canvas>
+    <div class="canvas-overlay">
+      <div class="sim-timer" id="simTimer">T + 00:00</div>
+      <div class="sim-alerts" id="alertContainer"></div>
+    </div>
+    <div class="canvas-hint" id="canvasHint">🔥 Click para focos · 🚧 Arrastra para cortafuego · 🚒 Click para unidades contra incendio</div>
+    <div class="frame-tag" id="frameTag">UABCS · BCS · FRAME 0</div>
+  </div>
+
+  <!-- PANEL DERECHO -->
+  <div class="panel-right">
+
+    <div>
+      <div class="section-title">🎯 Índice de Riesgo</div>
+      <div class="risk-gauge">
+        <div class="risk-value-label" id="riskLabel" style="color:#22c55e">BAJO</div>
+        <div class="risk-bar">
+          <div class="risk-indicator" id="riskIndicator" style="left:5%"></div>
+        </div>
+        <div class="risk-labels">
+          <span>BAJO</span><span>MOD</span><span>ALTO</span><span>EXTREM</span>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">📐 Métricas de Incendio</div>
+      <div class="metric-grid">
+        <div class="metric-card" id="mc-area">
+          <div class="metric-val" id="mAreaVal">0</div>
+          <div class="metric-unit">ha</div>
+          <div class="metric-name">Área quemada</div>
+        </div>
+        <div class="metric-card" id="mc-spread">
+          <div class="metric-val" id="mSpreadVal">0.0</div>
+          <div class="metric-unit">m/min</div>
+          <div class="metric-name">Vel. dispersión</div>
+        </div>
+        <div class="metric-card" id="mc-front">
+          <div class="metric-val" id="mFrontVal">0</div>
+          <div class="metric-unit">m</div>
+          <div class="metric-name">Long. frente</div>
+        </div>
+        <div class="metric-card" id="mc-int">
+          <div class="metric-val" id="mIntVal">0</div>
+          <div class="metric-unit">kW/m</div>
+          <div class="metric-name">Intensidad</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">🌬 Rosa de Viento</div>
+      <div class="compass-container">
+        <canvas id="compassCanvas" width="120" height="120" class="compass"></canvas>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">📡 Datos en Tiempo Real BCS</div>
+      <div id="bcsDataDisplay">
+        <div class="data-row"><span class="data-key">demanda_mw</span><span class="data-val" id="d-demanda">145.2</span></div>
+        <div class="data-row"><span class="data-key">gen_fossil_mw</span><span class="data-val" id="d-fossil">95.5</span></div>
+        <div class="data-row"><span class="data-key">gen_eolica_mw</span><span class="data-val" id="d-eolica">28.3</span></div>
+        <div class="data-row"><span class="data-key">gen_solar_mw</span><span class="data-val" id="d-solar">0.0</span></div>
+        <div class="data-row"><span class="data-key">balance_mw</span><span class="data-val" id="d-balance">-15.5</span></div>
+        <div class="data-row"><span class="data-key">estado_red</span><span class="data-val" id="d-estado">equilibrado</span></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">🚒 Unidades Contraincendio</div>
+      <div class="unit-type-grid">
+        <div class="unit-type-btn active-unit" id="ut-tanqueta" onclick="selectUnitType('tanqueta')">
+          <span class="u-emoji">🚒</span>Tanqueta
+          <span class="u-range">Radio: 5 cel</span>
+        </div>
+        <div class="unit-type-btn" id="ut-helicoptero" onclick="selectUnitType('helicoptero')">
+          <span class="u-emoji">🚁</span>Helicóptero
+          <span class="u-range">Radio: 8 cel</span>
+        </div>
+        <div class="unit-type-btn" id="ut-brigadista" onclick="selectUnitType('brigadista')">
+          <span class="u-emoji">👨‍🚒</span>Brigada
+          <span class="u-range">Radio: 3 cel</span>
+        </div>
+        <div class="unit-type-btn" id="ut-avion" onclick="selectUnitType('avion')">
+          <span class="u-emoji">✈️</span>Avión
+          <span class="u-range">Radio: 12 cel</span>
+        </div>
+        <div class="unit-type-btn" id="ut-motobomba" onclick="selectUnitType('motobomba')">
+          <span class="u-emoji">🔧</span>Motobomba
+          <span class="u-range">Radio: 4 cel</span>
+        </div>
+        <div class="unit-type-btn" id="ut-retardante" onclick="selectUnitType('retardante')">
+          <span class="u-emoji">🧪</span>Retardante
+          <span class="u-range">Radio: 6 cel</span>
+        </div>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:5px">
+        <button class="btn btn-ghost" style="flex:1;font-size:10px" onclick="clearAllUnits()">🗑 Limpiar</button>
+        <button class="btn btn-ghost" style="flex:1;font-size:10px" onclick="autoPlaceUnits()">✨ Auto-colocar</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">📋 Unidades Desplegadas</div>
+      <div class="units-list" id="unitsList">
+        <div style="font-size:10px;color:var(--text-muted);font-family:'IBM Plex Mono',monospace;padding:6px 0;text-align:center">Sin unidades desplegadas.<br>Activa modo 🚒 y haz click en el mapa.</div>
+      </div>
+      <div class="stat-suppression" id="suppStats">
+        <div class="stat-supp-row"><span class="stat-supp-key">Unidades activas</span><span class="stat-supp-val" id="ss-units">0</span></div>
+        <div class="stat-supp-row"><span class="stat-supp-key">Celdas suprimidas</span><span class="stat-supp-val" id="ss-cells">0</span></div>
+        <div class="stat-supp-row"><span class="stat-supp-key">Efectividad</span><span class="stat-supp-val" id="ss-eff">0%</span></div>
+        <div class="stat-supp-row"><span class="stat-supp-key">Agua restante</span><span class="stat-supp-val" id="ss-water">— L</span></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">🗺 Leyenda</div>
+      <div class="legend">
+        <div class="legend-row"><div class="legend-swatch" style="background:#1a4a1a"></div>Vegetación sin quemar</div>
+        <div class="legend-row"><div class="legend-swatch" style="background:#ff4500"></div>Fuego activo (núcleo)</div>
+        <div class="legend-row"><div class="legend-swatch" style="background:#ff8c00"></div>Fuego periférico</div>
+        <div class="legend-row"><div class="legend-swatch" style="background:#ffd700"></div>Frente de llama</div>
+        <div class="legend-row"><div class="legend-swatch" style="background:#3a2010"></div>Área quemada</div>
+        <div class="legend-row"><div class="legend-swatch" style="background:rgba(80,80,100,0.6)"></div>Columna de humo</div>
+        <div class="legend-row"><div class="legend-swatch" style="background:#0044aa;border:1px dashed #4488ff"></div>Línea cortafuego</div>
+        <div class="legend-row"><div class="legend-swatch" style="background:rgba(6,182,212,0.3);border:1px solid #22d3ee"></div>Radio supresión</div>
+        <div class="legend-row"><div style="font-size:14px;width:14px;text-align:center">🚒</div>Unidad contra incendio</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">⏱ Progreso Simulación</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">Tiempo transcurrido</div>
+      <div class="progress-bar"><div class="progress-fill" id="simProgress" style="width:0%"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-top:3px;font-family:'IBM Plex Mono',monospace">
+        <span>0 min</span><span id="simElapsed">0 min</span><span>120 min</span>
+      </div>
+      <button class="btn btn-primary" style="width:100%;margin-top:8px;font-size:11px" onclick="exportReport()">📄 EXPORTAR REPORTE</button>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+// ===== BCS DATA =====
+const bcsData = [
+  {fecha:"2024-01-01",hora:"0:00",demanda:145.2,fossil:95.5,eolica:28.3,solar:0.0,hidrica:21.4,temp:18.5,humedad:72,viento:12.5,nubosidad:45,balance:-15.5,estado:"equilibrado"},
+  {fecha:"2024-01-01",hora:"1:00",demanda:138.5,fossil:92.1,eolica:31.2,solar:0.0,hidrica:15.2,temp:17.8,humedad:75,viento:14.2,nubosidad:52,balance:-22.3,estado:"equilibrado"},
+  {fecha:"2024-01-01",hora:"2:00",demanda:132.3,fossil:89.7,eolica:32.5,solar:0.0,hidrica:10.1,temp:17.2,humedad:78,viento:15.8,nubosidad:58,balance:-25.7,estado:"equilibrado"},
+  {fecha:"2024-01-01",hora:"3:00",demanda:128.9,fossil:87.4,eolica:34.1,solar:0.0,hidrica:7.4,temp:16.9,humedad:80,viento:16.5,nubosidad:62,balance:-28.1,estado:"equilibrado"},
+  {fecha:"2024-01-01",hora:"4:00",demanda:126.5,fossil:85.9,eolica:35.3,solar:0.0,hidrica:5.3,temp:16.5,humedad:82,viento:17.2,nubosidad:65,balance:-28.9,estado:"equilibrado"},
+  {fecha:"2024-01-01",hora:"5:00",demanda:131.2,fossil:88.6,eolica:33.8,solar:0.0,hidrica:8.8,temp:16.8,humedad:81,viento:16.1,nubosidad:60,balance:-24.8,estado:"equilibrado"},
+  {fecha:"2024-01-01",hora:"6:00",demanda:142.7,fossil:94.2,eolica:30.5,solar:8.2,hidrica:9.8,temp:17.5,humedad:77,viento:14.8,nubosidad:50,balance:-18.5,estado:"equilibrado"},
+  {fecha:"2024-01-01",hora:"7:00",demanda:158.4,fossil:98.1,eolica:28.3,solar:21.5,hidrica:10.5,temp:18.9,humedad:73,viento:12.4,nubosidad:38,balance:-12.8,estado:"equilibrado"},
+  {fecha:"2024-01-01",hora:"8:00",demanda:175.6,fossil:102.3,eolica:25.4,solar:38.2,hidrica:9.7,temp:21.2,humedad:65,viento:10.2,nubosidad:25,balance:-8.3,estado:"equilibrado"},
+  {fecha:"2024-01-01",hora:"9:00",demanda:192.3,fossil:105.8,eolica:22.1,solar:52.3,hidrica:12.1,temp:23.5,humedad:58,viento:8.5,nubosidad:15,balance:-4.2,estado:"equilibrado"},
+  {fecha:"2024-01-01",hora:"10:00",demanda:205.7,fossil:108.2,eolica:19.5,solar:65.4,hidrica:12.6,temp:25.8,humedad:52,viento:6.2,nubosidad:8,balance:-0.9,estado:"equilibrado"},
+  {fecha:"2024-01-01",hora:"11:00",demanda:218.4,fossil:110.5,eolica:17.2,solar:75.8,hidrica:14.9,temp:27.2,humedad:48,viento:5.1,nubosidad:5,balance:1.8,estado:"equilibrado"},
+  {fecha:"2024-01-01",hora:"12:00",demanda:225.6,fossil:112.1,eolica:15.8,solar:82.3,hidrica:15.4,temp:28.5,humedad:45,viento:4.2,nubosidad:3,balance:2.9,estado:"exceso"},
+  {fecha:"2024-01-01",hora:"13:00",demanda:228.9,fossil:113.2,eolica:14.9,solar:85.2,hidrica:15.6,temp:29.1,humedad:43,viento:3.8,nubosidad:2,balance:3.2,estado:"exceso"},
+  {fecha:"2024-01-01",hora:"14:00",demanda:226.3,fossil:112.8,eolica:16.2,solar:83.1,hidrica:14.2,temp:28.8,humedad:44,viento:4.5,nubosidad:4,balance:2.8,estado:"exceso"},
+  {fecha:"2024-01-01",hora:"15:00",demanda:218.7,fossil:111.3,eolica:18.5,solar:78.4,hidrica:10.5,temp:27.5,humedad:47,viento:6.2,nubosidad:8,balance:1.2,estado:"equilibrado"},
+  {fecha:"2024-01-01",hora:"16:00",demanda:208.2,fossil:109.1,eolica:21.3,solar:72.1,hidrica:5.7,temp:26.2,humedad:51,viento:8.1,nubosidad:14,balance:-0.8,estado:"equilibrado"},
+  {fecha:"2024-01-01",hora:"17:00",demanda:195.4,fossil:106.2,eolica:24.8,solar:58.2,hidrica:6.2,temp:24.8,humedad:55,viento:10.5,nubosidad:22,balance:-4.6,estado:"equilibrado"},
+  {fecha:"2024-01-01",hora:"18:00",demanda:182.3,fossil:103.5,eolica:27.5,solar:38.1,hidrica:13.2,temp:22.1,humedad:62,viento:12.8,nubosidad:35,balance:-8.2,estado:"equilibrado"},
+  {fecha:"2024-01-01",hora:"19:00",demanda:168.9,fossil:100.1,eolica:29.2,solar:15.3,hidrica:24.3,temp:19.8,humedad:68,viento:15.2,nubosidad:48,balance:-12.4,estado:"equilibrado"},
+  {fecha:"2024-01-01",hora:"20:00",demanda:152.4,fossil:96.3,eolica:31.5,solar:2.1,hidrica:22.5,temp:18.5,humedad:72,viento:16.5,nubosidad:55,balance:-18.5,estado:"equilibrado"},
+  {fecha:"2024-01-01",hora:"21:00",demanda:141.2,fossil:93.2,eolica:33.2,solar:0.0,hidrica:14.8,temp:17.5,humedad:75,viento:15.8,nubosidad:58,balance:-21.8,estado:"equilibrado"},
+  {fecha:"2024-01-01",hora:"22:00",demanda:135.8,fossil:90.5,eolica:34.1,solar:0.0,hidrica:11.2,temp:17.0,humedad:77,viento:15.2,nubosidad:60,balance:-24.1,estado:"equilibrado"},
+  {fecha:"2024-01-01",hora:"23:00",demanda:140.5,fossil:92.8,eolica:32.5,solar:0.0,hidrica:15.2,temp:17.8,humedad:76,viento:14.5,nubosidad:52,balance:-22.3,estado:"equilibrado"},
+  {fecha:"2024-01-02",hora:"0:00",demanda:143.1,fossil:94.2,eolica:31.2,solar:0.0,hidrica:17.7,temp:18.2,humedad:74,viento:13.8,nubosidad:48,balance:-21.5,estado:"equilibrado"},
+  {fecha:"2024-01-02",hora:"1:00",demanda:138.9,fossil:92.1,eolica:32.8,solar:0.0,hidrica:14.0,temp:17.5,humedad:76,viento:14.2,nubosidad:52,balance:-22.7,estado:"equilibrado"},
+  {fecha:"2024-01-02",hora:"2:00",demanda:133.2,fossil:89.5,eolica:34.5,solar:0.0,hidrica:9.2,temp:16.9,humedad:78,viento:15.5,nubosidad:58,balance:-24.8,estado:"equilibrado"},
+  {fecha:"2024-01-02",hora:"12:00",demanda:228.7,fossil:113.9,eolica:16.5,solar:83.8,hidrica:14.5,temp:28.8,humedad:44,viento:4.1,nubosidad:3,balance:3.2,estado:"exceso"},
+  {fecha:"2024-01-02",hora:"13:00",demanda:231.2,fossil:114.5,eolica:15.8,solar:86.1,hidrica:14.8,temp:29.3,humedad:42,viento:3.9,nubosidad:2,balance:3.5,estado:"exceso"},
+  {fecha:"2024-01-03",hora:"12:00",demanda:231.2,fossil:115.2,eolica:17.2,solar:85.5,hidrica:13.3,temp:29.2,humedad:45,viento:4.0,nubosidad:2,balance:3.4,estado:"exceso"},
+  {fecha:"2024-01-03",hora:"13:00",demanda:233.5,fossil:116.1,eolica:16.5,solar:87.4,hidrica:13.5,temp:29.8,humedad:43,viento:3.8,nubosidad:1,balance:3.6,estado:"exceso"},
+];
+
+// Extended data for slider (use all 72 entries conceptually)
+const allData = [];
+for(let i=0;i<72;i++){
+  const d = bcsData[Math.min(i, bcsData.length-1)];
+  allData.push({...d});
+}
+// Fill in with interpolation from original data
+const origData = [
+  {temp:18.5,humedad:72,viento:12.5,nubosidad:45,demanda:145.2,fossil:95.5,eolica:28.3,solar:0.0,balance:-15.5,estado:"equilibrado"},
+  {temp:17.8,humedad:75,viento:14.2,nubosidad:52,demanda:138.5,fossil:92.1,eolica:31.2,solar:0.0,balance:-22.3,estado:"equilibrado"},
+  {temp:17.2,humedad:78,viento:15.8,nubosidad:58,demanda:132.3,fossil:89.7,eolica:32.5,solar:0.0,balance:-25.7,estado:"equilibrado"},
+  {temp:16.9,humedad:80,viento:16.5,nubosidad:62,demanda:128.9,fossil:87.4,eolica:34.1,solar:0.0,balance:-28.1,estado:"equilibrado"},
+  {temp:16.5,humedad:82,viento:17.2,nubosidad:65,demanda:126.5,fossil:85.9,eolica:35.3,solar:0.0,balance:-28.9,estado:"equilibrado"},
+  {temp:16.8,humedad:81,viento:16.1,nubosidad:60,demanda:131.2,fossil:88.6,eolica:33.8,solar:0.0,balance:-24.8,estado:"equilibrado"},
+  {temp:17.5,humedad:77,viento:14.8,nubosidad:50,demanda:142.7,fossil:94.2,eolica:30.5,solar:8.2,balance:-18.5,estado:"equilibrado"},
+  {temp:18.9,humedad:73,viento:12.4,nubosidad:38,demanda:158.4,fossil:98.1,eolica:28.3,solar:21.5,balance:-12.8,estado:"equilibrado"},
+  {temp:21.2,humedad:65,viento:10.2,nubosidad:25,demanda:175.6,fossil:102.3,eolica:25.4,solar:38.2,balance:-8.3,estado:"equilibrado"},
+  {temp:23.5,humedad:58,viento:8.5,nubosidad:15,demanda:192.3,fossil:105.8,eolica:22.1,solar:52.3,balance:-4.2,estado:"equilibrado"},
+  {temp:25.8,humedad:52,viento:6.2,nubosidad:8,demanda:205.7,fossil:108.2,eolica:19.5,solar:65.4,balance:-0.9,estado:"equilibrado"},
+  {temp:27.2,humedad:48,viento:5.1,nubosidad:5,demanda:218.4,fossil:110.5,eolica:17.2,solar:75.8,balance:1.8,estado:"equilibrado"},
+  {temp:28.5,humedad:45,viento:4.2,nubosidad:3,demanda:225.6,fossil:112.1,eolica:15.8,solar:82.3,balance:2.9,estado:"exceso"},
+  {temp:29.1,humedad:43,viento:3.8,nubosidad:2,demanda:228.9,fossil:113.2,eolica:14.9,solar:85.2,balance:3.2,estado:"exceso"},
+  {temp:28.8,humedad:44,viento:4.5,nubosidad:4,demanda:226.3,fossil:112.8,eolica:16.2,solar:83.1,balance:2.8,estado:"exceso"},
+  {temp:27.5,humedad:47,viento:6.2,nubosidad:8,demanda:218.7,fossil:111.3,eolica:18.5,solar:78.4,balance:1.2,estado:"equilibrado"},
+  {temp:26.2,humedad:51,viento:8.1,nubosidad:14,demanda:208.2,fossil:109.1,eolica:21.3,solar:72.1,balance:-0.8,estado:"equilibrado"},
+  {temp:24.8,humedad:55,viento:10.5,nubosidad:22,demanda:195.4,fossil:106.2,eolica:24.8,solar:58.2,balance:-4.6,estado:"equilibrado"},
+  {temp:22.1,humedad:62,viento:12.8,nubosidad:35,demanda:182.3,fossil:103.5,eolica:27.5,solar:38.1,balance:-8.2,estado:"equilibrado"},
+  {temp:19.8,humedad:68,viento:15.2,nubosidad:48,demanda:168.9,fossil:100.1,eolica:29.2,solar:15.3,balance:-12.4,estado:"equilibrado"},
+  {temp:18.5,humedad:72,viento:16.5,nubosidad:55,demanda:152.4,fossil:96.3,eolica:31.5,solar:2.1,balance:-18.5,estado:"equilibrado"},
+  {temp:17.5,humedad:75,viento:15.8,nubosidad:58,demanda:141.2,fossil:93.2,eolica:33.2,solar:0.0,balance:-21.8,estado:"equilibrado"},
+  {temp:17.0,humedad:77,viento:15.2,nubosidad:60,demanda:135.8,fossil:90.5,eolica:34.1,solar:0.0,balance:-24.1,estado:"equilibrado"},
+  {temp:17.8,humedad:76,viento:14.5,nubosidad:52,demanda:140.5,fossil:92.8,eolica:32.5,solar:0.0,balance:-22.3,estado:"equilibrado"},
+];
+// Repeat for 72 entries (3 days)
+const fullData = [];
+for(let i=0;i<72;i++) fullData.push(origData[i%24]);
+
+// ===== FIREFIGHTING UNITS =====
+const UNIT_TYPES = {
+  tanqueta:    { emoji:'🚒', name:'Tanqueta',    range:5,  power:0.82, water:8000,  color:'#22d3ee', suppRate:0.35 },
+  helicoptero: { emoji:'🚁', name:'Helicóptero', range:8,  power:0.70, water:5000,  color:'#34d399', suppRate:0.25 },
+  brigadista:  { emoji:'👨‍🚒', name:'Brigada',     range:3,  power:0.90, water:1500,  color:'#fb923c', suppRate:0.50 },
+  avion:       { emoji:'✈️', name:'Avión',        range:12, power:0.60, water:15000, color:'#818cf8', suppRate:0.15 },
+  motobomba:   { emoji:'🔧', name:'Motobomba',   range:4,  power:0.85, water:6000,  color:'#f472b6', suppRate:0.40 },
+  retardante:  { emoji:'🧪', name:'Retardante',  range:6,  power:0.75, water:3000,  color:'#a3e635', suppRate:0.30 },
+};
+
+let ffUnits = [];     // { id, type, row, col, waterLeft, maxWater, deployed, suppressing }
+let selectedUnitType = 'tanqueta';
+let drawMode = 'fire'; // 'fire' | 'break' | 'unit'
+let unitIdCounter = 0;
+const COLS = 120, ROWS = 80;
+const EMPTY=0, FUEL=1, BURNING=2, BURNED=3, FIREBREAK=4;
+
+let grid = [];
+let vegFactor = 1.4;
+let windSpeed = 12.5, windDir = 45;
+let temperature = 18.5, humidity = 72;
+let simRunning = false;
+let simPaused = false;
+let simTick = 0;
+let simInterval = null;
+let particles = [];
+let currentHoraIdx = 0;
+let frame = 0;
+
+// Init grid
+function initGrid() {
+  grid = [];
+  for(let r=0;r<ROWS;r++){
+    grid.push([]);
+    for(let c=0;c<COLS;c++) grid[r].push(FUEL);
+  }
+}
+
+// Simulation parameters derived from env
+function getSpreadProb() {
+  const humFactor = Math.max(0.05, 1 - humidity/100 * 0.9);
+  const tempFactor = Math.max(0.1, (temperature - 10) / 40);
+  const windFactor = Math.min(3.0, 1 + windSpeed/10);
+  return Math.min(0.95, humFactor * tempFactor * windFactor * vegFactor * 0.6);
+}
+
+function getWindVector() {
+  const rad = (windDir - 90) * Math.PI / 180;
+  return { x: Math.cos(rad), y: Math.sin(rad) };
+}
+
+function getSpreadProbCell(dr, dc) {
+  const base = getSpreadProb();
+  const wv = getWindVector();
+  const dot = (wv.x * dc + wv.y * dr) / (Math.sqrt(dc*dc+dr*dr) || 1);
+  const windBoost = 1 + (dot * windSpeed / 15);
+  return Math.min(0.98, base * windBoost);
+}
+
+function stepFire() {
+  const newGrid = grid.map(r => [...r]);
+  let changed = false;
+
+  // Build suppression map from active units
+  const suppressMap = new Uint8Array(ROWS * COLS);
+  for(const u of ffUnits){
+    if(u.waterLeft <= 0) continue;
+    const ut = UNIT_TYPES[u.type];
+    const r2 = ut.range * ut.range;
+    for(let dr=-ut.range;dr<=ut.range;dr++){
+      for(let dc=-ut.range;dc<=ut.range;dc++){
+        if(dr*dr+dc*dc<=r2){
+          const nr=u.row+dr, nc=u.col+dc;
+          if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS) suppressMap[nr*COLS+nc]=1;
+        }
+      }
+    }
+  }
+
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      if(grid[r][c] === BURNING){
+        // Apply suppression from units
+        if(suppressMap[r*COLS+c]){
+          // Find unit responsible and consume water
+          for(const u of ffUnits){
+            if(u.waterLeft <= 0) continue;
+            const ut = UNIT_TYPES[u.type];
+            const dist = Math.sqrt((r-u.row)**2+(c-u.col)**2);
+            if(dist <= ut.range){
+              const suppressChance = ut.power * (1 - dist/ut.range * 0.4);
+              if(Math.random() < suppressChance * ut.suppRate){
+                newGrid[r][c] = FUEL; // Extinguished — restore as wet/safe fuel
+                u.waterLeft = Math.max(0, u.waterLeft - 80);
+                u.suppressing = true;
+                changed = true;
+                break;
+              }
+            }
+          }
+        }
+        if(newGrid[r][c] !== FUEL){
+          // Spread to neighbors — reduced in suppression zone
+          const dirs = [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]];
+          for(const [dr,dc] of dirs){
+            const nr=r+dr, nc=c+dc;
+            if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS&&grid[nr][nc]===FUEL){
+              let p = getSpreadProbCell(dr,dc);
+              if(suppressMap[nr*COLS+nc]) p *= 0.15; // Strong reduction in suppressed zone
+              if(Math.random() < p * 0.25){
+                newGrid[nr][nc] = BURNING;
+                changed = true;
+              }
+            }
+          }
+          // Burn out
+          if(Math.random() < 0.08) { newGrid[r][c] = BURNED; changed = true; }
+          // Particles
+          if(document.getElementById('showSmoke').checked && Math.random() < 0.3){
+            addParticle(c, r);
+          }
+        }
+      }
+    }
+  }
+  // Reset suppressing flags each tick
+  for(const u of ffUnits) u.suppressing = false;
+  grid = newGrid;
+  return changed;
+}
+
+function addParticle(cx, cy) {
+  const wv = getWindVector();
+  particles.push({
+    x: cx + (Math.random()-0.5)*2,
+    y: cy + (Math.random()-0.5)*2,
+    vx: wv.x * windSpeed * 0.05 + (Math.random()-0.5)*0.3,
+    vy: wv.y * windSpeed * 0.05 - 0.4 - Math.random()*0.4,
+    life: 1.0,
+    size: 2 + Math.random()*4
+  });
+}
+
+function updateParticles() {
+  particles = particles.filter(p => p.life > 0);
+  for(const p of particles){
+    p.x += p.vx; p.y += p.vy;
+    p.vy -= 0.02;
+    p.life -= 0.015;
+    p.size *= 1.01;
+  }
+  if(particles.length > 600) particles.splice(0, particles.length-600);
+}
+
+// ===== CANVAS DRAWING =====
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  const area = canvas.parentElement;
+  canvas.width = area.clientWidth;
+  canvas.height = area.clientHeight;
+}
+
+function getCellSize() {
+  const cw = canvas.width / COLS;
+  const ch = canvas.height / ROWS;
+  return { cw, ch };
+}
+
+function drawGrid() {
+  const {cw, ch} = getCellSize();
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      const s = grid[r][c];
+      let color;
+      if(s === FUEL) {
+        // Varied green for terrain
+        const g = 60 + ((r*7+c*3)%20);
+        color = `rgb(15,${g},15)`;
+      } else if(s === BURNING) {
+        // Fire gradient
+        const t = Math.random();
+        if(t < 0.3) color = `rgb(255,${40+Math.floor(t*200)},0)`;
+        else if(t < 0.7) color = `rgb(255,${100+Math.floor(t*155)},0)`;
+        else color = `rgb(255,${200+Math.floor(t*55)},${Math.floor(t*100)})`;
+      } else if(s === BURNED) {
+        const v = 30+Math.floor(((r+c)%10)*2);
+        color = `rgb(${v+10},${v-5},${v-15})`;
+      } else if(s === FIREBREAK) {
+        color = '#0044aa';
+      }
+      ctx.fillStyle = color;
+      ctx.fillRect(c*cw, r*ch, cw+0.5, ch+0.5);
+    }
+  }
+}
+
+function drawParticles() {
+  const {cw,ch} = getCellSize();
+  for(const p of particles){
+    const a = p.life * 0.5;
+    ctx.globalAlpha = a;
+    const grad = ctx.createRadialGradient(p.x*cw, p.y*ch, 0, p.x*cw, p.y*ch, p.size*cw);
+    grad.addColorStop(0, `rgba(100,100,120,${a})`);
+    grad.addColorStop(1, 'rgba(50,50,70,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(p.x*cw, p.y*ch, p.size*cw, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawWindArrows() {
+  if(!document.getElementById('showWind').checked) return;
+  const {cw,ch} = getCellSize();
+  const wv = getWindVector();
+  const spacing = 10;
+  ctx.strokeStyle = 'rgba(200,153,42,0.25)';
+  ctx.lineWidth = 0.8;
+  ctx.fillStyle = 'rgba(200,153,42,0.25)';
+  for(let r=spacing/2;r<ROWS;r+=spacing){
+    for(let c=spacing/2;c<COLS;c+=spacing){
+      const x = c*cw, y = r*ch;
+      const len = 6 + windSpeed*0.4;
+      const ex = x + wv.x*len, ey = y + wv.y*len;
+      ctx.beginPath();
+      ctx.moveTo(x,y); ctx.lineTo(ex,ey);
+      ctx.stroke();
+      // Arrowhead
+      const angle = Math.atan2(wv.y, wv.x);
+      ctx.save();
+      ctx.translate(ex,ey);
+      ctx.rotate(angle);
+      ctx.beginPath();
+      ctx.moveTo(0,0); ctx.lineTo(-4,-2); ctx.lineTo(-4,2); ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+}
+
+function drawFirebreak() {
+  const {cw,ch} = getCellSize();
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      if(grid[r][c]===FIREBREAK){
+        ctx.fillStyle='rgba(0,68,170,0.5)';
+        ctx.fillRect(c*cw,r*ch,cw,ch);
+      }
+    }
+  }
+}
+
+function drawUnits() {
+  const {cw,ch} = getCellSize();
+  const showR = document.getElementById('showRadius').checked;
+
+  for(const u of ffUnits){
+    const ut = UNIT_TYPES[u.type];
+    const px = u.col * cw + cw/2;
+    const py = u.row * ch + ch/2;
+    const depleted = u.waterLeft <= 0;
+
+    // Suppression radius glow
+    if(showR && !depleted){
+      const pct = u.waterLeft / u.maxWater;
+      const alpha = 0.08 + pct * 0.08;
+      const grad = ctx.createRadialGradient(px,py,0,px,py,ut.range*Math.max(cw,ch));
+      grad.addColorStop(0, `rgba(34,211,238,${alpha*2})`);
+      grad.addColorStop(0.6, `rgba(34,211,238,${alpha})`);
+      grad.addColorStop(1, 'rgba(34,211,238,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(px,py,ut.range*Math.max(cw,ch),0,Math.PI*2);
+      ctx.fill();
+
+      // Radius ring
+      ctx.strokeStyle = depleted ? 'rgba(100,100,100,0.3)' : `rgba(34,211,238,${0.3+pct*0.3})`;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3,3]);
+      ctx.beginPath();
+      ctx.arc(px,py,ut.range*Math.max(cw,ch),0,Math.PI*2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // Pulsing suppression indicator
+    if(u.suppressing && !depleted){
+      const pulse = 0.4 + 0.4*Math.sin(Date.now()/120);
+      ctx.fillStyle = `rgba(34,211,238,${pulse*0.3})`;
+      ctx.beginPath();
+      ctx.arc(px,py,ut.range*Math.max(cw,ch)*0.5,0,Math.PI*2);
+      ctx.fill();
+    }
+
+    // Unit icon background
+    const iconR = Math.max(cw,ch) * 1.4;
+    ctx.fillStyle = depleted ? 'rgba(40,40,40,0.85)' : 'rgba(6,20,40,0.88)';
+    ctx.strokeStyle = depleted ? 'rgba(80,80,80,0.5)' : ut.color;
+    ctx.lineWidth = depleted ? 1 : 2;
+    ctx.beginPath();
+    ctx.arc(px,py,iconR,0,Math.PI*2);
+    ctx.fill(); ctx.stroke();
+
+    // Emoji
+    ctx.font = `${Math.max(cw,ch)*1.4}px serif`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.globalAlpha = depleted ? 0.4 : 1;
+    ctx.fillText(ut.emoji, px, py);
+    ctx.globalAlpha = 1;
+
+    // Water capacity arc
+    if(!depleted){
+      const pct = u.waterLeft / u.maxWater;
+      ctx.strokeStyle = pct > 0.5 ? '#22d3ee' : pct > 0.2 ? '#eab308' : '#ef4444';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(px,py,iconR+3,-Math.PI/2,-Math.PI/2+Math.PI*2*pct);
+      ctx.stroke();
+    }
+  }
+}
+
+
+function drawFrame() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  // BG
+  const bgGrad = ctx.createLinearGradient(0,0,0,canvas.height);
+  bgGrad.addColorStop(0,'#0c1508');
+  bgGrad.addColorStop(1,'#080d04');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  drawGrid();
+  drawFirebreak();
+  drawWindArrows();
+  drawParticles();
+  drawUnits();
+
+  // Grid overlay (subtle)
+  ctx.strokeStyle = 'rgba(200,153,42,0.03)';
+  ctx.lineWidth = 0.5;
+
+  frame++;
+  document.getElementById('frameTag').textContent = `UABCS · BCS · FRAME ${frame} · T+${simTick}min`;
+}
+
+// ===== COMPASS =====
+function drawCompass() {
+  const cCanvas = document.getElementById('compassCanvas');
+  const cCtx = cCanvas.getContext('2d');
+  const cx=60, cy=60, r=55;
+  cCtx.clearRect(0,0,120,120);
+
+  // BG
+  cCtx.fillStyle='#0d1425';
+  cCtx.beginPath(); cCtx.arc(cx,cy,r,0,Math.PI*2); cCtx.fill();
+  cCtx.strokeStyle='rgba(200,153,42,0.4)';
+  cCtx.lineWidth=1.5;
+  cCtx.stroke();
+
+  // Rings
+  for(const rv of [20,38]){
+    cCtx.strokeStyle='rgba(200,153,42,0.15)';
+    cCtx.lineWidth=0.5;
+    cCtx.beginPath(); cCtx.arc(cx,cy,rv,0,Math.PI*2); cCtx.stroke();
+  }
+
+  // Cardinal labels
+  const cards = [['N',0],['E',90],['S',180],['O',270]];
+  cCtx.font='bold 10px IBM Plex Mono';
+  cCtx.textAlign='center'; cCtx.textBaseline='middle';
+  for(const [lbl,deg] of cards){
+    const rad=(deg-90)*Math.PI/180;
+    const x=cx+Math.cos(rad)*47, y=cy+Math.sin(rad)*47;
+    cCtx.fillStyle = lbl==='N' ? '#C8992A' : 'rgba(200,153,42,0.6)';
+    cCtx.fillText(lbl,x,y);
+  }
+
+  // Wind arrow
+  const wRad = (windDir-90)*Math.PI/180;
+  cCtx.strokeStyle='#E8B840';
+  cCtx.lineWidth=2.5;
+  cCtx.beginPath();
+  cCtx.moveTo(cx-Math.cos(wRad)*30, cy-Math.sin(wRad)*30);
+  cCtx.lineTo(cx+Math.cos(wRad)*30, cy+Math.sin(wRad)*30);
+  cCtx.stroke();
+
+  // Arrowhead
+  cCtx.fillStyle='#E8B840';
+  cCtx.save();
+  cCtx.translate(cx+Math.cos(wRad)*30, cy+Math.sin(wRad)*30);
+  cCtx.rotate(wRad);
+  cCtx.beginPath();
+  cCtx.moveTo(0,0); cCtx.lineTo(-8,-4); cCtx.lineTo(-8,4); cCtx.closePath();
+  cCtx.fill();
+  cCtx.restore();
+
+  // Speed text
+  cCtx.fillStyle='rgba(200,153,42,0.8)';
+  cCtx.font='bold 9px IBM Plex Mono';
+  cCtx.fillText(`${windSpeed.toFixed(1)} m/s`, cx, cy);
+}
+
+// ===== METRICS =====
+function computeMetrics() {
+  let burned=0, burning=0;
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+    if(grid[r][c]===BURNED) burned++;
+    if(grid[r][c]===BURNING) burning++;
+  }
+  const total = ROWS*COLS;
+  const areaHa = ((burned+burning)/total * 50000/10000).toFixed(1);
+  const spread = (getSpreadProb() * windSpeed * vegFactor * 0.8).toFixed(1);
+  const frontLen = (Math.sqrt(burning) * 80).toFixed(0);
+  const intensity = (parseFloat(spread) * temperature * vegFactor * 3).toFixed(0);
+
+  document.getElementById('mAreaVal').textContent = areaHa;
+  document.getElementById('mSpreadVal').textContent = spread;
+  document.getElementById('mFrontVal').textContent = frontLen;
+  document.getElementById('mIntVal').textContent = intensity;
+
+  // Risk
+  const riskVal = Math.min(100, (burned+burning)/total*200 + temperature*1.5 + windSpeed*2 - humidity*0.5);
+  updateRisk(Math.max(0, riskVal));
+
+  // Progress
+  const prog = Math.min(100, simTick/120*100);
+  document.getElementById('simProgress').style.width = prog+'%';
+  document.getElementById('simElapsed').textContent = simTick+' min';
+
+  // Metric card colors
+  const burnedPct = (burned+burning)/total;
+  document.getElementById('mc-area').className = 'metric-card' + (burnedPct>0.3?' danger':burnedPct>0.1?' warn':'');
+  document.getElementById('mc-spread').className = 'metric-card' + (parseFloat(spread)>8?' danger':parseFloat(spread)>4?' warn':'');
+
+  // Suppression stats
+  updateSuppressionStats();
+}
+
+function updateSuppressionStats() {
+  const activeUnits = ffUnits.filter(u=>u.waterLeft>0);
+  let suppCells = 0;
+  for(const u of activeUnits){
+    const ut = UNIT_TYPES[u.type];
+    const r2 = ut.range*ut.range;
+    for(let dr=-ut.range;dr<=ut.range;dr++){
+      for(let dc=-ut.range;dc<=ut.range;dc++){
+        if(dr*dr+dc*dc<=r2){
+          const nr=u.row+dr,nc=u.col+dc;
+          if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS&&grid[nr][nc]===BURNING) suppCells++;
+        }
+      }
+    }
+  }
+  const burningTotal = grid.flat().filter(c=>c===BURNING).length;
+  const eff = burningTotal>0 ? Math.min(100,Math.round(suppCells/burningTotal*100)) : 0;
+  const totalWater = ffUnits.reduce((s,u)=>s+u.waterLeft,0);
+
+  document.getElementById('ss-units').textContent = activeUnits.length + '/' + ffUnits.length;
+  document.getElementById('ss-cells').textContent = suppCells;
+  document.getElementById('ss-eff').textContent = eff+'%';
+  document.getElementById('ss-water').textContent = totalWater>0 ? (totalWater/1000).toFixed(1)+'k L' : '—';
+
+  // Update unit list items
+  for(const u of ffUnits){
+    const el = document.getElementById('unit-item-'+u.id);
+    if(!el) continue;
+    const ut = UNIT_TYPES[u.type];
+    const pct = u.waterLeft/u.maxWater*100;
+    const fill = el.querySelector('.unit-capacity-fill');
+    if(fill) fill.style.width = pct+'%';
+    const status = el.querySelector('.unit-status');
+    if(status){
+      if(u.waterLeft<=0) status.textContent = '⚠ SIN AGUA';
+      else if(u.suppressing) status.textContent = '💧 SUPRIMIENDO';
+      else status.textContent = `${(u.waterLeft/1000).toFixed(1)}k L · En espera`;
+    }
+    el.className = 'unit-item' + (u.waterLeft<=0?' depleted':u.suppressing?' active-suppressing':'');
+  }
+}
+
+
+function updateRisk(val) {
+  const pct = Math.min(98, val);
+  document.getElementById('riskIndicator').style.left = `calc(${pct}% - 3px)`;
+  let label, color;
+  if(pct < 25) { label='BAJO'; color='#22c55e'; }
+  else if(pct < 50) { label='MODERADO'; color='#eab308'; }
+  else if(pct < 75) { label='ALTO'; color='#f97316'; }
+  else { label='EXTREMO'; color='#ef4444'; }
+  document.getElementById('riskLabel').textContent = label;
+  document.getElementById('riskLabel').style.color = color;
+
+  // Alert chips
+  const ac = document.getElementById('alertContainer');
+  if(pct > 75 && simRunning) {
+    showAlert('⚠ RIESGO EXTREMO DE INCENDIO', 'extreme');
+  } else if(pct > 50 && simRunning) {
+    showAlert('⚡ ALERTA ROJA — DISPERSIÓN ACTIVA', 'high');
+  }
+}
+
+let lastAlertTime = 0;
+function showAlert(msg, type) {
+  const now = Date.now();
+  if(now - lastAlertTime < 5000) return;
+  lastAlertTime = now;
+  const ac = document.getElementById('alertContainer');
+  const chip = document.createElement('div');
+  chip.className = `alert-chip alert-${type==='extreme'?'extreme':'high'}`;
+  chip.textContent = msg;
+  ac.appendChild(chip);
+  if(ac.children.length > 3) ac.removeChild(ac.firstChild);
+}
+
+// ===== FIREFIGHTING UNIT MANAGEMENT =====
+function selectUnitType(type) {
+  selectedUnitType = type;
+  document.querySelectorAll('.unit-type-btn').forEach(b=>b.classList.remove('active-unit'));
+  document.getElementById('ut-'+type).classList.add('active-unit');
+  // Auto-switch to unit draw mode
+  setDrawMode('unit');
+}
+
+function setDrawMode(mode) {
+  drawMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
+  const ids = {fire:'modeFireBtn', break:'modeBreakBtn', unit:'modeUnitBtn'};
+  document.getElementById(ids[mode]).classList.add('active');
+  const hints = {
+    fire:'🔥 Click en el mapa para iniciar focos de incendio',
+    break:'🚧 Click/arrastra para trazar líneas cortafuego',
+    unit:'🚒 Click en el mapa para desplegar '+UNIT_TYPES[selectedUnitType].emoji+' '+UNIT_TYPES[selectedUnitType].name
+  };
+  document.getElementById('canvasHint').textContent = hints[mode];
+  document.getElementById('canvasHint').style.display='block';
+}
+
+function placeUnit(row, col) {
+  const ut = UNIT_TYPES[selectedUnitType];
+  const id = ++unitIdCounter;
+  const unit = {
+    id, type: selectedUnitType,
+    row, col,
+    waterLeft: ut.water, maxWater: ut.water,
+    suppressing: false
+  };
+  ffUnits.push(unit);
+  renderUnitList();
+  showAlert(`${ut.emoji} ${ut.name} desplegada en (${col},${row})`, 'info');
+  setTimeout(()=>{
+    const ac=document.getElementById('alertContainer');
+    if(ac.children.length>0) ac.removeChild(ac.firstChild);
+  }, 2500);
+}
+
+function removeUnit(id) {
+  ffUnits = ffUnits.filter(u=>u.id!==id);
+  renderUnitList();
+  drawFrame();
+}
+
+function clearAllUnits() {
+  ffUnits = [];
+  renderUnitList();
+  drawFrame();
+}
+
+function autoPlaceUnits() {
+  // Find burning cells and place units strategically upwind
+  const burningCells = [];
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) if(grid[r][c]===BURNING) burningCells.push([r,c]);
+  if(burningCells.length===0){ showAlert('⚠ No hay fuego activo para responder', 'high'); return; }
+
+  const wv = getWindVector();
+  // Place 3 units upwind of the fire centroid
+  const cr = Math.round(burningCells.reduce((s,b)=>s+b[0],0)/burningCells.length);
+  const cc = Math.round(burningCells.reduce((s,b)=>s+b[1],0)/burningCells.length);
+
+  const placements = [
+    {type:'tanqueta',    dr:-Math.round(wv.y*8), dc:-Math.round(wv.x*8)},
+    {type:'helicoptero', dr:-Math.round(wv.y*4)+5, dc:-Math.round(wv.x*4)-5},
+    {type:'brigadista',  dr:-Math.round(wv.y*4)-5, dc:-Math.round(wv.x*4)+5},
+  ];
+  for(const p of placements){
+    const nr = Math.max(2,Math.min(ROWS-3,cr+p.dr));
+    const nc = Math.max(2,Math.min(COLS-3,cc+p.dc));
+    selectedUnitType = p.type;
+    placeUnit(nr, nc);
+  }
+  selectedUnitType = 'tanqueta';
+  document.querySelectorAll('.unit-type-btn').forEach(b=>b.classList.remove('active-unit'));
+  document.getElementById('ut-tanqueta').classList.add('active-unit');
+  drawFrame();
+}
+
+function renderUnitList() {
+  const list = document.getElementById('unitsList');
+  if(ffUnits.length===0){
+    list.innerHTML='<div style="font-size:10px;color:var(--text-muted);font-family:\'IBM Plex Mono\',monospace;padding:6px 0;text-align:center">Sin unidades desplegadas.<br>Activa modo 🚒 y haz click en el mapa.</div>';
+    return;
+  }
+  list.innerHTML = ffUnits.map(u=>{
+    const ut = UNIT_TYPES[u.type];
+    const pct = Math.round(u.waterLeft/u.maxWater*100);
+    const depleted = u.waterLeft<=0;
+    return `<div class="unit-item${depleted?' depleted':''}" id="unit-item-${u.id}">
+      <span class="unit-emoji">${ut.emoji}</span>
+      <div class="unit-info">
+        <div class="unit-name">${ut.name} #${u.id}</div>
+        <div class="unit-status">${depleted?'⚠ SIN AGUA':`${(u.waterLeft/1000).toFixed(1)}k L · En espera`}</div>
+        <div class="unit-capacity-bar"><div class="unit-capacity-fill" style="width:${pct}%;background:${pct>50?'#22d3ee':pct>20?'#eab308':'#ef4444'}"></div></div>
+      </div>
+      <span class="unit-remove" onclick="removeUnit(${u.id})">✕</span>
+    </div>`;
+  }).join('');
+}
+
+// ===== SIMULATION CONTROL =====
+function startSim() {
+  if(simRunning && !simPaused) return;
+  if(!simRunning) {
+    initGrid();
+    particles = [];
+    simTick = 0;
+    frame = 0;
+    // Place initial fire at center
+    const cr = Math.floor(ROWS/2), cc = Math.floor(COLS/2);
+    for(let dr=-2;dr<=2;dr++) for(let dc=-2;dc<=2;dc++) {
+      if(cr+dr>=0&&cr+dr<ROWS&&cc+dc>=0&&cc+dc<COLS)
+        grid[cr+dr][cc+dc]=BURNING;
+    }
+    showAlert('🔥 INCENDIO DETECTADO — SIMULACIÓN INICIADA', 'info');
+  }
+  simRunning = true;
+  simPaused = false;
+  document.getElementById('btnStart').textContent='▶ CORRIENDO';
+  document.getElementById('simDot').className='status-dot dot-danger';
+  document.getElementById('simStatus').textContent='SIMULANDO';
+
+  if(simInterval) clearInterval(simInterval);
+  simInterval = setInterval(tick, 120);
+}
+
+function pauseSim() {
+  if(!simRunning) return;
+  simPaused = !simPaused;
+  document.getElementById('btnPause').textContent = simPaused ? '▶' : '⏸';
+  document.getElementById('simStatus').textContent = simPaused ? 'PAUSADO' : 'SIMULANDO';
+  document.getElementById('simDot').className = simPaused ? 'status-dot dot-warn' : 'status-dot dot-danger';
+}
+
+function resetSim() {
+  simRunning = false; simPaused = false;
+  if(simInterval) clearInterval(simInterval);
+  simInterval = null;
+  simTick = 0; frame = 0; particles = [];
+  initGrid();
+  document.getElementById('btnStart').textContent='▶ INICIAR';
+  document.getElementById('simDot').className='status-dot dot-active';
+  document.getElementById('simStatus').textContent='LISTO';
+  document.getElementById('simTimer').textContent='T + 00:00';
+  document.getElementById('simProgress').style.width='0%';
+  document.getElementById('alertContainer').innerHTML='';
+  drawFrame();
+  computeMetrics();
+}
+
+function tick() {
+  if(simPaused) return;
+  stepFire();
+  updateParticles();
+  simTick++;
+  const mins = simTick;
+  const hh = String(Math.floor(mins/60)).padStart(2,'0');
+  const mm = String(mins%60).padStart(2,'0');
+  document.getElementById('simTimer').textContent = `T + ${hh}:${mm}`;
+  drawFrame();
+  drawCompass();
+  computeMetrics();
+  updateClock();
+
+  if(simTick >= 120) {
+    clearInterval(simInterval);
+    simRunning = false;
+    document.getElementById('simStatus').textContent = 'COMPLETADO';
+    document.getElementById('simDot').className = 'status-dot dot-warn';
+    showAlert('✅ SIMULACIÓN COMPLETADA — 120 min', 'info');
+  }
+}
+
+// ===== PARAMS UPDATE =====
+function updateParams() {
+  windSpeed = parseFloat(document.getElementById('windSpeed').value);
+  windDir = parseFloat(document.getElementById('windDir').value);
+  temperature = parseFloat(document.getElementById('tempCtrl').value);
+  humidity = parseInt(document.getElementById('humCtrl').value);
+
+  const dirs = ['N','NE','E','SE','S','SO','O','NO'];
+  const dIdx = Math.round(windDir/45) % 8;
+  document.getElementById('windVal').textContent = windSpeed.toFixed(1)+' m/s';
+  document.getElementById('windDirVal').textContent = dirs[dIdx]+' ('+windDir+'°)';
+  document.getElementById('tempVal').textContent = temperature.toFixed(1)+'°C';
+  document.getElementById('humVal').textContent = humidity+'%';
+  document.getElementById('nubVal').textContent = document.getElementById('nubCtrl').value+'%';
+
+  document.getElementById('statusWind').textContent = windSpeed.toFixed(1)+' m/s';
+  document.getElementById('statusTemp').textContent = temperature.toFixed(1)+'°C';
+  document.getElementById('statusHum').textContent = humidity+'%';
+
+  drawCompass();
+  if(!simRunning) drawFrame();
+}
+
+function setVeg(el, name, factor) {
+  document.querySelectorAll('.terrain-pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  vegFactor = factor;
+}
+
+function updateDateFilter() {
+  // Just display
+}
+
+function loadBCSData(idx) {
+  currentHoraIdx = parseInt(idx);
+  const d = fullData[currentHoraIdx];
+  const horaLabel = String(Math.floor(currentHoraIdx)).padStart(2,'0')+':00';
+  document.getElementById('horaSelVal').textContent = horaLabel;
+  // Display data values
+  document.getElementById('d-demanda').textContent = origData[currentHoraIdx%24].demanda.toFixed(1);
+  document.getElementById('d-fossil').textContent = origData[currentHoraIdx%24].fossil.toFixed(1);
+  document.getElementById('d-eolica').textContent = origData[currentHoraIdx%24].eolica.toFixed(1);
+  document.getElementById('d-solar').textContent = origData[currentHoraIdx%24].solar.toFixed(1);
+  document.getElementById('d-balance').textContent = origData[currentHoraIdx%24].balance.toFixed(1);
+  document.getElementById('d-estado').textContent = origData[currentHoraIdx%24].estado;
+}
+
+function applyBCSData() {
+  const d = origData[currentHoraIdx%24];
+  document.getElementById('windSpeed').value = d.viento;
+  document.getElementById('tempCtrl').value = d.temp;
+  document.getElementById('humCtrl').value = d.humedad;
+  document.getElementById('nubCtrl').value = d.nubosidad;
+  updateParams();
+  showAlert(`⚡ DATOS BCS APLICADOS — HORA ${String(currentHoraIdx).padStart(2,'0')}:00`, 'info');
+  setTimeout(()=>{
+    document.getElementById('alertContainer').innerHTML='';
+  }, 3000);
+}
+
+// ===== CLOCK =====
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clockVal').textContent = now.toLocaleTimeString('es-MX');
+}
+
+// ===== CANVAS INTERACTION =====
+canvas.addEventListener('click', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  const {cw,ch} = getCellSize();
+  const cc = Math.floor(mx/cw), cr = Math.floor(my/ch);
+  if(cc<0||cc>=COLS||cr<0||cr>=ROWS) return;
+
+  if(drawMode === 'unit') {
+    placeUnit(cr, cc);
+    renderUnitList();
+    drawFrame();
+  } else if(drawMode === 'break') {
+    for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){
+      const nr=cr+dr,nc=cc+dc;
+      if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS) grid[nr][nc]=FIREBREAK;
+    }
+    drawFrame();
+  } else {
+    // fire mode
+    for(let dr=-2;dr<=2;dr++) for(let dc=-2;dc<=2;dc++){
+      const nr=cr+dr,nc=cc+dc;
+      if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS&&grid[nr][nc]===FUEL) grid[nr][nc]=BURNING;
+    }
+    if(!simRunning) startSim();
+    drawFrame();
+  }
+  document.getElementById('canvasHint').style.display='none';
+});
+
+canvas.addEventListener('mousemove', (e) => {
+  if(!e.buttons) return;
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  const {cw,ch} = getCellSize();
+  const cc = Math.floor(mx/cw), cr = Math.floor(my/ch);
+  if(cc<0||cc>=COLS||cr<0||cr>=ROWS) return;
+  if(drawMode === 'break'){
+    grid[cr][cc] = FIREBREAK;
+    drawFrame();
+  }
+});
+
+// ===== EXPORT =====
+function exportReport() {
+  const d = origData[currentHoraIdx%24];
+  const burned = grid.flat().filter(c=>c===BURNED).length;
+  const burning = grid.flat().filter(c=>c===BURNING).length;
+  const total = ROWS*COLS;
+  const areaHa = ((burned+burning)/total*50000/10000).toFixed(1);
+  const totalWaterUsed = ffUnits.reduce((s,u)=>s+(u.maxWater-u.waterLeft),0);
+  const unitsReport = ffUnits.length>0
+    ? ffUnits.map(u=>`  · ${UNIT_TYPES[u.type].name} #${u.id} — Pos:(${u.col},${u.row}) Agua usada:${((u.maxWater-u.waterLeft)/1000).toFixed(1)}k L`).join('\n')
+    : '  (Ninguna unidad desplegada)';
+  const report = `REPORTE DE SIMULACIÓN DE INCENDIO - SimFuego BCS
+Universidad Autónoma de Baja California Sur (UABCS)
+Protección Civil Baja California Sur
+========================================================
+Fecha/Hora: ${new Date().toLocaleString('es-MX')}
+Tiempo Simulado: ${simTick} minutos
+Estado: ${simRunning?'En curso':'Completado'}
+
+PARÁMETROS ATMOSFÉRICOS (Datos BCS):
+- Temperatura: ${temperature.toFixed(1)}°C
+- Humedad Relativa: ${humidity}%
+- Velocidad Viento: ${windSpeed.toFixed(1)} m/s
+- Dirección Viento: ${windDir}°
+- Demanda Eléctrica: ${d.demanda.toFixed(1)} MW
+- Estado Red: ${d.estado}
+
+RESULTADOS DE SIMULACIÓN:
+- Área quemada estimada: ${areaHa} ha
+- Celdas en combustión activa: ${burning}
+- Celdas quemadas: ${burned}
+- Porcentaje afectado: ${((burned+burning)/total*100).toFixed(1)}%
+- Velocidad dispersión estimada: ${(parseFloat(document.getElementById('mSpreadVal').textContent)||0).toFixed(1)} m/min
+- Intensidad estimada: ${document.getElementById('mIntVal').textContent} kW/m
+
+UNIDADES CONTRAINCENDIO DESPLEGADAS (${ffUnits.length}):
+${unitsReport}
+- Total agua utilizada: ${(totalWaterUsed/1000).toFixed(1)}k L
+- Efectividad supresión: ${document.getElementById('ss-eff').textContent}
+
+NOTAS:
+Este reporte es generado por el Simulador SimFuego BCS.
+Los datos meteorológicos provienen del Sistema BCS de monitoreo energético.
+Para uso exclusivo de equipos de Protección Civil y Prevención de Desastres.
+`;
+  const blob = new Blob([report], {type:'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=`reporte_incendio_${Date.now()}.txt`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function redraw() { drawFrame(); }
+
+// ===== INIT =====
+window.addEventListener('resize', () => { resizeCanvas(); drawFrame(); });
+resizeCanvas();
+initGrid();
+drawFrame();
+drawCompass();
+updateParams();
+updateClock();
+setInterval(updateClock, 1000);
+renderUnitList();
+
+// Initial alert
+setTimeout(()=>{
+  showAlert('🛰 SISTEMA ACTIVO — Cargando datos BCS 2024-01-01', 'info');
+  setTimeout(()=>document.getElementById('alertContainer').innerHTML='', 4000);
+}, 500);
+</script>
+</body>
+</html>

@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulacro de Incendio Forestal</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0d0a}
+body{font-family:'Rajdhani',sans-serif;color:#c8d8c8}
+
+#app{display:flex;flex-direction:column;height:100vh}
+
+/* TOP HUD */
+#topbar{
+  display:flex;align-items:center;height:42px;flex-shrink:0;
+  background:#0d130d;border-bottom:1px solid #1a2e1a;padding:0 14px;gap:0
+}
+#topbar h1{
+  font-size:13px;font-weight:700;letter-spacing:3px;text-transform:uppercase;
+  color:#ff4500;margin-right:auto;white-space:nowrap
+}
+#topbar h1 em{color:#4a7a4a;font-style:normal;font-weight:400}
+.hud-stats{display:flex}
+.hud-stat{
+  padding:0 12px;border-left:1px solid #1a2e1a;display:flex;
+  flex-direction:column;justify-content:center;min-width:74px
+}
+.hud-val{font-family:'Share Tech Mono',monospace;font-size:13px}
+.hud-val.red{color:#ff4500}.hud-val.blue{color:#29b6f6}.hud-val.green{color:#66bb6a}.hud-val.amber{color:#ffa726}
+.hud-lbl{font-size:9px;color:#3a5a3a;letter-spacing:1px;text-transform:uppercase}
+#hud-time{font-family:'Share Tech Mono',monospace;font-size:17px;color:#ffa726;padding:0 14px;border-left:1px solid #1a2e1a}
+
+/* LAYOUT */
+#main{display:flex;flex:1;overflow:hidden}
+
+/* LEFT PANEL */
+#panel{
+  width:188px;flex-shrink:0;background:#0d130d;
+  border-right:1px solid #1a2e1a;display:flex;flex-direction:column;
+  overflow-y:auto
+}
+.ps{padding:10px 12px;border-bottom:1px solid #1a2e1a}
+.ps-title{font-size:9px;letter-spacing:2px;color:#3a5a3a;text-transform:uppercase;margin-bottom:8px}
+.tb{
+  width:100%;padding:8px 10px;margin-bottom:5px;
+  background:transparent;border:1px solid #1a2e1a;
+  color:#8aaa8a;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:500;
+  cursor:pointer;text-align:left;display:flex;align-items:center;gap:8px;
+  transition:all .12s;letter-spacing:.5px
+}
+.tb:hover{background:#111a11;border-color:#2a4a2a;color:#aacaaa}
+.tb.t-fire{border-color:#ff4500;color:#ff6030;background:#1a0800}
+.tb.t-water{border-color:#29b6f6;color:#29b6f6;background:#001218}
+.tb.t-cut{border-color:#8bc34a;color:#8bc34a;background:#071000}
+.tb.t-brigade{border-color:#42a5f5;color:#42a5f5;background:#00060f}
+.tb.t-heli{border-color:#ab47bc;color:#ce93d8;background:#080012}
+.ti{font-size:15px;width:18px;text-align:center;flex-shrink:0}
+
+.slr{margin-bottom:9px}
+.slr-lbl{font-size:11px;color:#3a5a3a;margin-bottom:3px;display:flex;justify-content:space-between}
+.slr-lbl span{color:#8aaa8a;font-family:'Share Tech Mono',monospace;font-size:11px}
+input[type=range]{
+  width:100%;height:3px;background:#1a2e1a;-webkit-appearance:none;
+  border-radius:2px;cursor:pointer;outline:none
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:11px;height:11px;
+  background:#ff4500;border-radius:50%;cursor:pointer
+}
+select{
+  width:100%;padding:5px 7px;background:#0a100a;border:1px solid #1a2e1a;
+  color:#8aaa8a;font-family:'Rajdhani',sans-serif;font-size:12px;cursor:pointer;
+  outline:none
+}
+.cmp-wrap{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.compass{width:60px;height:60px;flex-shrink:0;position:relative;border:1px solid #1a2e1a;border-radius:50%}
+.cl{position:absolute;font-size:9px;color:#3a5a3a;font-family:'Share Tech Mono',monospace}
+.cl.n{top:1px;left:50%;transform:translateX(-50%)}
+.cl.s{bottom:1px;left:50%;transform:translateX(-50%)}
+.cl.e{right:2px;top:50%;transform:translateY(-50%)}
+.cl.w{left:2px;top:50%;transform:translateY(-50%)}
+#carr{
+  position:absolute;top:50%;left:50%;width:2px;height:22px;
+  background:linear-gradient(to bottom,#ff4500,transparent);
+  transform-origin:bottom center;transform:translateX(-50%) rotate(90deg);transition:transform .3s
+}
+.abtn{
+  width:100%;padding:7px;background:transparent;
+  border:1px solid #2a3a2a;color:#4a7a4a;
+  font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:600;
+  letter-spacing:2px;cursor:pointer;text-transform:uppercase;transition:all .12s;margin-bottom:5px
+}
+.abtn:hover{background:#0d180d;color:#6aaa6a}
+.abtn.red{border-color:#3a1010;color:#aa4040}.abtn.red:hover{background:#1a0808;color:#cc6060}
+
+/* CANVAS */
+#cw{flex:1;position:relative;overflow:hidden;background:#050a05}
+#mc,#oc{position:absolute;top:0;left:0;width:100%;height:100%}
+#oc{pointer-events:none}
+
+/* STATUS */
+#sbar{
+  height:28px;flex-shrink:0;background:#0d130d;border-top:1px solid #1a2e1a;
+  display:flex;align-items:center;padding:0 14px;gap:16px
+}
+#sbar #smsg{flex:1;font-family:'Share Tech Mono',monospace;font-size:10px;color:#3a6a3a}
+.leg{display:flex;gap:10px}
+.li{display:flex;align-items:center;gap:4px;font-size:10px;color:#3a5a3a}
+.ld{width:8px;height:8px;border-radius:2px}
+
+/* ALERT */
+#alert-box{
+  display:none;position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  background:#0d130d;border:1px solid #ff4500;
+  padding:24px 32px;text-align:center;z-index:99;min-width:200px
+}
+#alert-box h2{font-size:20px;font-weight:700;letter-spacing:3px;color:#ff4500;margin-bottom:6px}
+#alert-box p{font-size:13px;color:#4a7a4a;margin-bottom:14px;white-space:pre-line}
+#alert-box button{
+  padding:9px 22px;background:#ff4500;color:#fff;border:none;
+  font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;
+  letter-spacing:2px;cursor:pointer
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<div id="topbar">
+  <h1>SIMULACRO <em>BOSQUE FORESTAL</em></h1>
+  <div class="hud-stats">
+    <div class="hud-stat"><div class="hud-val red" id="h-area">0.0 ha</div><div class="hud-lbl">Quemado</div></div>
+    <div class="hud-stat"><div class="hud-val" id="h-perim">0 m</div><div class="hud-lbl">Perímetro</div></div>
+    <div class="hud-stat"><div class="hud-val red" id="h-fire">0</div><div class="hud-lbl">Focos</div></div>
+    <div class="hud-stat"><div class="hud-val green" id="h-units">0</div><div class="hud-lbl">Unidades</div></div>
+    <div class="hud-stat"><div class="hud-val blue" id="h-wind">— —</div><div class="hud-lbl">Viento</div></div>
+  </div>
+  <div id="hud-time">0:00</div>
+</div>
+
+<div id="main">
+<div id="panel">
+
+  <div class="ps">
+    <div class="ps-title">Herramientas</div>
+    <button class="tb t-fire" id="tb-fire" onclick="setTool('fire')"><span class="ti">🔥</span>Poner fuego</button>
+    <button class="tb" id="tb-water" onclick="setTool('water')"><span class="ti">💧</span>Lanzar agua</button>
+    <button class="tb" id="tb-cut" onclick="setTool('cut')"><span class="ti">🪓</span>Línea de corte</button>
+    <button class="tb" id="tb-brigade" onclick="setTool('brigade')"><span class="ti">👥</span>Brigada</button>
+    <button class="tb" id="tb-heli" onclick="setTool('heli')"><span class="ti">🚁</span>Helicóptero</button>
+  </div>
+
+  <div class="ps">
+    <div class="ps-title">Viento</div>
+    <div class="cmp-wrap">
+      <div class="compass">
+        <span class="cl n">N</span><span class="cl s">S</span>
+        <span class="cl e">E</span><span class="cl w">O</span>
+        <div id="carr"></div>
+      </div>
+      <select id="wdir" onchange="updWind()">
+        <option value="0,0">Sin viento</option>
+        <option value="0,-1">Norte ↑</option>
+        <option value="1,-1">Noreste ↗</option>
+        <option value="1,0" selected>Este →</option>
+        <option value="1,1">Sureste ↘</option>
+        <option value="0,1">Sur ↓</option>
+        <option value="-1,1">Suroeste ↙</option>
+        <option value="-1,0">Oeste ←</option>
+        <option value="-1,-1">Noroeste ↖</option>
+      </select>
+    </div>
+    <div class="slr">
+      <div class="slr-lbl">Intensidad <span id="wlbl">Brisa</span></div>
+      <input type="range" id="wstr" min="0" max="3" step="1" value="1" oninput="updWind()">
+    </div>
+  </div>
+
+  <div class="ps">
+    <div class="ps-title">Parámetros</div>
+    <div class="slr">
+      <div class="slr-lbl">Velocidad sim <span id="spd-lbl">2×</span></div>
+      <input type="range" id="spd" min="1" max="6" step="1" value="2" oninput="document.getElementById('spd-lbl').textContent=this.value+'×'">
+    </div>
+    <div class="slr">
+      <div class="slr-lbl">Humedad <span id="hum-lbl">50%</span></div>
+      <input type="range" id="hum" min="0" max="100" step="5" value="50" oninput="document.getElementById('hum-lbl').textContent=this.value+'%'">
+    </div>
+    <div class="slr">
+      <div class="slr-lbl">Pincel <span id="br-lbl">2</span></div>
+      <input type="range" id="br" min="1" max="8" step="1" value="2" oninput="document.getElementById('br-lbl').textContent=this.value">
+    </div>
+  </div>
+
+  <div class="ps">
+    <button class="abtn" id="pausebtn" onclick="togglePause()">⏸ PAUSAR</button>
+    <button class="abtn red" onclick="resetGame()">↺ REINICIAR</button>
+  </div>
+
+</div>
+
+<div id="cw">
+  <canvas id="mc"></canvas>
+  <canvas id="oc"></canvas>
+  <div id="alert-box">
+    <h2 id="at">EXTINGUIDO</h2>
+    <p id="am">Incendio controlado</p>
+    <button onclick="document.getElementById('alert-box').style.display='none'">CONTINUAR</button>
+  </div>
+</div>
+</div>
+
+<div id="sbar">
+  <div id="smsg">Herramienta activa: FUEGO — haz clic o arrastra sobre el bosque</div>
+  <div class="leg">
+    <div class="li"><div class="ld" style="background:#1a4a10"></div>Pino</div>
+    <div class="li"><div class="ld" style="background:#2d7a1a"></div>Roble</div>
+    <div class="li"><div class="ld" style="background:#7a9e3a"></div>Matorral</div>
+    <div class="li"><div class="ld" style="background:#c8b44a"></div>Pastizal</div>
+    <div class="li"><div class="ld" style="background:#ff4500"></div>Fuego</div>
+    <div class="li"><div class="ld" style="background:#1a1a1a"></div>Ceniza</div>
+    <div class="li"><div class="ld" style="background:#4a90c0"></div>Lago</div>
+  </div>
+</div>
+</div>
+
+<script>
+// ── CELL TYPES ─────────────────────────────────────────────
+const EMPTY=0,PINE=1,OAK=2,BRUSH=3,GRASS=4,LAKE=5,ROCK=6;
+const FIRE=7,BURNED=8,CUT=9,WET=10;
+
+const BURN_T={1:24,2:20,3:11,4:6};
+const SPREAD={1:0.016,2:0.019,3:0.034,4:0.058};
+const CS=10; // cell size px
+
+let COLS=0,ROWS=0;
+let G=[],BT=[],FA=[];
+let treeData=[]; // per-cell visual data
+let particles=[];
+let units=[];
+let tool='fire',paused=false,painting=false;
+let wx=1,wy=0,ws=1;
+let tick=0,accum=0,lastTs=0;
+const TICK_MS=85;
+let alertDone=false;
+
+const mc=document.getElementById('mc');
+const oc=document.getElementById('oc');
+const mCtx=mc.getContext('2d');
+const oCtx=oc.getContext('2d');
+
+// ── RESIZE ─────────────────────────────────────────────────
+function resize(){
+  const wrap=document.getElementById('cw');
+  mc.width=oc.width=wrap.clientWidth;
+  mc.height=oc.height=wrap.clientHeight;
+  COLS=Math.floor(mc.width/CS);
+  ROWS=Math.floor(mc.height/CS);
+  initWorld();
+}
+window.addEventListener('resize',()=>{resize();});
+
+// ── NOISE ──────────────────────────────────────────────────
+function noise(x,y,seed){
+  return(Math.sin(x*8.1+y*5.3+seed)*0.5+0.5+
+         Math.cos(x*13.7-y*9.2+seed*2)*0.5+0.5+
+         Math.sin((x+y)*11.3+seed*3)*0.5+0.5)/3;
+}
+
+// ── WORLD INIT ─────────────────────────────────────────────
+function initWorld(){
+  G=[];BT=[];FA=[];treeData=[];particles=[];units=[];tick=0;alertDone=false;
+  document.getElementById('alert-box').style.display='none';
+
+  const lakeCX=Math.floor(COLS*0.55),lakeCY=Math.floor(ROWS*0.38);
+  const lakeRX=Math.floor(COLS*0.09),lakeRY=Math.floor(ROWS*0.07);
+  const lake2X=Math.floor(COLS*0.2),lake2Y=Math.floor(ROWS*0.7),lake2R=Math.floor(COLS*0.04);
+  const riverY1=Math.floor(ROWS*0.6),riverY2=Math.floor(ROWS*0.62);
+
+  for(let r=0;r<ROWS;r++){
+    G[r]=[];BT[r]=[];FA[r]=[];treeData[r]=[];
+    for(let c=0;c<COLS;c++){
+      const nx=c/COLS,ny=r/ROWS;
+      const n=noise(nx,ny,42);
+      const n2=noise(nx,ny,7);
+      let t;
+      // borders
+      if(r<2||r>ROWS-3||c<2||c>COLS-3){t=EMPTY;}
+      // lake 1
+      else if((c-lakeCX)**2/lakeRX**2+(r-lakeCY)**2/lakeRY**2<1){t=LAKE;}
+      // lake 2
+      else if((c-lake2X)**2+(r-lake2Y)**2<lake2R**2){t=LAKE;}
+      // river strip
+      else if(r>=riverY1&&r<=riverY2&&c>lake2X+lake2R&&c<COLS-10){t=LAKE;}
+      // rocky patch
+      else if(c>COLS*0.75&&c<COLS*0.85&&r>ROWS*0.2&&r<ROWS*0.35&&n>0.6){t=ROCK;}
+      // clearing
+      else if(c>COLS*0.42&&c<COLS*0.58&&r>ROWS*0.55&&r<ROWS*0.75){t=GRASS;}
+      else if(n<0.22){t=PINE;}
+      else if(n<0.38){t=OAK;}
+      else if(n<0.58){t=BRUSH;}
+      else{t=GRASS;}
+      G[r][c]=t;BT[r][c]=0;FA[r][c]=0;
+      // tree visual seed
+      treeData[r][c]={seed:Math.random(),h:0.7+Math.random()*0.6,sw:0.8+Math.random()*0.4,hue:(Math.random()-0.5)*18};
+    }
+  }
+  drawForest();
+}
+
+// ── FOREST RENDERING ──────────────────────────────────────
+// We draw the whole forest scene onto an offscreen canvas, then composite fire on top
+let forestCache=null;
+
+function drawForest(){
+  forestCache=document.createElement('canvas');
+  forestCache.width=mc.width;forestCache.height=mc.height;
+  const fc=forestCache.getContext('2d');
+
+  // Sky/ground base
+  fc.fillStyle='#3a5a3a';
+  fc.fillRect(0,0,mc.width,mc.height);
+
+  // Draw ground layer first
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      const t=G[r][c];
+      const x=c*CS,y=r*CS;
+      const td=treeData[r][c];
+      switch(t){
+        case GRASS:{
+          const g=100+td.hue*2;
+          fc.fillStyle=`rgb(${150+td.hue},${g+40},${40+td.hue})`;
+          fc.fillRect(x,y,CS,CS);
+          // grass tufts
+          if(td.seed>0.5){
+            fc.fillStyle=`rgba(120,${160+td.hue},50,0.5)`;
+            fc.fillRect(x+2,y+CS-3,1,3);
+            fc.fillRect(x+5,y+CS-4,1,4);
+            fc.fillRect(x+8,y+CS-2,1,2);
+          }
+          break;
+        }
+        case BRUSH:{
+          fc.fillStyle=`rgb(${80+td.hue},${110+td.hue*2},${30+td.hue})`;
+          fc.fillRect(x,y,CS,CS);
+          fc.fillStyle=`rgba(50,${90+td.hue},20,0.7)`;
+          fc.beginPath();
+          fc.ellipse(x+CS/2,y+CS*0.7,CS*0.45*td.sw,CS*0.35*td.h,0,0,Math.PI*2);
+          fc.fill();
+          break;
+        }
+        case LAKE:{
+          const depth=0.5+td.seed*0.5;
+          fc.fillStyle=`rgb(${30+td.hue*0.5},${80+depth*30},${120+depth*40})`;
+          fc.fillRect(x,y,CS,CS);
+          if(td.seed>0.7){
+            fc.fillStyle='rgba(200,240,255,0.12)';
+            fc.fillRect(x,y+1,CS,1);
+          }
+          break;
+        }
+        case ROCK:{
+          const v=90+td.seed*30;
+          fc.fillStyle=`rgb(${v},${v},${v-10})`;
+          fc.fillRect(x,y,CS,CS);
+          fc.fillStyle='rgba(255,255,255,0.07)';
+          fc.fillRect(x,y,CS,2);
+          break;
+        }
+        default:
+          if(t===EMPTY){fc.fillStyle='#1a2a1a';fc.fillRect(x,y,CS,CS);}
+      }
+    }
+  }
+
+  // Draw trees on top (taller, spanning cells visually)
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      const t=G[r][c];
+      const x=c*CS+CS/2,y=(r+1)*CS;
+      const td=treeData[r][c];
+      if(t===PINE){
+        drawPine(fc,x,y,CS*td.h*1.4,CS*td.sw,td.hue);
+      } else if(t===OAK){
+        drawOak(fc,x,y,CS*td.h*1.2,CS*td.sw,td.hue);
+      }
+    }
+  }
+}
+
+function drawPine(ctx,x,y,h,sw,hue){
+  const trunkH=h*0.3,trunkW=Math.max(1.5,sw*1.2);
+  // trunk
+  ctx.fillStyle=`rgb(${80+hue},${55+hue},${30+hue})`;
+  ctx.fillRect(x-trunkW/2,y-trunkH,trunkW,trunkH);
+  // 3 triangular layers
+  const layers=3;
+  for(let i=0;i<layers;i++){
+    const ly=y-trunkH-(i*(h*0.28));
+    const lw=sw*(1.1-i*0.2)*(1+0.1*(layers-i));
+    const lh=h*0.38;
+    const g=110+hue+i*8;
+    ctx.fillStyle=`rgb(${20+hue},${g},${20+hue})`;
+    ctx.beginPath();
+    ctx.moveTo(x,ly-lh);
+    ctx.lineTo(x-lw,ly);
+    ctx.lineTo(x+lw,ly);
+    ctx.closePath();ctx.fill();
+  }
+}
+
+function drawOak(ctx,x,y,h,sw,hue){
+  const trunkH=h*0.4,trunkW=Math.max(1.8,sw*1.5);
+  ctx.fillStyle=`rgb(${90+hue},${62+hue},${35+hue})`;
+  ctx.fillRect(x-trunkW/2,y-trunkH,trunkW,trunkH);
+  // canopy (several overlapping ellipses)
+  const canopyY=y-trunkH;
+  const offsets=[{ox:0,oy:-sw*0.6,rx:sw*0.85,ry:sw*0.7},{ox:-sw*0.5,oy:-sw*0.3,rx:sw*0.65,ry:sw*0.55},{ox:sw*0.5,oy:-sw*0.35,rx:sw*0.6,ry:sw*0.5}];
+  offsets.forEach((o,i)=>{
+    const g=100+hue+i*10;
+    ctx.fillStyle=`rgba(${30+hue},${g},${20+hue},0.95)`;
+    ctx.beginPath();
+    ctx.ellipse(x+o.ox,canopyY+o.oy,o.rx,o.ry,0,0,Math.PI*2);
+    ctx.fill();
+  });
+}
+
+// ── RENDER FRAME ──────────────────────────────────────────
+function render(){
+  // 1. Draw cached forest
+  if(forestCache) mCtx.drawImage(forestCache,0,0);
+
+  // 2. Overlay fire/burned/cut/wet states
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      const t=G[r][c];
+      const x=c*CS,y=r*CS;
+      if(t===BURNED){
+        mCtx.fillStyle='rgba(15,10,8,0.92)';
+        mCtx.fillRect(x,y,CS,CS);
+        if(treeData[r][c].seed>0.5){
+          mCtx.strokeStyle='rgba(50,30,20,0.7)';
+          mCtx.lineWidth=1;
+          mCtx.beginPath();
+          mCtx.moveTo(x+CS/2,y+CS);mCtx.lineTo(x+CS/2,y+2);
+          mCtx.stroke();
+        }
+      } else if(t===FIRE){
+        renderFireCell(mCtx,x,y,r,c);
+      } else if(t===CUT){
+        mCtx.fillStyle='rgba(180,160,110,0.85)';
+        mCtx.fillRect(x,y,CS,CS);
+      } else if(t===WET){
+        mCtx.fillStyle='rgba(40,100,160,0.45)';
+        mCtx.fillRect(x,y,CS,CS);
+      }
+    }
+  }
+
+  // 3. Draw units
+  drawUnits();
+
+  // 4. Overlay canvas: smoke, embers, water, HUD
+  drawOverlay();
+}
+
+function renderFireCell(ctx,x,y,r,c){
+  const t2=FA[r][c]||0;
+  const phase=(tick+r*3+c*7)%30/30;
+  // base fire
+  const rb=200+Math.floor(phase*55);
+  const gb=50+Math.floor(phase*80);
+  ctx.fillStyle=`rgb(${rb},${gb},0)`;
+  ctx.fillRect(x,y,CS,CS);
+  // bright core
+  if(t2>3){
+    ctx.fillStyle=`rgba(255,220,100,${0.3+phase*0.3})`;
+    ctx.fillRect(x+1,y+1,CS-2,CS-2);
+  }
+  // flame tips
+  ctx.fillStyle=`rgba(255,255,100,${0.4+phase*0.4})`;
+  ctx.beginPath();
+  ctx.moveTo(x+CS/2,y);
+  ctx.lineTo(x+CS*0.2,y+CS*0.5);
+  ctx.lineTo(x+CS*0.8,y+CS*0.5);
+  ctx.closePath();ctx.fill();
+}
+
+function drawUnits(){
+  mCtx.save();
+  units.forEach(u=>{
+    const x=u.c*CS+CS/2,y=u.r*CS+CS/2,sz=CS*1.4;
+    if(u.type==='brigade'){
+      mCtx.fillStyle='#0d47a1';mCtx.strokeStyle='#90caf9';mCtx.lineWidth=1.5;
+      mCtx.beginPath();mCtx.arc(x,y,sz,0,Math.PI*2);mCtx.fill();mCtx.stroke();
+      mCtx.fillStyle='#fff';mCtx.font=`bold ${CS}px sans-serif`;
+      mCtx.textAlign='center';mCtx.textBaseline='middle';mCtx.fillText('B',x,y);
+    } else {
+      mCtx.fillStyle='#4a148c';mCtx.strokeStyle='#ce93d8';mCtx.lineWidth=1.5;
+      mCtx.beginPath();mCtx.arc(x,y,sz,0,Math.PI*2);mCtx.fill();mCtx.stroke();
+      mCtx.fillStyle='#fff';mCtx.font=`bold ${CS}px sans-serif`;
+      mCtx.textAlign='center';mCtx.textBaseline='middle';mCtx.fillText('H',x,y);
+    }
+  });
+  mCtx.restore();
+}
+
+// ── OVERLAY (particles + HUD elements) ────────────────────
+function drawOverlay(){
+  oCtx.clearRect(0,0,oc.width,oc.height);
+  oCtx.save();
+
+  // particles
+  for(const p of particles){
+    const a=Math.max(0,p.life);
+    if(p.type==='smoke'){
+      oCtx.globalAlpha=a*0.18;
+      oCtx.fillStyle=`rgb(${p.cr},${p.cr},${p.cr})`;
+      oCtx.beginPath();oCtx.arc(p.x,p.y,p.sz,0,Math.PI*2);oCtx.fill();
+    } else if(p.type==='ember'){
+      oCtx.globalAlpha=a*0.95;
+      oCtx.fillStyle=p.life>0.5?'#ffdd00':'#ff6600';
+      oCtx.beginPath();oCtx.arc(p.x,p.y,p.sz,0,Math.PI*2);oCtx.fill();
+    } else if(p.type==='water'){
+      oCtx.globalAlpha=a*0.75;
+      oCtx.fillStyle='#60d0ff';
+      oCtx.beginPath();oCtx.arc(p.x,p.y,2.5,0,Math.PI*2);oCtx.fill();
+    }
+  }
+  oCtx.globalAlpha=1;
+
+  // wind indicator
+  const wx2=oc.width-55,wy2=50;
+  const ang=Math.atan2(wy,wx);
+  const wlen=14+ws*5;
+  oCtx.strokeStyle='rgba(200,220,200,0.55)';oCtx.lineWidth=1.5;oCtx.setLineDash([3,3]);
+  oCtx.beginPath();oCtx.moveTo(wx2,wy2);oCtx.lineTo(wx2+Math.cos(ang)*wlen,wy2+Math.sin(ang)*wlen);oCtx.stroke();
+  oCtx.setLineDash([]);
+  oCtx.fillStyle='rgba(150,200,150,0.5)';oCtx.font='9px Share Tech Mono,monospace';oCtx.textAlign='right';
+  oCtx.fillText('VIENTO',wx2-4,wy2+4);
+
+  // scale bar
+  const sb={x:12,y:oc.height-16};
+  oCtx.fillStyle='rgba(0,0,0,0.45)';oCtx.fillRect(sb.x-2,sb.y-12,96,16);
+  oCtx.fillStyle='rgba(200,220,200,0.6)';oCtx.fillRect(sb.x,sb.y-3,80,3);
+  oCtx.fillStyle='rgba(50,50,50,0.7)';oCtx.fillRect(sb.x,sb.y-3,40,3);
+  oCtx.fillStyle='rgba(180,200,180,0.7)';oCtx.font='9px Share Tech Mono,monospace';oCtx.textAlign='left';
+  oCtx.fillText('0       500m    1km',sb.x,sb.y-6);
+
+  oCtx.restore();
+}
+
+// ── PARTICLES ─────────────────────────────────────────────
+function spawnParticles(){
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      if(G[r][c]!==FIRE)continue;
+      if(Math.random()>0.05)continue;
+      const age=FA[r][c]||0;
+      const inten=Math.min(1,age/15);
+      // smoke
+      particles.push({
+        type:'smoke',
+        x:c*CS+Math.random()*CS,y:r*CS,
+        vx:(Math.random()-0.5)*0.5+wx*0.25*ws,
+        vy:-(0.5+Math.random()*0.6),
+        life:1,decay:0.005+Math.random()*0.005,
+        sz:CS*(1.2+Math.random()*2.5),
+        cr:25+Math.floor(inten*55)
+      });
+      // ember
+      if(Math.random()<0.18){
+        particles.push({
+          type:'ember',
+          x:c*CS+Math.random()*CS,y:r*CS,
+          vx:(Math.random()-0.5)*1.8+wx*ws*0.7,
+          vy:-(1.2+Math.random()*2.5),
+          life:1,decay:0.018+Math.random()*0.025,
+          sz:1.5+Math.random()*2
+        });
+      }
+    }
+  }
+}
+
+function updateParticles(){
+  const alive=[];
+  for(const p of particles){
+    p.x+=p.vx;p.y+=p.vy;
+    if(p.type==='smoke'){
+      p.vx+=wx*0.008*ws;p.vy-=0.008;p.sz+=0.07;
+    } else if(p.type==='ember'){
+      p.vx+=wx*0.03*ws;p.vy+=0.07;
+      if(p.vy>0){
+        const ec=Math.floor(p.x/CS),er=Math.floor(p.y/CS);
+        if(er>=0&&er<ROWS&&ec>=0&&ec<COLS){
+          const et=G[er][ec];
+          if(et>=1&&et<=4&&Math.random()<0.07){
+            G[er][ec]=FIRE;BT[er][ec]=BURN_T[et]||8;FA[er][ec]=0;
+            // invalidate forest cache at this cell
+          }
+        }
+      }
+    } else if(p.type==='water'){
+      p.vx+=wx*0.02*ws;p.vy+=0.14;
+      if(p.vy>2.5){
+        const wc=Math.floor(p.x/CS),wr=Math.floor(p.y/CS);
+        if(wr>=0&&wr<ROWS&&wc>=0&&wc<COLS){
+          if(G[wr][wc]===FIRE)G[wr][wc]=BURNED;
+          else if(G[wr][wc]>=1&&G[wr][wc]<=4)G[wr][wc]=WET;
+        }
+        p.life=0;
+      }
+    }
+    p.life-=p.decay;
+    if(p.life>0)alive.push(p);
+  }
+  particles=alive;
+  if(particles.length>2200)particles=particles.slice(-2200);
+}
+
+// ── SIM STEP ──────────────────────────────────────────────
+function simStep(){
+  const spd=+document.getElementById('spd').value;
+  for(let s=0;s<spd;s++) _tick();
+  spawnParticles();
+  updateParticles();
+}
+
+function _tick(){
+  const nG=G.map(r=>[...r]);
+  const nBT=BT.map(r=>[...r]);
+  const hum=+document.getElementById('hum').value/100;
+
+  for(let r=1;r<ROWS-1;r++){
+    for(let c=1;c<COLS-1;c++){
+      const t=G[r][c];
+      if(t!==FIRE)continue;
+      FA[r][c]++;
+      nBT[r][c]--;
+      if(nBT[r][c]<=0){nG[r][c]=BURNED;continue;}
+      for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){
+        if(!dr&&!dc)continue;
+        const nr=r+dr,nc=c+dc;
+        if(nr<0||nr>=ROWS||nc<0||nc>=COLS)continue;
+        const nt=G[nr][nc];
+        if(nt<1||nt>4)continue;
+        const base=SPREAD[nt]||0.02;
+        const wdot=dr*wy+dc*wx;
+        const wbonus=1+wdot*0.8*ws;
+        const diag=(dr&&dc)?0.72:1;
+        const prob=base*wbonus*diag*(1-hum*0.6);
+        if(Math.random()<prob){nG[nr][nc]=FIRE;nBT[nr][nc]=BURN_T[nt]||8;}
+      }
+    }
+  }
+
+  // WET drying
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)
+    if(G[r][c]===WET&&Math.random()<0.002)nG[r][c]=GRASS;
+
+  units.forEach(u=>{
+    u.timer=(u.timer||0)+1;
+    if(u.type==='brigade'){
+      if(u.timer%2===0)
+        for(let dr=-4;dr<=4;dr++)for(let dc=-4;dc<=4;dc++){
+          const nr=u.r+dr,nc=u.c+dc;
+          if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS&&nG[nr][nc]===FIRE&&Math.random()<0.22)nG[nr][nc]=BURNED;
+        }
+    } else if(u.type==='heli'){
+      if(u.timer%3===0){
+        let best=null,bd=9999;
+        for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)
+          if(G[r][c]===FIRE){const d=Math.abs(r-u.r)+Math.abs(c-u.c);if(d<bd){bd=d;best={r,c};}}
+        if(best){
+          u.r=Math.max(1,Math.min(ROWS-2,u.r+Math.sign(best.r-u.r)));
+          u.c=Math.max(1,Math.min(COLS-2,u.c+Math.sign(best.c-u.c)));
+          for(let i=0;i<14;i++)particles.push({
+            type:'water',x:u.c*CS+(Math.random()-0.5)*CS*2,y:u.r*CS,
+            vx:(Math.random()-0.5)*1.8,vy:-0.5-Math.random(),
+            life:1,decay:0.045,sz:3
+          });
+          for(let dr=-3;dr<=3;dr++)for(let dc=-3;dc<=3;dc++){
+            const nr=u.r+dr,nc=u.c+dc;
+            if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS&&nG[nr][nc]===FIRE&&Math.random()<0.3)nG[nr][nc]=BURNED;
+          }
+        }
+      }
+    }
+  });
+
+  G=nG;BT=nBT;tick++;
+  checkWin();
+}
+
+// ── HUD ────────────────────────────────────────────────────
+function updHUD(){
+  let burned=0,fire=0;
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+    if(G[r][c]===BURNED)burned++;if(G[r][c]===FIRE)fire++;
+  }
+  const HA=(2000/COLS*1500/ROWS)/10000;
+  const MP=Math.sqrt((2000/COLS)*(1500/ROWS));
+  let perim=0;
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)
+    if(G[r][c]===FIRE||G[r][c]===BURNED)
+      for(const[dr,dc]of[[-1,0],[1,0],[0,-1],[0,1]]){
+        const nr=r+dr,nc=c+dc;
+        if(nr<0||nr>=ROWS||nc<0||nc>=COLS||G[nr][nc]<7)perim++;
+      }
+  const m=Math.floor(tick*TICK_MS/60000),s=Math.floor((tick*TICK_MS%60000)/1000);
+  document.getElementById('hud-time').textContent=m+':'+(s<10?'0':'')+s;
+  document.getElementById('h-area').textContent=(burned*HA).toFixed(1)+' ha';
+  document.getElementById('h-perim').textContent=Math.round(perim*MP/4)+' m';
+  document.getElementById('h-fire').textContent=fire;
+  document.getElementById('h-units').textContent=units.length;
+  const wn=['—','Brisa','Moderado','Fuerte'];
+  const wd=document.getElementById('wdir').options[document.getElementById('wdir').selectedIndex].text.split(' ')[0];
+  document.getElementById('h-wind').textContent=wn[ws]+' '+wd;
+}
+
+function checkWin(){
+  if(alertDone)return;
+  let f=0,b=0;
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){if(G[r][c]===FIRE)f++;if(G[r][c]===BURNED)b++;}
+  if(f===0&&b>0&&tick>10){
+    alertDone=true;
+    const ha=(b*(2000/COLS*1500/ROWS)/10000).toFixed(1);
+    const m=Math.floor(tick*TICK_MS/60000),s=Math.floor((tick*TICK_MS%60000)/1000);
+    document.getElementById('at').textContent='EXTINGUIDO';
+    document.getElementById('am').textContent=`Incendio controlado en ${m}m ${s}s\nÁrea afectada: ${ha} ha`;
+    document.getElementById('alert-box').style.display='block';
+  }
+}
+
+// ── WIND ──────────────────────────────────────────────────
+function updWind(){
+  const v=document.getElementById('wdir').value.split(',');
+  wx=+v[0];wy=+v[1];ws=+document.getElementById('wstr').value;
+  const wn=['Calma','Brisa','Moderado','Fuerte'];
+  document.getElementById('wlbl').textContent=wn[ws];
+  const ang=Math.atan2(wy,wx)*180/Math.PI;
+  document.getElementById('carr').style.transform=`translateX(-50%) rotate(${ang+90}deg)`;
+}
+
+// ── TOOL ──────────────────────────────────────────────────
+const TC={fire:'t-fire',water:'t-water',cut:'t-cut',brigade:'t-brigade',heli:'t-heli'};
+const TM={
+  fire:'Haz clic o arrastra para encender el bosque.',
+  water:'Arrastra sobre el fuego para apagarlo. Los goterones caen con gravedad real.',
+  cut:'Arrastra para talar vegetación y crear cortafuegos.',
+  brigade:'Clic para colocar brigada terrestre — apaga en su radio.',
+  heli:'Clic para enviar helicóptero — persigue y lanza agua automáticamente.'
+};
+function setTool(t){
+  tool=t;
+  Object.keys(TC).forEach(k=>{
+    const b=document.getElementById('tb-'+k);
+    b.className='tb'+(k===t?' '+TC[k]:'');
+  });
+  document.getElementById('smsg').textContent=TM[t]||'';
+}
+
+// ── APPLY TOOL ────────────────────────────────────────────
+function applyTool(mx,my){
+  const c0=Math.floor(mx/CS),r0=Math.floor(my/CS);
+  const br=+document.getElementById('br').value;
+  if(tool==='brigade'||tool==='heli'){
+    if(c0>=0&&c0<COLS&&r0>=0&&r0<ROWS){
+      units.push({type:tool,r:r0,c:c0,timer:0});
+      st(tool==='brigade'?'Brigada desplegada.':'Helicóptero enviado.');
+    }
+    return;
+  }
+  for(let dr=-(br-1);dr<=br-1;dr++)for(let dc=-(br-1);dc<=br-1;dc++){
+    if(dr*dr+dc*dc>br*br)continue;
+    const r=r0+dr,c=c0+dc;
+    if(r<0||r>=ROWS||c<0||c>=COLS)continue;
+    const t=G[r][c];
+    if(tool==='fire'){
+      if(t>=1&&t<=4){G[r][c]=FIRE;BT[r][c]=BURN_T[t]||8;FA[r][c]=0;}
+    } else if(tool==='water'){
+      if(t===FIRE)G[r][c]=BURNED;
+      else if(t>=1&&t<=4)G[r][c]=WET;
+      if(Math.random()<0.5)particles.push({
+        type:'water',x:c*CS+(Math.random()-0.5)*CS,y:r*CS,
+        vx:(Math.random()-0.5)*1.8,vy:-0.8-Math.random()*1.5,
+        life:1,decay:0.07,sz:2.5
+      });
+    } else if(tool==='cut'){
+      if(t>=1&&t<=4)G[r][c]=CUT;
+    }
+  }
+}
+
+// ── EVENTS ────────────────────────────────────────────────
+function canvasXY(e){
+  const rect=mc.getBoundingClientRect();
+  const sx=mc.width/rect.width,sy=mc.height/rect.height;
+  const src=e.touches?e.touches[0]:e;
+  return{x:(src.clientX-rect.left)*sx,y:(src.clientY-rect.top)*sy};
+}
+mc.addEventListener('mousedown',e=>{painting=true;const p=canvasXY(e);applyTool(p.x,p.y);});
+mc.addEventListener('mousemove',e=>{if(!painting)return;const p=canvasXY(e);applyTool(p.x,p.y);});
+mc.addEventListener('mouseup',()=>painting=false);
+mc.addEventListener('mouseleave',()=>painting=false);
+mc.addEventListener('touchstart',e=>{e.preventDefault();painting=true;const p=canvasXY(e);applyTool(p.x,p.y);},{passive:false});
+mc.addEventListener('touchmove',e=>{e.preventDefault();const p=canvasXY(e);applyTool(p.x,p.y);},{passive:false});
+mc.addEventListener('touchend',()=>painting=false);
+
+// ── LOOP ──────────────────────────────────────────────────
+function loop(ts){
+  if(!paused){
+    const dt=ts-lastTs;lastTs=ts;accum+=dt;
+    if(accum>=TICK_MS){accum-=TICK_MS;simStep();updHUD();}
+  }
+  render();
+  requestAnimationFrame(loop);
+}
+
+function togglePause(){
+  paused=!paused;
+  document.getElementById('pausebtn').textContent=paused?'▶ REANUDAR':'⏸ PAUSAR';
+}
+function resetGame(){initWorld();}
+function st(t){document.getElementById('smsg').textContent=t;}
+
+// ── START ─────────────────────────────────────────────────
+resize();
+updWind();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

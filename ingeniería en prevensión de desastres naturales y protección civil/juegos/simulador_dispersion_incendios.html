@@ -1,0 +1,554 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: transparent; }
+  .sim-wrap {
+    font-family: var(--font-sans);
+    color: var(--color-text-primary);
+    padding: 0;
+  }
+  .sim-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 16px 20px 12px;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .sim-title-block h2 {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    line-height: 1.2;
+  }
+  .sim-title-block p {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    margin-top: 2px;
+  }
+  .author-badge {
+    font-size: 11px;
+    background: var(--color-background-secondary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-md);
+    padding: 5px 12px;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+  }
+  .author-badge strong {
+    color: var(--color-text-primary);
+    font-weight: 500;
+  }
+  .sim-body {
+    display: grid;
+    grid-template-columns: 1fr 260px;
+    gap: 0;
+  }
+  @media (max-width: 680px) {
+    .sim-body { grid-template-columns: 1fr; }
+  }
+  .canvas-area {
+    position: relative;
+    background: #1a2a1a;
+    border-right: 0.5px solid var(--color-border-tertiary);
+  }
+  #simCanvas {
+    display: block;
+    width: 100%;
+    cursor: crosshair;
+  }
+  .canvas-hint {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    color: rgba(255,255,255,0.45);
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .controls {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    background: var(--color-background-primary);
+  }
+  .ctrl-group label {
+    display: block;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    margin-bottom: 5px;
+  }
+  .ctrl-group .val {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    float: right;
+  }
+  input[type=range] { width: 100%; }
+  select {
+    width: 100%;
+    font-size: 13px;
+    padding: 6px 8px;
+    border-radius: var(--border-radius-md);
+    border: 0.5px solid var(--color-border-secondary);
+    background: var(--color-background-secondary);
+    color: var(--color-text-primary);
+    cursor: pointer;
+  }
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .stat-card {
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+    padding: 10px;
+    text-align: center;
+  }
+  .stat-card .sval {
+    font-size: 20px;
+    font-weight: 500;
+    display: block;
+    line-height: 1;
+  }
+  .stat-card .slbl {
+    font-size: 10px;
+    color: var(--color-text-secondary);
+    display: block;
+    margin-top: 3px;
+  }
+  .stat-card.fire .sval { color: #e05a10; }
+  .stat-card.burned .sval { color: #8a6030; }
+  .btn-row { display: flex; gap: 8px; }
+  button {
+    flex: 1;
+    font-size: 13px;
+    padding: 8px 10px;
+    border-radius: var(--border-radius-md);
+    border: 0.5px solid var(--color-border-secondary);
+    background: var(--color-background-secondary);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    font-family: var(--font-sans);
+    transition: background 0.15s;
+  }
+  button:hover { background: var(--color-background-tertiary); }
+  button.primary {
+    background: #e05a10;
+    border-color: #e05a10;
+    color: #fff;
+  }
+  button.primary:hover { background: #c04a08; }
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--color-text-secondary);
+  }
+  .leg-item { display: flex; align-items: center; gap: 5px; }
+  .leg-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  .divider {
+    border: none;
+    border-top: 0.5px solid var(--color-border-tertiary);
+    margin: 0;
+  }
+  .sim-footer {
+    padding: 8px 20px;
+    border-top: 0.5px solid var(--color-border-tertiary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    background: var(--color-background-secondary);
+  }
+  .step-info { font-size: 11px; color: var(--color-text-secondary); }
+  .wind-arrow {
+    display: inline-block;
+    font-size: 14px;
+    transition: transform 0.3s;
+  }
+</style>
+
+<div class="sim-wrap">
+  <div class="sim-header">
+    <div class="sim-title-block">
+      <h2>Simulador de dispersión de incendios forestales</h2>
+      <p>Haz clic en el mapa para iniciar un foco de incendio</p>
+    </div>
+    <div class="author-badge">Creado por <strong>Yamil Zamora</strong></div>
+  </div>
+
+  <div class="sim-body">
+    <div class="canvas-area">
+      <canvas id="simCanvas" width="480" height="420"></canvas>
+      <div class="canvas-hint">Clic para colocar foco de ignición</div>
+    </div>
+    <div class="controls">
+
+      <div class="ctrl-group">
+        <label>Velocidad del viento <span class="val" id="windVal">15 km/h</span></label>
+        <input type="range" id="windSpeed" min="0" max="80" value="15" step="1">
+      </div>
+
+      <div class="ctrl-group">
+        <label>Dirección del viento <span class="val" id="windDirVal">N <span class="wind-arrow" id="windArrow">↓</span></span></label>
+        <input type="range" id="windDir" min="0" max="360" value="0" step="5">
+      </div>
+
+      <div class="ctrl-group">
+        <label>Humedad relativa <span class="val" id="humVal">30%</span></label>
+        <input type="range" id="humidity" min="5" max="95" value="30" step="1">
+      </div>
+
+      <div class="ctrl-group">
+        <label>Tipo de vegetación</label>
+        <select id="vegType">
+          <option value="pine">Bosque de pino</option>
+          <option value="oak">Bosque de encino</option>
+          <option value="shrub">Matorral</option>
+          <option value="grass">Pastizal</option>
+          <option value="jungle">Selva baja caducifolia</option>
+        </select>
+      </div>
+
+      <hr class="divider">
+
+      <div class="stat-grid">
+        <div class="stat-card fire">
+          <span class="sval" id="activeCells">0</span>
+          <span class="slbl">Celdas activas</span>
+        </div>
+        <div class="stat-card burned">
+          <span class="sval" id="burnedCells">0</span>
+          <span class="slbl">Ha quemadas</span>
+        </div>
+        <div class="stat-card">
+          <span class="sval" id="stepCount">0</span>
+          <span class="slbl">Iteraciones</span>
+        </div>
+        <div class="stat-card">
+          <span class="sval" id="riskVal">—</span>
+          <span class="slbl">Nivel riesgo</span>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="btn-row">
+        <button class="primary" id="btnPlay">▶ Iniciar</button>
+        <button id="btnReset">Limpiar</button>
+      </div>
+
+      <hr class="divider">
+
+      <div class="legend">
+        <div class="leg-item"><div class="leg-dot" style="background:#2d5a27"></div>Vegetación</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#ff6600"></div>Fuego activo</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#ffd966"></div>Frente de fuego</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#4a3020"></div>Quemado</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="sim-footer">
+    <span id="simStatus">Listo — coloca un foco de ignición</span>
+    <span>Yamil Zamora &mdash; Simulador Forestal v1.0</span>
+  </div>
+</div>
+
+<script>
+(function() {
+  const canvas = document.getElementById('simCanvas');
+  const ctx = canvas.getContext('2d');
+  const COLS = 80, ROWS = 70;
+  const CW = canvas.width / COLS, CH = canvas.height / ROWS;
+
+  const EMPTY = 0, TREE = 1, BURNING = 2, EMBER = 3, BURNED = 4;
+
+  let grid = [], next = [];
+  let burnTime = [];
+  let running = false;
+  let intervalId = null;
+  let stepCount = 0;
+
+  const vegParams = {
+    pine:   { spread: 0.52, burnDur: 4, color: '#1a4a14' },
+    oak:    { spread: 0.40, burnDur: 5, color: '#2a5a18' },
+    shrub:  { spread: 0.65, burnDur: 2, color: '#4a6a1a' },
+    grass:  { spread: 0.78, burnDur: 1, color: '#5a7a20' },
+    jungle: { spread: 0.35, burnDur: 6, color: '#1a6030' }
+  };
+
+  function getParams() {
+    return vegParams[document.getElementById('vegType').value];
+  }
+
+  function initGrid() {
+    grid = []; next = []; burnTime = [];
+    for (let r = 0; r < ROWS; r++) {
+      grid[r] = []; next[r] = []; burnTime[r] = [];
+      for (let c = 0; c < COLS; c++) {
+        grid[r][c] = Math.random() < 0.82 ? TREE : EMPTY;
+        next[r][c] = grid[r][c];
+        burnTime[r][c] = 0;
+      }
+    }
+    stepCount = 0;
+    updateStats();
+    draw();
+  }
+
+  function cellColor(state, row, col) {
+    const p = getParams();
+    if (state === EMPTY) return '#0e1e0e';
+    if (state === TREE)  return p.color;
+    if (state === EMBER) {
+      const t = burnTime[row][col];
+      const d = getParams().burnDur;
+      const ratio = t / d;
+      if (ratio < 0.4) return '#ff6600';
+      return '#ff3300';
+    }
+    if (state === BURNING) return '#ffd966';
+    if (state === BURNED) {
+      return '#3a2010';
+    }
+    return '#0e1e0e';
+  }
+
+  function draw() {
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        ctx.fillStyle = cellColor(grid[r][c], r, c);
+        ctx.fillRect(Math.round(c * CW), Math.round(r * CH), Math.ceil(CW), Math.ceil(CH));
+      }
+    }
+    drawWindIndicator();
+  }
+
+  function drawWindIndicator() {
+    const ws = parseInt(document.getElementById('windSpeed').value);
+    const wd = parseInt(document.getElementById('windDir').value);
+    if (ws === 0) return;
+    const cx = canvas.width - 36, cy = 36, r = 22;
+    ctx.save();
+    ctx.globalAlpha = 0.7;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,200,100,0.6)';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+    const angle = (wd * Math.PI) / 180;
+    const dx = Math.sin(angle) * 16;
+    const dy = -Math.cos(angle) * 16;
+    ctx.strokeStyle = '#ffd966';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(cx - dx * 0.5, cy - dy * 0.5);
+    ctx.lineTo(cx + dx * 0.8, cy + dy * 0.8);
+    ctx.stroke();
+    const len = ws > 0 ? 6 : 0;
+    const nx = Math.sin(angle), ny = -Math.cos(angle);
+    const px = -ny, py = nx;
+    ctx.beginPath();
+    ctx.moveTo(cx + dx * 0.8, cy + dy * 0.8);
+    ctx.lineTo(cx + dx * 0.8 - nx * len + px * len * 0.5, cy + dy * 0.8 - ny * len + py * len * 0.5);
+    ctx.moveTo(cx + dx * 0.8, cy + dy * 0.8);
+    ctx.lineTo(cx + dx * 0.8 - nx * len - px * len * 0.5, cy + dy * 0.8 - ny * len - py * len * 0.5);
+    ctx.stroke();
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = '#ffd966';
+    ctx.font = '9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(ws + 'km/h', cx, cy + r + 11);
+    ctx.restore();
+  }
+
+  function step() {
+    const ws = parseInt(document.getElementById('windSpeed').value);
+    const wd = parseInt(document.getElementById('windDir').value) * Math.PI / 180;
+    const hum = parseInt(document.getElementById('humidity').value);
+    const p = getParams();
+
+    const windX = Math.sin(wd);
+    const windY = -Math.cos(wd);
+    const windFactor = ws / 80;
+    const humFactor = 1 - (hum - 5) / 90;
+
+    const dirs = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        next[r][c] = grid[r][c];
+      }
+    }
+
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        const state = grid[r][c];
+        if (state === EMBER || state === BURNING) {
+          burnTime[r][c]++;
+          if (burnTime[r][c] >= p.burnDur * 3) {
+            next[r][c] = BURNED;
+          } else {
+            for (const [dr, dc] of dirs) {
+              const nr = r + dr, nc = c + dc;
+              if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
+              if (grid[nr][nc] !== TREE) continue;
+              const dot = dr * windY + dc * windX;
+              const windBoost = 1 + dot * windFactor * 1.6;
+              const spreadP = p.spread * windBoost * humFactor;
+              if (Math.random() < Math.min(spreadP, 0.95)) {
+                next[nr][nc] = EMBER;
+                burnTime[nr][nc] = 0;
+              }
+            }
+            if (Math.random() < 0.4) {
+              next[r][c] = burnTime[r][c] > p.burnDur ? BURNING : EMBER;
+            }
+          }
+        }
+      }
+    }
+
+    for (let r = 0; r < ROWS; r++)
+      for (let c = 0; c < COLS; c++)
+        grid[r][c] = next[r][c];
+
+    stepCount++;
+    draw();
+    updateStats();
+
+    let hasActive = false;
+    for (let r = 0; r < ROWS && !hasActive; r++)
+      for (let c = 0; c < COLS && !hasActive; c++)
+        if (grid[r][c] === EMBER || grid[r][c] === BURNING) hasActive = true;
+
+    if (!hasActive) stopSim('Incendio extinto o propagación completa');
+  }
+
+  function updateStats() {
+    let active = 0, burned = 0;
+    for (let r = 0; r < ROWS; r++)
+      for (let c = 0; c < COLS; c++) {
+        if (grid[r][c] === EMBER || grid[r][c] === BURNING) active++;
+        if (grid[r][c] === BURNED) burned++;
+      }
+    document.getElementById('activeCells').textContent = active;
+    document.getElementById('burnedCells').textContent = burned;
+    document.getElementById('stepCount').textContent = stepCount;
+
+    const ws = parseInt(document.getElementById('windSpeed').value);
+    const hum = parseInt(document.getElementById('humidity').value);
+    const risk = (ws / 80 * 0.5) + ((100 - hum) / 100 * 0.5);
+    let rl = risk < 0.3 ? 'Bajo' : risk < 0.55 ? 'Medio' : risk < 0.75 ? 'Alto' : 'Extremo';
+    document.getElementById('riskVal').textContent = rl;
+    const colors = { Bajo: '#2a8a50', Medio: '#b87a10', Alto: '#c84010', Extremo: '#8a0010' };
+    document.getElementById('riskVal').style.color = colors[rl];
+  }
+
+  function startSim() {
+    if (running) return;
+    let hasIgnition = false;
+    for (let r = 0; r < ROWS && !hasIgnition; r++)
+      for (let c = 0; c < COLS && !hasIgnition; c++)
+        if (grid[r][c] === EMBER || grid[r][c] === BURNING) hasIgnition = true;
+
+    if (!hasIgnition) {
+      document.getElementById('simStatus').textContent = 'Haz clic en el mapa para iniciar un foco primero';
+      return;
+    }
+    running = true;
+    document.getElementById('btnPlay').textContent = '⏸ Pausar';
+    document.getElementById('btnPlay').classList.add('primary');
+    document.getElementById('simStatus').textContent = 'Simulación en curso...';
+    intervalId = setInterval(step, 120);
+  }
+
+  function pauseSim() {
+    running = false;
+    clearInterval(intervalId);
+    document.getElementById('btnPlay').textContent = '▶ Continuar';
+    document.getElementById('simStatus').textContent = 'Pausado';
+  }
+
+  function stopSim(msg) {
+    running = false;
+    clearInterval(intervalId);
+    document.getElementById('btnPlay').textContent = '▶ Iniciar';
+    document.getElementById('btnPlay').classList.remove('primary');
+    document.getElementById('simStatus').textContent = msg || 'Detenido';
+  }
+
+  function resetSim() {
+    stopSim('Listo — coloca un foco de ignición');
+    initGrid();
+  }
+
+  canvas.addEventListener('click', function(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const mx = (e.clientX - rect.left) * scaleX;
+    const my = (e.clientY - rect.top) * scaleY;
+    const col = Math.floor(mx / CW);
+    const row = Math.floor(my / CH);
+    for (let dr = -2; dr <= 2; dr++) {
+      for (let dc = -2; dc <= 2; dc++) {
+        const r = row + dr, c = col + dc;
+        if (r >= 0 && r < ROWS && c >= 0 && c < COLS) {
+          grid[r][c] = EMBER;
+          burnTime[r][c] = 0;
+        }
+      }
+    }
+    draw();
+    updateStats();
+    document.getElementById('simStatus').textContent = 'Foco de ignición colocado — presiona Iniciar';
+  });
+
+  document.getElementById('btnPlay').addEventListener('click', function() {
+    if (running) pauseSim();
+    else startSim();
+  });
+
+  document.getElementById('btnReset').addEventListener('click', resetSim);
+
+  document.getElementById('windSpeed').addEventListener('input', function() {
+    document.getElementById('windVal').textContent = this.value + ' km/h';
+    updateStats(); draw();
+  });
+
+  document.getElementById('windDir').addEventListener('input', function() {
+    const d = parseInt(this.value);
+    const dirs = ['N','NE','E','SE','S','SO','O','NO'];
+    const label = dirs[Math.round(d / 45) % 8];
+    const angles = { 0:'↓',45:'↙',90:'←',135:'↖',180:'↑',225:'↗',270:'→',315:'↘' };
+    const nearAngle = Math.round(d / 45) * 45 % 360;
+    document.getElementById('windArrow').textContent = angles[nearAngle] || '↓';
+    document.getElementById('windDirVal').innerHTML = label + ' <span class="wind-arrow" id="windArrow">' + (angles[nearAngle] || '↓') + '</span>';
+    updateStats(); draw();
+  });
+
+  document.getElementById('humidity').addEventListener('input', function() {
+    document.getElementById('humVal').textContent = this.value + '%';
+    updateStats();
+  });
+
+  document.getElementById('vegType').addEventListener('change', function() {
+    resetSim();
+  });
+
+  initGrid();
+})();
+</script>

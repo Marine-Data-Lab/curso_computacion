@@ -1,0 +1,714 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: #0a1628;
+    color: #e8f4f8;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .ocean-bg {
+    position: fixed; inset: 0; z-index: 0;
+    background: linear-gradient(180deg, #0a1628 0%, #0d2240 40%, #0a3050 100%);
+    overflow: hidden;
+  }
+
+  .wave { position: absolute; border-radius: 50%; opacity: 0.04; background: #4fc3f7; animation: pulse 8s ease-in-out infinite; }
+  .wave:nth-child(1) { width: 800px; height: 800px; top: -200px; left: -200px; animation-delay: 0s; }
+  .wave:nth-child(2) { width: 600px; height: 600px; top: 100px; right: -150px; animation-delay: -3s; }
+  .wave:nth-child(3) { width: 400px; height: 400px; bottom: 50px; left: 30%; animation-delay: -5s; }
+
+  @keyframes pulse { 0%,100% { transform: scale(1); opacity: 0.04; } 50% { transform: scale(1.1); opacity: 0.08; } }
+
+  .app { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 1rem 1.5rem 3rem; }
+
+  .header { display: flex; align-items: center; justify-content: space-between; padding: 1.5rem 0 1rem; border-bottom: 1px solid rgba(79,195,247,0.2); margin-bottom: 1.5rem; }
+
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-icon { width: 44px; height: 44px; background: rgba(79,195,247,0.15); border: 1px solid rgba(79,195,247,0.3); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+  .logo-text h1 { font-size: 18px; font-weight: 800; color: #4fc3f7; letter-spacing: -0.5px; }
+  .logo-text p { font-size: 11px; color: rgba(232,244,248,0.5); font-family: 'Space Mono', monospace; margin-top: 1px; }
+
+  .year-badge { font-family: 'Space Mono', monospace; font-size: 13px; background: rgba(79,195,247,0.1); border: 1px solid rgba(79,195,247,0.25); padding: 6px 14px; border-radius: 20px; color: #4fc3f7; }
+
+  .status-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+
+  .stat-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px 16px; position: relative; overflow: hidden; }
+  .stat-card::before { content: ''; position: absolute; inset: 0; border-radius: 12px; opacity: 0; transition: opacity 0.3s; }
+  .stat-card.good::before { background: rgba(29,198,117,0.08); opacity: 1; border-color: rgba(29,198,117,0.3); }
+  .stat-card.warn::before { background: rgba(239,159,39,0.08); opacity: 1; border-color: rgba(239,159,39,0.3); }
+  .stat-card.danger::before { background: rgba(226,75,74,0.08); opacity: 1; border-color: rgba(226,75,74,0.3); }
+
+  .stat-label { font-size: 10px; color: rgba(232,244,248,0.45); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; font-family: 'Space Mono', monospace; }
+  .stat-value { font-size: 26px; font-weight: 700; color: #e8f4f8; line-height: 1; }
+  .stat-unit { font-size: 12px; color: rgba(232,244,248,0.5); margin-top: 2px; }
+
+  .main-grid { display: grid; grid-template-columns: 1fr 320px; gap: 1.2rem; }
+
+  .panel { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09); border-radius: 16px; padding: 1.25rem; }
+
+  .panel-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(232,244,248,0.4); font-family: 'Space Mono', monospace; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
+  .panel-title::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.06); }
+
+  /* Ocean visualization */
+  .ocean-vis { width: 100%; height: 220px; position: relative; border-radius: 12px; overflow: hidden; background: linear-gradient(180deg, #0d2a45 0%, #0a3a5a 100%); margin-bottom: 1.2rem; }
+
+  canvas#fishCanvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+  .ocean-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+  .veda-banner { background: rgba(226,75,74,0.85); color: white; font-weight: 700; font-size: 14px; padding: 8px 20px; border-radius: 20px; letter-spacing: 1px; display: none; }
+  .veda-banner.active { display: block; }
+
+  /* Population bar */
+  .pop-bar-wrap { margin-bottom: 1rem; }
+  .pop-label { display: flex; justify-content: space-between; font-size: 12px; color: rgba(232,244,248,0.6); margin-bottom: 6px; }
+  .pop-bar { height: 10px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; }
+  .pop-fill { height: 100%; border-radius: 10px; transition: width 0.8s ease, background 0.5s; }
+
+  /* Controls */
+  .control-row { margin-bottom: 1.2rem; }
+  .control-label { font-size: 12px; color: rgba(232,244,248,0.7); margin-bottom: 8px; display: flex; justify-content: space-between; }
+  .control-label span { font-family: 'Space Mono', monospace; color: #4fc3f7; }
+
+  input[type=range] { width: 100%; accent-color: #4fc3f7; cursor: pointer; }
+  input[type=range]:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .toggle-row { display: flex; gap: 8px; margin-bottom: 1rem; }
+
+  .toggle-btn { flex: 1; padding: 9px 0; border-radius: 10px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); color: rgba(232,244,248,0.6); font-size: 12px; font-family: 'Syne', sans-serif; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: center; }
+  .toggle-btn.active { background: rgba(79,195,247,0.15); border-color: rgba(79,195,247,0.4); color: #4fc3f7; }
+  .toggle-btn.danger { background: rgba(226,75,74,0.15); border-color: rgba(226,75,74,0.4); color: #e24b4a; }
+  .toggle-btn:hover:not(:disabled) { background: rgba(255,255,255,0.1); }
+
+  .action-btn { width: 100%; padding: 13px; border-radius: 12px; border: none; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; cursor: pointer; transition: all 0.2s; margin-top: 0.5rem; }
+  .action-btn.primary { background: #4fc3f7; color: #0a1628; }
+  .action-btn.primary:hover { background: #7dd4f8; transform: translateY(-1px); }
+  .action-btn.primary:disabled { background: rgba(79,195,247,0.2); color: rgba(79,195,247,0.4); cursor: not-allowed; transform: none; }
+  .action-btn.veda { background: rgba(226,75,74,0.15); color: #e24b4a; border: 1px solid rgba(226,75,74,0.3); }
+  .action-btn.veda.on { background: #e24b4a; color: white; }
+
+  /* Chart area */
+  .chart-wrap { position: relative; width: 100%; height: 160px; }
+
+  /* Events log */
+  .event-log { max-height: 130px; overflow-y: auto; }
+  .event-item { display: flex; gap: 8px; align-items: flex-start; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 12px; }
+  .event-item:last-child { border-bottom: none; }
+  .event-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+  .event-text { color: rgba(232,244,248,0.65); line-height: 1.4; }
+  .event-year { font-family: 'Space Mono', monospace; color: rgba(232,244,248,0.3); font-size: 10px; margin-left: auto; white-space: nowrap; padding-left: 8px; }
+
+  /* Talla mínima indicator */
+  .talla-visual { display: flex; gap: 4px; align-items: center; margin: 8px 0; }
+  .fish-small { opacity: 0.3; }
+  .fish-ok { opacity: 1; }
+
+  .score-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(29,198,117,0.15); border: 1px solid rgba(29,198,117,0.3); color: #1dc675; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-top: 6px; }
+
+  .crash-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.92); display: none; align-items: center; justify-content: center; flex-direction: column; gap: 16px; text-align: center; padding: 2rem; }
+  .crash-overlay.show { display: flex; }
+  .crash-title { font-size: 36px; font-weight: 800; color: #e24b4a; }
+  .crash-sub { font-size: 16px; color: rgba(232,244,248,0.6); max-width: 400px; line-height: 1.6; }
+  .crash-stats { font-family: 'Space Mono', monospace; font-size: 13px; color: rgba(232,244,248,0.4); }
+
+  .win-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; flex-direction: column; gap: 16px; text-align: center; padding: 2rem; }
+  .win-overlay.show { display: flex; }
+  .win-title { font-size: 36px; font-weight: 800; color: #4fc3f7; }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(79,195,247,0.2); border-radius: 4px; }
+
+  @media (max-width: 700px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .status-bar { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="ocean-bg">
+  <div class="wave"></div>
+  <div class="wave"></div>
+  <div class="wave"></div>
+</div>
+
+<div class="app">
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">🐟</div>
+      <div class="logo-text">
+        <h1>CoopPesca Sustentable</h1>
+        <p>Simulador de gestión pesquera</p>
+      </div>
+    </div>
+    <div class="year-badge" id="yearBadge">Año 1 / 20</div>
+  </div>
+
+  <div class="status-bar">
+    <div class="stat-card" id="cardPob">
+      <div class="stat-label">Población</div>
+      <div class="stat-value" id="statPob">1000</div>
+      <div class="stat-unit">individuos</div>
+    </div>
+    <div class="stat-card" id="cardGan">
+      <div class="stat-label">Ganancias</div>
+      <div class="stat-value" id="statGan">$0</div>
+      <div class="stat-unit">este año</div>
+    </div>
+    <div class="stat-card" id="cardTotal">
+      <div class="stat-label">Total acumulado</div>
+      <div class="stat-value" id="statTotal">$0</div>
+      <div class="stat-unit">histórico</div>
+    </div>
+    <div class="stat-card" id="cardSalud">
+      <div class="stat-label">Salud del mar</div>
+      <div class="stat-value" id="statSalud">100%</div>
+      <div class="stat-unit">ecosistema</div>
+    </div>
+  </div>
+
+  <div class="main-grid">
+    <div>
+      <!-- Ocean canvas -->
+      <div class="panel" style="padding: 1rem;">
+        <div class="panel-title">Ecosistema marino</div>
+        <div class="ocean-vis">
+          <canvas id="fishCanvas"></canvas>
+          <div class="ocean-overlay">
+            <div class="veda-banner" id="vedaBanner">⛔ VEDA ACTIVA</div>
+          </div>
+        </div>
+
+        <div class="pop-bar-wrap">
+          <div class="pop-label">
+            <span>Biomasa poblacional</span>
+            <span id="popPct">100%</span>
+          </div>
+          <div class="pop-bar"><div class="pop-fill" id="popFill" style="width:100%; background:#1dc675;"></div></div>
+        </div>
+
+        <div class="pop-bar-wrap">
+          <div class="pop-label">
+            <span>Salud del ecosistema</span>
+            <span id="ecoPct">100%</span>
+          </div>
+          <div class="pop-bar"><div class="pop-fill" id="ecoFill" style="width:100%; background:#4fc3f7;"></div></div>
+        </div>
+
+        <!-- Chart -->
+        <div class="panel-title" style="margin-top:1rem;">Histórico poblacional</div>
+        <div class="chart-wrap">
+          <canvas id="histChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Event log -->
+      <div class="panel" style="margin-top: 1rem;">
+        <div class="panel-title">Registro de eventos</div>
+        <div class="event-log" id="eventLog"></div>
+      </div>
+    </div>
+
+    <!-- Controls panel -->
+    <div>
+      <div class="panel">
+        <div class="panel-title">Controles de gestión</div>
+
+        <!-- Veda toggle -->
+        <div class="control-row">
+          <div class="control-label">Estado de pesca</div>
+          <div class="toggle-row">
+            <button class="toggle-btn active" id="btnPescaOn" onclick="setPesca(true)">Temporada abierta</button>
+            <button class="toggle-btn" id="btnVeda" onclick="setPesca(false)">Declarar veda</button>
+          </div>
+        </div>
+
+        <!-- Talla mínima -->
+        <div class="control-row">
+          <div class="control-label">Talla mínima de captura <span id="tallaVal">25 cm</span></div>
+          <input type="range" id="tallaSlider" min="10" max="45" value="25" step="5" oninput="updateTalla(this.value)">
+          <div style="display:flex; justify-content:space-between; font-size:10px; color:rgba(232,244,248,0.3); margin-top:4px; font-family:'Space Mono',monospace;">
+            <span>10cm</span><span>25cm</span><span>45cm</span>
+          </div>
+        </div>
+
+        <!-- Esfuerzo -->
+        <div class="control-row">
+          <div class="control-label">Esfuerzo de pesca <span id="esfVal">50%</span></div>
+          <input type="range" id="esfSlider" min="10" max="100" value="50" step="10" oninput="updateEsf(this.value)">
+          <div style="display:flex; justify-content:space-between; font-size:10px; color:rgba(232,244,248,0.3); margin-top:4px; font-family:'Space Mono',monospace;">
+            <span>10%</span><span>50%</span><span>100%</span>
+          </div>
+        </div>
+
+        <!-- Artes -->
+        <div class="control-row">
+          <div class="control-label">Arte de pesca</div>
+          <div class="toggle-row" style="flex-wrap:wrap; gap:6px;">
+            <button class="toggle-btn active" id="arteLina" style="font-size:11px;" onclick="setArte('selectiva')">Selectiva</button>
+            <button class="toggle-btn" id="arteRed" style="font-size:11px;" onclick="setArte('red')">Red de arrastre</button>
+          </div>
+        </div>
+
+        <!-- Zonas de reserva -->
+        <div class="control-row">
+          <div class="control-label">Zona de reserva marina <span id="reservaVal">0%</span></div>
+          <input type="range" id="reservaSlider" min="0" max="50" value="0" step="10" oninput="updateReserva(this.value)">
+          <div style="display:flex; justify-content:space-between; font-size:10px; color:rgba(232,244,248,0.3); margin-top:4px; font-family:'Space Mono',monospace;">
+            <span>0%</span><span>25%</span><span>50%</span>
+          </div>
+        </div>
+
+        <!-- Cuota -->
+        <div class="control-row">
+          <div class="control-label">Cuota anual <span id="cuotaVal">Auto</span></div>
+          <input type="range" id="cuotaSlider" min="0" max="300" value="0" step="25" oninput="updateCuota(this.value)">
+          <div style="display:flex; justify-content:space-between; font-size:10px; color:rgba(232,244,248,0.3); margin-top:4px; font-family:'Space Mono',monospace;">
+            <span>Libre</span><span>150t</span><span>300t</span>
+          </div>
+        </div>
+
+        <button class="action-btn primary" id="btnAvanzar" onclick="avanzarAnio()">
+          ▶ Avanzar un año
+        </button>
+
+        <div style="margin-top:1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.06);">
+          <div style="font-size:11px; color:rgba(232,244,248,0.35); margin-bottom:8px; text-transform:uppercase; letter-spacing:1px; font-family:'Space Mono',monospace;">Diagnóstico</div>
+          <div id="diagnostico" style="font-size:13px; color:rgba(232,244,248,0.6); line-height:1.6;"></div>
+        </div>
+
+        <button class="action-btn" style="margin-top:1rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:rgba(232,244,248,0.5); font-size:13px;" onclick="reiniciar()">
+          ↺ Reiniciar simulación
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Crash overlay -->
+<div class="crash-overlay" id="crashOverlay">
+  <div style="font-size:48px;">💀</div>
+  <div class="crash-title">Colapso Pesquero</div>
+  <div class="crash-sub">La población de peces cayó por debajo del nivel crítico. El ecosistema colapsó y la cooperativa quedó en bancarrota.</div>
+  <div class="crash-stats" id="crashStats"></div>
+  <button class="action-btn primary" style="max-width:200px; margin-top:1rem;" onclick="reiniciar()">Intentar de nuevo</button>
+</div>
+
+<!-- Win overlay -->
+<div class="win-overlay" id="winOverlay">
+  <div style="font-size:48px;">🏆</div>
+  <div class="win-title">¡Gestión Exitosa!</div>
+  <div class="crash-sub" style="color:rgba(232,244,248,0.7);">Administraste la cooperativa durante 20 años manteniendo el ecosistema sano.</div>
+  <div class="crash-stats" id="winStats" style="color:#4fc3f7;"></div>
+  <button class="action-btn primary" style="max-width:200px; margin-top:1rem;" onclick="reiniciar()">Jugar de nuevo</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+const INITIAL_POP = 1000;
+const CARRYING_CAPACITY = 1200;
+const GROWTH_RATE = 0.35;
+const COLLAPSE_THRESHOLD = 80;
+
+let state = {};
+let fish = [];
+let histChart = null;
+
+function createState() {
+  return {
+    year: 1, population: INITIAL_POP, ecosystemHealth: 100, totalEarnings: 0,
+    pescaActiva: true, talla: 25, esfuerzo: 50, arte: 'selectiva',
+    reserva: 0, cuota: 0, events: [], popHistory: [INITIAL_POP],
+    consecutiveOverfishing: 0, collapsed: false
+  };
+}
+
+// ── Fish animation ──────────────────────────────────────────────────────────
+const canvas = document.getElementById('fishCanvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  canvas.width = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+}
+
+function initFish() {
+  fish = [];
+  const count = Math.min(40, Math.floor(state.population / 25));
+  for (let i = 0; i < count; i++) fish.push(spawnFish());
+}
+
+function spawnFish() {
+  return {
+    x: Math.random() * (canvas.width || 600),
+    y: 30 + Math.random() * (canvas.height - 60 || 160),
+    vx: (Math.random() - 0.5) * 1.5 + 0.5,
+    vy: (Math.random() - 0.5) * 0.6,
+    size: 6 + Math.random() * 8,
+    wobble: Math.random() * Math.PI * 2,
+    speed: 0.5 + Math.random() * 1,
+    hue: 180 + Math.random() * 60
+  };
+}
+
+function drawFish(f) {
+  ctx.save();
+  ctx.translate(f.x, f.y);
+  const dir = f.vx < 0 ? -1 : 1;
+  ctx.scale(dir, 1);
+  ctx.beginPath();
+  ctx.ellipse(0, 0, f.size, f.size * 0.5, 0, 0, Math.PI * 2);
+  ctx.fillStyle = `hsla(${f.hue}, 70%, 65%, 0.8)`;
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(-f.size, 0);
+  ctx.lineTo(-f.size * 1.6, -f.size * 0.5);
+  ctx.lineTo(-f.size * 1.6, f.size * 0.5);
+  ctx.closePath();
+  ctx.fillStyle = `hsla(${f.hue}, 60%, 55%, 0.7)`;
+  ctx.fill();
+  ctx.restore();
+}
+
+function animateOcean() {
+  resizeCanvas();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // water lines
+  ctx.strokeStyle = 'rgba(79,195,247,0.05)';
+  ctx.lineWidth = 1;
+  for (let y = 0; y < canvas.height; y += 20) {
+    ctx.beginPath();
+    for (let x = 0; x <= canvas.width; x += 40) {
+      const wave = Math.sin(x * 0.02 + Date.now() * 0.001 + y * 0.05) * 3;
+      if (x === 0) ctx.moveTo(x, y + wave);
+      else ctx.lineTo(x, y + wave);
+    }
+    ctx.stroke();
+  }
+
+  const targetCount = state.collapsed ? 0 : Math.min(40, Math.floor(state.population / 25));
+  while (fish.length < targetCount) fish.push(spawnFish());
+  while (fish.length > targetCount) fish.pop();
+
+  fish.forEach(f => {
+    f.wobble += 0.05;
+    f.vy = Math.sin(f.wobble) * 0.4;
+    f.x += f.vx;
+    f.y += f.vy;
+    if (f.x > canvas.width + 30) f.x = -20;
+    if (f.x < -30) f.x = canvas.width + 20;
+    f.y = Math.max(20, Math.min(canvas.height - 20, f.y));
+    drawFish(f);
+  });
+
+  requestAnimationFrame(animateOcean);
+}
+
+// ── Controls ────────────────────────────────────────────────────────────────
+function setPesca(active) {
+  state.pescaActiva = active;
+  document.getElementById('btnPescaOn').classList.toggle('active', active);
+  document.getElementById('btnVeda').classList.toggle('active', !active);
+  document.getElementById('btnVeda').classList.toggle('danger', !active);
+  document.getElementById('vedaBanner').classList.toggle('active', !active);
+  document.getElementById('esfSlider').disabled = !active;
+  updateDiag();
+}
+
+function updateTalla(v) {
+  state.talla = parseInt(v);
+  document.getElementById('tallaVal').textContent = v + ' cm';
+  updateDiag();
+}
+
+function updateEsf(v) {
+  state.esfuerzo = parseInt(v);
+  document.getElementById('esfVal').textContent = v + '%';
+  updateDiag();
+}
+
+function setArte(tipo) {
+  state.arte = tipo;
+  document.getElementById('arteLina').classList.toggle('active', tipo === 'selectiva');
+  document.getElementById('arteRed').classList.toggle('active', tipo === 'red');
+  document.getElementById('arteRed').classList.toggle('danger', tipo === 'red');
+  updateDiag();
+}
+
+function updateReserva(v) {
+  state.reserva = parseInt(v);
+  document.getElementById('reservaVal').textContent = v + '%';
+  updateDiag();
+}
+
+function updateCuota(v) {
+  state.cuota = parseInt(v);
+  document.getElementById('cuotaVal').textContent = v === 0 ? 'Libre' : v + 't';
+  updateDiag();
+}
+
+// ── Simulation ───────────────────────────────────────────────────────────────
+function calcCaptura() {
+  if (!state.pescaActiva) return 0;
+  
+  // Talla mínima: mayor talla = menos captura pero mejor calidad
+  const tallaMult = state.talla >= 30 ? 1.0 : (state.talla >= 20 ? 0.85 : 0.6);
+  const tallaPenalty = state.talla < 20 ? 1.4 : (state.talla < 25 ? 1.15 : 1.0);
+
+  // Arte selectiva vs arrastre
+  const arteMult = state.arte === 'red' ? 1.6 : 1.0;
+
+  // Esfuerzo base
+  const esfBase = state.esfuerzo / 100;
+
+  // Cuota limita captura
+  let captura = state.population * 0.18 * esfBase * arteMult;
+  if (state.cuota > 0) captura = Math.min(captura, state.cuota);
+
+  return Math.floor(captura * tallaMult);
+}
+
+function calcImpacto(captura) {
+  const ratio = captura / Math.max(state.population, 1);
+  let impacto = ratio * 0.7;
+
+  if (state.arte === 'red') impacto *= 1.5;
+  if (state.talla < 20) impacto *= 1.3; // captura juveniles
+
+  return Math.min(impacto, 1);
+}
+
+function avanzarAnio() {
+  if (state.collapsed || state.year > 20) return;
+
+  document.getElementById('btnAvanzar').disabled = true;
+
+  const captura = calcCaptura();
+  const impacto = calcImpacto(captura);
+
+  // Reproductive capacity affected by ecosystem health
+  const healthMult = 0.5 + (state.ecosystemHealth / 200);
+  const reproMult = state.pescaActiva ? 1.0 : 1.25; // veda boost
+  const reservaMult = 1 + (state.reserva / 100) * 0.3;
+
+  // Logistic growth
+  const growth = GROWTH_RATE * state.population * (1 - state.population / CARRYING_CAPACITY);
+  const newPop = Math.max(0, state.population + growth * healthMult * reproMult * reservaMult - captura);
+
+  // Ecosystem health
+  const ecoChange = state.pescaActiva ? -impacto * 12 + (state.reserva * 0.4) : 8;
+  state.ecosystemHealth = Math.max(5, Math.min(100, state.ecosystemHealth + ecoChange));
+
+  // Earnings: price per unit × talla quality bonus × arte penalty
+  const pricePerUnit = state.talla >= 30 ? 18 : (state.talla >= 25 ? 14 : 9);
+  const artePenalty = state.arte === 'red' ? 0.7 : 1.0; // red destroys quality
+  const earnings = Math.floor(captura * pricePerUnit * artePenalty);
+
+  state.totalEarnings += earnings;
+
+  // Check overfishing
+  if (state.pescaActiva && captura > state.population * 0.25) {
+    state.consecutiveOverfishing++;
+  } else {
+    state.consecutiveOverfishing = Math.max(0, state.consecutiveOverfishing - 1);
+  }
+
+  state.population = Math.floor(newPop);
+  state.popHistory.push(state.population);
+
+  // Events
+  const events = [];
+  if (!state.pescaActiva) events.push({ color: '#e24b4a', text: `Veda observada. La población se recupera (+${Math.floor(growth * reproMult)} ind.)` });
+  if (state.talla >= 30) events.push({ color: '#1dc675', text: `Talla mínima alta: capturas de calidad. Precio +29%` });
+  if (state.talla < 20) events.push({ color: '#ef9f27', text: `⚠ Capturas juveniles reducen la biomasa reproductiva` });
+  if (state.arte === 'red') events.push({ color: '#e24b4a', text: `Red de arrastre: daño al lecho marino y alta bycatch` });
+  if (state.reserva >= 20) events.push({ color: '#1dc675', text: `Zona de reserva: refugio reproductivo activo (${state.reserva}%)` });
+  if (captura > 0) events.push({ color: '#4fc3f7', text: `Captura: ${captura} ind. → Ingresos: $${earnings.toLocaleString()}` });
+  if (state.consecutiveOverfishing >= 3) events.push({ color: '#e24b4a', text: `⚠ Sobreexplotación continua: ${state.consecutiveOverfishing} años seguidos` });
+
+  if (events.length === 0) events.push({ color: '#888', text: 'Temporada sin novedad' });
+
+  const logYear = state.year;
+  events.forEach(e => addEvent(e.color, e.text, logYear));
+
+  state.year++;
+  updateUI();
+  updateChart();
+
+  // Check collapse
+  if (state.population < COLLAPSE_THRESHOLD) {
+    state.collapsed = true;
+    setTimeout(() => {
+      document.getElementById('crashStats').textContent = `Año ${state.year - 1} | Total ganado: $${state.totalEarnings.toLocaleString()}`;
+      document.getElementById('crashOverlay').classList.add('show');
+    }, 500);
+    return;
+  }
+
+  // Win condition
+  if (state.year > 20) {
+    const grade = state.ecosystemHealth > 70 ? 'Excelente' : state.ecosystemHealth > 40 ? 'Aceptable' : 'Marginal';
+    document.getElementById('winStats').textContent = `Ganancias totales: $${state.totalEarnings.toLocaleString()} | Salud final: ${Math.round(state.ecosystemHealth)}% (${grade})`;
+    document.getElementById('winOverlay').classList.add('show');
+    return;
+  }
+
+  document.getElementById('btnAvanzar').disabled = false;
+}
+
+// ── UI Updates ───────────────────────────────────────────────────────────────
+function updateUI() {
+  document.getElementById('yearBadge').textContent = `Año ${state.year} / 20`;
+  document.getElementById('statPob').textContent = state.population.toLocaleString();
+  document.getElementById('statSalud').textContent = Math.round(state.ecosystemHealth) + '%';
+  document.getElementById('statTotal').textContent = '$' + state.totalEarnings.toLocaleString();
+  document.getElementById('statGan').textContent = state.year > 1 ? '$' + calcCaptura() * (state.talla >= 30 ? 18 : 14) : '$0';
+
+  const popPct = Math.round((state.population / INITIAL_POP) * 100);
+  document.getElementById('popPct').textContent = popPct + '%';
+  const popFill = document.getElementById('popFill');
+  popFill.style.width = Math.min(100, popPct) + '%';
+  popFill.style.background = popPct > 70 ? '#1dc675' : popPct > 40 ? '#ef9f27' : '#e24b4a';
+
+  const ecoPct = Math.round(state.ecosystemHealth);
+  document.getElementById('ecoPct').textContent = ecoPct + '%';
+  const ecoFill = document.getElementById('ecoFill');
+  ecoFill.style.width = ecoPct + '%';
+  ecoFill.style.background = ecoPct > 60 ? '#4fc3f7' : ecoPct > 30 ? '#ef9f27' : '#e24b4a';
+
+  // Status colors
+  const cardPob = document.getElementById('cardPob');
+  cardPob.className = 'stat-card ' + (popPct > 70 ? 'good' : popPct > 40 ? 'warn' : 'danger');
+
+  const cardSalud = document.getElementById('cardSalud');
+  cardSalud.className = 'stat-card ' + (ecoPct > 60 ? 'good' : ecoPct > 30 ? 'warn' : 'danger');
+
+  updateDiag();
+}
+
+function updateDiag() {
+  const captura = calcCaptura();
+  const ratio = captura / Math.max(state.population, 1);
+  const lines = [];
+
+  if (!state.pescaActiva) {
+    lines.push('🟢 Veda activa: recuperación natural en curso');
+  } else if (ratio > 0.3) {
+    lines.push('🔴 Esfuerzo excesivo: riesgo de sobreexplotación');
+  } else if (ratio > 0.2) {
+    lines.push('🟡 Esfuerzo alto: monitoreo necesario');
+  } else {
+    lines.push('🟢 Esfuerzo sostenible');
+  }
+
+  if (state.talla < 20) lines.push('⚠ Talla muy baja: capturas juveniles dañinas');
+  else if (state.talla >= 30) lines.push('✓ Talla adecuada: reproductores protegidos');
+
+  if (state.arte === 'red') lines.push('⚠ Arrastre: alto impacto ecosistémico');
+  if (state.reserva >= 20) lines.push('✓ Reserva marina activa');
+
+  document.getElementById('diagnostico').innerHTML = lines.map(l =>
+    `<div style="padding: 2px 0;">${l}</div>`
+  ).join('');
+}
+
+function addEvent(color, text, year) {
+  const log = document.getElementById('eventLog');
+  const item = document.createElement('div');
+  item.className = 'event-item';
+  item.innerHTML = `<div class="event-dot" style="background:${color}"></div><div class="event-text">${text}</div><div class="event-year">Año ${year}</div>`;
+  log.insertBefore(item, log.firstChild);
+}
+
+// ── Chart ────────────────────────────────────────────────────────────────────
+function initChart() {
+  if (histChart) histChart.destroy();
+  const c = document.getElementById('histChart');
+  histChart = new Chart(c, {
+    type: 'line',
+    data: {
+      labels: state.popHistory.map((_, i) => i === 0 ? 'Inicio' : `Año ${i}`),
+      datasets: [{
+        label: 'Población',
+        data: state.popHistory,
+        borderColor: '#4fc3f7',
+        backgroundColor: 'rgba(79,195,247,0.08)',
+        borderWidth: 2,
+        pointRadius: 2,
+        fill: true,
+        tension: 0.4
+      }, {
+        label: 'Umbral crítico',
+        data: state.popHistory.map(() => COLLAPSE_THRESHOLD),
+        borderColor: 'rgba(226,75,74,0.5)',
+        borderDash: [4, 4],
+        borderWidth: 1,
+        pointRadius: 0,
+        fill: false
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: 'rgba(232,244,248,0.35)', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: 'rgba(232,244,248,0.35)', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' }, min: 0 }
+      }
+    }
+  });
+}
+
+function updateChart() {
+  if (!histChart) return;
+  const labels = state.popHistory.map((_, i) => i === 0 ? 'Inicio' : `A${i}`);
+  histChart.data.labels = labels;
+  histChart.data.datasets[0].data = state.popHistory;
+  histChart.data.datasets[1].data = state.popHistory.map(() => COLLAPSE_THRESHOLD);
+  histChart.update();
+}
+
+function reiniciar() {
+  document.getElementById('crashOverlay').classList.remove('show');
+  document.getElementById('winOverlay').classList.remove('show');
+  state = createState();
+
+  // Reset controls
+  document.getElementById('tallaSlider').value = 25; updateTalla(25);
+  document.getElementById('esfSlider').value = 50; updateEsf(50);
+  document.getElementById('reservaSlider').value = 0; updateReserva(0);
+  document.getElementById('cuotaSlider').value = 0; updateCuota(0);
+  setPesca(true);
+  setArte('selectiva');
+
+  document.getElementById('eventLog').innerHTML = '';
+  document.getElementById('btnAvanzar').disabled = false;
+  initFish();
+  updateUI();
+  initChart();
+  addEvent('#4fc3f7', 'Cooperativa fundada. ¡Bienvenido al mar!', 1);
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+state = createState();
+initFish();
+updateUI();
+setTimeout(() => {
+  resizeCanvas();
+  initChart();
+  addEvent('#4fc3f7', 'Cooperativa fundada. Gestiona tu flota con responsabilidad.', 1);
+  animateOcean();
+}, 100);
+</script>
+</body>
+</html>

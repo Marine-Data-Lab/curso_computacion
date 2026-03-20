@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mar Sustentable — Juego Didáctico</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --deep: #041c2c;
+  --abyss: #020f18;
+  --ocean: #0a3d5c;
+  --mid: #1a6b8a;
+  --surf: #2a9fd6;
+  --foam: #7dd8f5;
+  --sand: #e8c87a;
+  --coral: #ff6b5b;
+  --kelp: #2eb87a;
+  --light: #e8f4f9;
+  --muted: rgba(232,244,249,0.5);
+  --border: rgba(125,216,245,0.12);
+  --border-bright: rgba(125,216,245,0.3);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--abyss);
+  color: var(--light);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* BACKGROUND */
+.bg-ocean {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 80%, rgba(10,61,92,0.7) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 40% at 80% 20%, rgba(26,107,138,0.3) 0%, transparent 60%),
+    linear-gradient(180deg, #020f18 0%, #041c2c 40%, #0a3d5c 100%);
+  overflow: hidden;
+}
+
+.wave {
+  position: absolute;
+  bottom: 0;
+  width: 200%;
+  height: 200px;
+  opacity: 0.06;
+  animation: wave-move 8s linear infinite;
+}
+.wave:nth-child(2) { animation-duration: 12s; animation-direction: reverse; opacity: 0.04; bottom: 20px; }
+.wave:nth-child(3) { animation-duration: 15s; opacity: 0.03; bottom: 40px; }
+@keyframes wave-move {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.bubble {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(125,216,245,0.04);
+  border: 1px solid rgba(125,216,245,0.06);
+  animation: bubble-float linear infinite;
+}
+@keyframes bubble-float {
+  from { transform: translateY(0) scale(1); opacity: 0.6; }
+  to { transform: translateY(-100vh) scale(1.2); opacity: 0; }
+}
+
+/* LAYOUT */
+.app {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* HEADER */
+header {
+  padding: 1.5rem 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+  background: rgba(2,15,24,0.6);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, var(--surf), var(--foam));
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.logo h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--light);
+}
+
+.logo span {
+  font-size: 0.75rem;
+  color: var(--foam);
+  display: block;
+  font-weight: 300;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.season-badge {
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border: 1px solid var(--border-bright);
+  background: rgba(42,159,214,0.1);
+  color: var(--foam);
+  letter-spacing: 0.02em;
+}
+
+.turn-counter {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.turn-counter strong {
+  color: var(--sand);
+  font-weight: 700;
+}
+
+/* NAV */
+nav {
+  padding: 0 2.5rem;
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  background: rgba(2,15,24,0.4);
+}
+
+.nav-tab {
+  padding: 1rem 1.5rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: rgba(232,244,249,0.45);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+}
+
+.nav-tab:hover { color: var(--foam); }
+.nav-tab.active {
+  color: var(--foam);
+  border-bottom-color: var(--surf);
+}
+
+/* MAIN CONTENT */
+main {
+  flex: 1;
+  padding: 2rem 2.5rem;
+  display: grid;
+  grid-template-columns: 300px 1fr 280px;
+  gap: 1.5rem;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* CARDS */
+.card {
+  background: rgba(10,61,92,0.25);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.25rem;
+  backdrop-filter: blur(10px);
+}
+
+.card-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(125,216,245,0.6);
+  margin-bottom: 1rem;
+}
+
+/* LEFT COLUMN */
+.left-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* ROLE SELECTOR */
+.roles-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 1rem;
+}
+
+.role-card {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(4,28,44,0.6);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.role-card:hover {
+  border-color: var(--border-bright);
+  background: rgba(26,107,138,0.2);
+}
+
+.role-card.active {
+  border-color: var(--surf);
+  background: rgba(42,159,214,0.15);
+}
+
+.role-icon { font-size: 24px; display: block; margin-bottom: 4px; }
+.role-name { font-size: 0.75rem; font-weight: 500; color: var(--light); }
+
+.role-description {
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: rgba(232,244,249,0.6);
+  padding: 10px;
+  background: rgba(4,28,44,0.4);
+  border-radius: 10px;
+  border-left: 2px solid var(--surf);
+}
+
+/* STATS */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.stat-item {
+  background: rgba(4,28,44,0.5);
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+  border: 1px solid var(--border);
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  color: rgba(125,216,245,0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+}
+
+.stat-val {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+/* CENTER COLUMN */
+.center-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* OCEAN VIZ */
+.ocean-view {
+  position: relative;
+  height: 220px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, #0a2840 0%, #0a3d5c 40%, #0d5578 100%);
+}
+
+.ocean-depth {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60%;
+  background: linear-gradient(180deg, transparent, rgba(2,15,24,0.5));
+}
+
+.ocean-surface {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, rgba(125,216,245,0.3), transparent);
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.sea-creature {
+  position: absolute;
+  font-size: 18px;
+  animation: swim linear infinite;
+  user-select: none;
+}
+
+@keyframes swim {
+  0% { transform: translateX(-30px) scaleX(1); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateX(calc(100vw + 30px)) scaleX(1); opacity: 0; }
+}
+
+.ocean-floor {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: linear-gradient(180deg, transparent, rgba(10,61,92,0.8));
+  display: flex;
+  align-items: flex-end;
+  padding: 0 20px 8px;
+  gap: 20px;
+}
+
+.ocean-label {
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--foam);
+  opacity: 0.8;
+}
+
+.ocean-stats-overlay {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+}
+
+.oso-pill {
+  font-size: 0.7rem;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: rgba(2,15,24,0.6);
+  border: 1px solid var(--border-bright);
+  backdrop-filter: blur(10px);
+  color: var(--foam);
+}
+
+/* ECO BARS */
+.eco-bars { display: flex; flex-direction: column; gap: 10px; }
+
+.eco-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.eco-label {
+  font-size: 0.8rem;
+  color: rgba(232,244,249,0.6);
+  width: 100px;
+  flex-shrink: 0;
+}
+
+.eco-track {
+  flex: 1;
+  height: 8px;
+  background: rgba(4,28,44,0.8);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.eco-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+}
+
+.eco-num {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  width: 48px;
+  text-align: right;
+  color: var(--foam);
+}
+
+/* ACTIONS */
+.actions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.action-btn {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(4,28,44,0.5);
+  color: var(--light);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.action-btn:hover:not(:disabled) {
+  background: rgba(26,107,138,0.3);
+  border-color: var(--border-bright);
+  transform: translateX(2px);
+}
+
+.action-btn.destructive { border-color: rgba(255,107,91,0.25); }
+.action-btn.destructive:hover:not(:disabled) {
+  background: rgba(255,107,91,0.1);
+  border-color: rgba(255,107,91,0.5);
+}
+
+.action-btn.positive { border-color: rgba(46,184,122,0.25); }
+.action-btn.positive:hover:not(:disabled) {
+  background: rgba(46,184,122,0.1);
+  border-color: rgba(46,184,122,0.5);
+}
+
+.action-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.action-label { font-weight: 500; }
+.action-tag {
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: rgba(125,216,245,0.08);
+  color: var(--foam);
+  white-space: nowrap;
+}
+
+.action-tag.red { background: rgba(255,107,91,0.1); color: #ff9f96; }
+.action-tag.green { background: rgba(46,184,122,0.1); color: #6ee4b4; }
+
+.end-turn-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--surf), var(--mid));
+  border: none;
+  color: white;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.02em;
+  margin-top: 4px;
+}
+
+.end-turn-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(42,159,214,0.3);
+}
+
+.end-turn-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* RIGHT COLUMN */
+.right-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* EVENTS */
+.events-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.event-item {
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  background: rgba(4,28,44,0.5);
+  border-left: 2px solid var(--surf);
+  color: rgba(232,244,249,0.75);
+  animation: event-in 0.3s ease;
+}
+
+@keyframes event-in {
+  from { opacity: 0; transform: translateX(8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.event-item.danger { border-left-color: var(--coral); }
+.event-item.good { border-left-color: var(--kelp); }
+.event-item.warn { border-left-color: var(--sand); }
+
+/* ECOSYSTEM TAB */
+.eco-chain { display: flex; flex-direction: column; gap: 10px; }
+
+.chain-level {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(4,28,44,0.5);
+  border: 1px solid var(--border);
+  transition: border-color 0.3s;
+}
+
+.chain-level:hover { border-color: var(--border-bright); }
+.chain-icon { font-size: 28px; flex-shrink: 0; }
+.chain-info { flex: 1; }
+.chain-name { font-weight: 500; font-size: 0.9rem; margin-bottom: 2px; }
+.chain-desc { font-size: 0.75rem; color: rgba(232,244,249,0.5); line-height: 1.4; }
+.chain-status { font-size: 0.75rem; font-weight: 600; padding: 4px 10px; border-radius: 8px; white-space: nowrap; }
+.status-ok { background: rgba(46,184,122,0.12); color: #6ee4b4; }
+.status-warn { background: rgba(232,200,122,0.12); color: #f0d080; }
+.status-bad { background: rgba(255,107,91,0.12); color: #ff9f96; }
+
+/* LEARN TAB */
+.learn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+
+.concept-card {
+  background: rgba(10,61,92,0.25);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.concept-card:hover {
+  border-color: var(--border-bright);
+  background: rgba(26,107,138,0.2);
+}
+
+.concept-icon { font-size: 28px; margin-bottom: 10px; }
+.concept-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--foam);
+}
+
+.concept-body {
+  font-size: 0.8rem;
+  line-height: 1.65;
+  color: rgba(232,244,249,0.6);
+}
+
+.ods-list { display: flex; flex-direction: column; gap: 8px; }
+.ods-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(4,28,44,0.5);
+  border: 1px solid var(--border);
+}
+.ods-num {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--surf);
+  width: 36px;
+  flex-shrink: 0;
+}
+.ods-text { font-size: 0.8rem; color: rgba(232,244,249,0.7); }
+
+/* GAME OVER OVERLAY */
+.game-over {
+  position: fixed;
+  inset: 0;
+  background: rgba(2,15,24,0.9);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(20px);
+  display: none;
+}
+
+.game-over-card {
+  text-align: center;
+  padding: 3rem;
+  background: rgba(10,61,92,0.4);
+  border: 1px solid rgba(255,107,91,0.4);
+  border-radius: 24px;
+  max-width: 480px;
+}
+
+.game-over-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--coral);
+  margin-bottom: 1rem;
+}
+
+.game-over-body {
+  font-size: 1rem;
+  color: rgba(232,244,249,0.7);
+  line-height: 1.7;
+  margin-bottom: 2rem;
+}
+
+.restart-btn {
+  padding: 14px 36px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--surf), var(--mid));
+  border: none;
+  color: white;
+  font-family: 'Syne', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.restart-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(42,159,214,0.3);
+}
+
+/* HIDDEN */
+.tab-content { display: none; }
+.tab-content.active { display: contents; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="bg-ocean">
+  <svg class="wave" viewBox="0 0 1440 200" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+    <path d="M0,100 C180,40 360,160 540,100 C720,40 900,160 1080,100 C1260,40 1440,160 1440,100 L1440,200 L0,200 Z" fill="rgba(125,216,245,1)"/>
+  </svg>
+  <svg class="wave" viewBox="0 0 1440 200" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+    <path d="M0,120 C200,60 400,180 600,120 C800,60 1000,180 1200,120 C1300,90 1380,140 1440,120 L1440,200 L0,200 Z" fill="rgba(125,216,245,1)"/>
+  </svg>
+  <svg class="wave" viewBox="0 0 1440 200" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+    <path d="M0,80 C150,140 300,20 450,80 C600,140 750,20 900,80 C1050,140 1200,20 1350,80 L1440,80 L1440,200 L0,200 Z" fill="rgba(125,216,245,1)"/>
+  </svg>
+  <div id="bubbles"></div>
+</div>
+
+<div class="app">
+
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🌊</div>
+      <div>
+        <h1>Mar Sustentable</h1>
+        <span>Juego Didáctico de Gestión Pesquera</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="turn-counter">Turno <strong id="turn-display">1</strong> de 12</div>
+      <div class="season-badge" id="season-badge">🌸 Primavera</div>
+    </div>
+  </header>
+
+  <nav>
+    <div class="nav-tab active" onclick="switchTab('play', this)">⚓ Jugar</div>
+    <div class="nav-tab" onclick="switchTab('eco', this)">🌿 Ecosistema</div>
+    <div class="nav-tab" onclick="switchTab('learn', this)">📚 Aprender</div>
+  </nav>
+
+  <main>
+
+    <!-- TAB: PLAY -->
+    <div id="tab-play" class="tab-content active">
+
+      <!-- LEFT -->
+      <div class="left-col">
+        <div class="card">
+          <div class="card-title">Elige tu rol</div>
+          <div class="roles-grid">
+            <div class="role-card active" onclick="setRole('artesanal', this)">
+              <span class="role-icon">🎣</span>
+              <span class="role-name">Artesanal</span>
+            </div>
+            <div class="role-card" onclick="setRole('industrial', this)">
+              <span class="role-icon">🚢</span>
+              <span class="role-name">Industrial</span>
+            </div>
+            <div class="role-card" onclick="setRole('inspector', this)">
+              <span class="role-icon">🏛️</span>
+              <span class="role-name">Inspector</span>
+            </div>
+            <div class="role-card" onclick="setRole('ong', this)">
+              <span class="role-icon">🌿</span>
+              <span class="role-name">ONG</span>
+            </div>
+          </div>
+          <div class="role-description" id="role-desc">
+            🎣 Pescas con botes pequeños y métodos tradicionales. Bajo impacto ambiental. Puedes apoyar zonas de veda y prácticas sostenibles.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Tu desempeño</div>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-label">Pesca total</div>
+              <div class="stat-val" id="total-catch" style="color: var(--sand)">0 t</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">Reputación</div>
+              <div class="stat-val" id="rep-val" style="color: var(--kelp)">100</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">Turno</div>
+              <div class="stat-val" id="turn-val" style="color: var(--foam)">1</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">Biomasa</div>
+              <div class="stat-val" id="biomasa-val" style="color: var(--surf)">750 t</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CENTER -->
+      <div class="center-col">
+
+        <div class="card" style="padding: 0; overflow: hidden;">
+          <div class="ocean-view" id="ocean-view">
+            <div class="ocean-surface"></div>
+            <div class="ocean-label">Visualización del ecosistema</div>
+            <div class="ocean-stats-overlay">
+              <div class="oso-pill" id="fish-pill">🐟 750 peces</div>
+              <div class="oso-pill" id="coral-pill">🪸 Corales 80%</div>
+            </div>
+            <div class="ocean-depth"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Estado del océano</div>
+          <div class="eco-bars">
+            <div class="eco-row">
+              <span class="eco-label">Biomasa peces</span>
+              <div class="eco-track"><div class="eco-fill" id="fill-fish" style="width:75%; background: var(--surf);"></div></div>
+              <span class="eco-num" id="num-fish">750 t</span>
+            </div>
+            <div class="eco-row">
+              <span class="eco-label">Salud corales</span>
+              <div class="eco-track"><div class="eco-fill" id="fill-coral" style="width:80%; background: var(--kelp);"></div></div>
+              <span class="eco-num" id="num-coral">80%</span>
+            </div>
+            <div class="eco-row">
+              <span class="eco-label">Contaminación</span>
+              <div class="eco-track"><div class="eco-fill" id="fill-poll" style="width:20%; background: var(--coral);"></div></div>
+              <span class="eco-num" id="num-poll">20%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Acciones disponibles</div>
+          <div class="actions-list" id="actions-list"></div>
+          <button class="end-turn-btn" id="end-turn-btn" onclick="endTurn()">
+            ⟳ Siguiente turno
+          </button>
+        </div>
+
+      </div>
+
+      <!-- RIGHT -->
+      <div class="right-col">
+        <div class="card" style="flex: 1;">
+          <div class="card-title">Registro de eventos</div>
+          <div class="events-feed" id="events-feed">
+            <div class="event-item good">🌊 Inicio de temporada. Las reservas del mar están en buen estado. Actúa con responsabilidad.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TAB: ECOSISTEMA -->
+    <div id="tab-eco" class="tab-content">
+      <div class="left-col" style="grid-column: 1 / -1; max-width: 100%;">
+        <div class="card" style="max-width:100%;">
+          <div class="card-title">Cadena trófica marina</div>
+          <p style="font-size:0.85rem; color: rgba(232,244,249,0.55); margin-bottom: 1rem; line-height: 1.6;">Cada nivel depende del anterior. La sobreexplotación de una especie desestabiliza todo el ecosistema.</p>
+          <div class="eco-chain">
+            <div class="chain-level">
+              <div class="chain-icon">🦈</div>
+              <div class="chain-info">
+                <div class="chain-name">Depredadores cima</div>
+                <div class="chain-desc">Tiburones, atún, marlin. Controlan las poblaciones intermedias. Su desaparición genera cascadas tróficas devastadoras.</div>
+              </div>
+              <div class="chain-status status-ok" id="pred-chip">Estable</div>
+            </div>
+            <div class="chain-level">
+              <div class="chain-icon">🐟</div>
+              <div class="chain-info">
+                <div class="chain-name">Peces objetivo</div>
+                <div class="chain-desc">Sardinas, huachinango, jurel, robalo. Base de la pesca comercial y artesanal en el Golfo de California.</div>
+              </div>
+              <div class="chain-status status-ok" id="fish-chip">750 t</div>
+            </div>
+            <div class="chain-level">
+              <div class="chain-icon">🦐</div>
+              <div class="chain-info">
+                <div class="chain-name">Organismos base</div>
+                <div class="chain-desc">Plancton, copépodos, camarón, pequeños crustáceos. Son la base energética de toda la cadena. Vulnerables a contaminación.</div>
+              </div>
+              <div class="chain-status status-ok" id="base-chip">Bueno</div>
+            </div>
+            <div class="chain-level">
+              <div class="chain-icon">🪸</div>
+              <div class="chain-info">
+                <div class="chain-name">Hábitat coralino y bentónico</div>
+                <div class="chain-desc">Arrecifes de coral y fondo marino. Hogar del 25% de las especies. Destruidos por redes de arrastre y acidificación oceánica.</div>
+              </div>
+              <div class="chain-status status-ok" id="coral-chip">80%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: APRENDER -->
+    <div id="tab-learn" class="tab-content">
+      <div style="grid-column: 1 / -1; display: flex; flex-direction: column; gap: 1.5rem;">
+        <div class="learn-grid">
+          <div class="concept-card">
+            <div class="concept-icon">⚖️</div>
+            <div class="concept-title">Pesca sustentable</div>
+            <div class="concept-body">Capturar peces a un ritmo que permita la recuperación natural de la población. Se basa en tres pilares: viabilidad ecológica, rentabilidad económica y equidad social para las comunidades pesqueras.</div>
+          </div>
+          <div class="concept-card">
+            <div class="concept-icon">📊</div>
+            <div class="concept-title">Rendimiento Máximo Sostenible</div>
+            <div class="concept-body">El RMS es la mayor captura posible sin reducir la población futura. Pescar por encima del RMS lleva al colapso. En este juego, el límite es ~200 t por temporada. Superarlo reduce la biomasa irrecuperablemente.</div>
+          </div>
+          <div class="concept-card">
+            <div class="concept-icon">🏝️</div>
+            <div class="concept-title">Áreas Marinas Protegidas</div>
+            <div class="concept-body">Zonas de pesca prohibida o restringida. Funcionan como "bancos" biológicos que repueblan zonas adyacentes. Los estudios muestran que incrementan la biomasa en un 670% dentro de sus límites.</div>
+          </div>
+          <div class="concept-card">
+            <div class="concept-icon">🏭</div>
+            <div class="concept-title">Externalidades pesqueras</div>
+            <div class="concept-body">Las redes de arrastre destruyen el fondo marino. La captura incidental (bycatch) elimina especies no objetivo como tortugas y delfines. Los subsidios gubernamentales a la pesca industrial generan sobreexplotación.</div>
+          </div>
+          <div class="concept-card">
+            <div class="concept-icon">🌐</div>
+            <div class="concept-title">El dilema del bien común</div>
+            <div class="concept-body">El océano es un recurso compartido. Si cada actor lo explota individualmente al máximo, el recurso colapsa para todos. La cooperación y regulación son esenciales para evitar la "tragedia de los comunes".</div>
+          </div>
+          <div class="concept-card">
+            <div class="concept-icon">🌡️</div>
+            <div class="concept-title">Cambio climático y pesca</div>
+            <div class="concept-body">El calentamiento oceánico desplaza las especies hacia los polos. La acidificación disuelve las conchas y corales. Los eventos El Niño/La Niña alteran drásticamente la disponibilidad de especies.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Objetivos de Desarrollo Sostenible — ODS 14: Vida submarina</div>
+          <div class="ods-list">
+            <div class="ods-item"><div class="ods-num">14.4</div><div class="ods-text">Regular eficazmente la pesca y poner fin a la sobrepesca, la pesca ilegal y las prácticas pesqueras destructivas</div></div>
+            <div class="ods-item"><div class="ods-num">14.2</div><div class="ods-text">Gestionar y proteger sosteniblemente los ecosistemas marinos y costeros para evitar efectos adversos</div></div>
+            <div class="ods-item"><div class="ods-num">14.b</div><div class="ods-text">Facilitar el acceso de los pescadores artesanales a los recursos marinos y los mercados</div></div>
+            <div class="ods-item"><div class="ods-num">14.5</div><div class="ods-text">Conservar al menos el 10% de las zonas costeras y marinas mediante áreas protegidas</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+</div>
+
+<!-- GAME OVER -->
+<div class="game-over" id="game-over">
+  <div class="game-over-card">
+    <div class="game-over-title">⚠️ Colapso Pesquero</div>
+    <div class="game-over-body">La población de peces ha colapsado por sobreexplotación. El ecosistema marino tardará décadas en recuperarse. Esta es la realidad de muchas pesquerías en el mundo.</div>
+    <button class="restart-btn" onclick="restartGame()">🔄 Reiniciar juego</button>
+  </div>
+</div>
+
+<script>
+/* BUBBLES */
+const bubbleContainer = document.getElementById('bubbles');
+for (let i = 0; i < 18; i++) {
+  const b = document.createElement('div');
+  b.className = 'bubble';
+  const size = 20 + Math.random() * 60;
+  b.style.cssText = `width:${size}px; height:${size}px; left:${Math.random()*100}%; bottom:-${size}px; animation-duration:${10+Math.random()*20}s; animation-delay:${Math.random()*15}s;`;
+  bubbleContainer.appendChild(b);
+}
+
+/* GAME STATE */
+const S = {
+  role: 'artesanal',
+  fish: 750,
+  coral: 80,
+  poll: 20,
+  rep: 100,
+  catch: 0,
+  turn: 1,
+  done: [],
+  over: false
+};
+
+const seasons = [
+  { name: 'Primavera', emoji: '🌸' },
+  { name: 'Verano', emoji: '☀️' },
+  { name: 'Otoño', emoji: '🍂' },
+  { name: 'Invierno', emoji: '❄️' }
+];
+
+const roleDescs = {
+  artesanal: '🎣 Pescas con botes pequeños y métodos tradicionales. Bajo impacto ambiental. Puedes apoyar zonas de veda y prácticas sostenibles.',
+  industrial: '🚢 Operas flotas con redes de arrastre. Alto volumen, pero alto impacto. Debes decidir cuándo frenar para no destruir tu fuente de ingresos.',
+  inspector: '🏛️ Eres la autoridad pesquera. Estableces cuotas, cierras temporadas y aplicas sanciones. Sin regulación, el mercado falla.',
+  ong: '🌿 Representas la sociedad civil. Puedes crear presión social, establecer áreas protegidas y denunciar prácticas ilegales.'
+};
+
+const roleActions = {
+  artesanal: [
+    { id:'a1', label:'Pesca selectiva (50 t)', tag:'Bajo impacto', type:'', fx:{fish:-50, rep:5, catch:50} },
+    { id:'a2', label:'Pesca intensiva (120 t)', tag:'Alto volumen', type:'destructive', fx:{fish:-120, rep:-10, catch:120} },
+    { id:'a3', label:'Respetar veda voluntaria', tag:'Recuperación', type:'positive', fx:{fish:30, rep:15, catch:0} },
+  ],
+  industrial: [
+    { id:'b1', label:'Pesca de arrastre (200 t)', tag:'Muy destructivo', type:'destructive', fx:{fish:-200, coral:-8, rep:-20, catch:200} },
+    { id:'b2', label:'Pesca con palangre (100 t)', tag:'Moderado', type:'', fx:{fish:-100, rep:-5, catch:100} },
+    { id:'b3', label:'Certificar flota sostenible', tag:'MSC ✓', type:'positive', fx:{fish:-60, rep:20, catch:60} },
+  ],
+  inspector: [
+    { id:'c1', label:'Establecer cuota de captura', tag:'Limita extracción', type:'positive', fx:{fish:20, rep:10, catch:0} },
+    { id:'c2', label:'Crear área marina protegida', tag:'AMP', type:'positive', fx:{fish:50, coral:5, rep:15, catch:0} },
+    { id:'c3', label:'Ignorar denuncia ilegal', tag:'Corrupción', type:'destructive', fx:{fish:-80, rep:-30, catch:0} },
+  ],
+  ong: [
+    { id:'d1', label:'Campaña de concientización', tag:'Educación', type:'positive', fx:{rep:10, fish:10, catch:0} },
+    { id:'d2', label:'Monitoreo del ecosistema', tag:'Ciencia', type:'positive', fx:{coral:5, poll:-10, rep:8, catch:0} },
+    { id:'d3', label:'Denuncia pesca ilegal', tag:'Acción legal', type:'positive', fx:{fish:40, rep:20, catch:0} },
+  ]
+};
+
+const randomEvents = [
+  { msg:'🌡️ El Niño detectado. Temperatura marina sube +2°C.', type:'warn', fx:{fish:-30} },
+  { msg:'📋 Nueva regulación: cuotas reducidas en 10%.', type:'', fx:{} },
+  { msg:'🐬 Avistamiento de delfines. La biodiversidad mejora.', type:'good', fx:{rep:5} },
+  { msg:'⛽ Derrame de combustible. Contaminación +8%.', type:'danger', fx:{poll:8} },
+  { msg:'🎓 Foro internacional de pesca sustentable.', type:'good', fx:{rep:5} },
+  { msg:'🌿 Temporada de reproducción. Evitar zonas de desove.', type:'warn', fx:{} },
+  { msg:'🌊 Tormenta. Pesca suspendida 3 días.', type:'warn', fx:{fish:15} },
+  { msg:'🐙 Los cefalópodos se recuperan gracias a la veda.', type:'good', fx:{fish:20} },
+];
+
+function setRole(role, el) {
+  S.role = role;
+  document.querySelectorAll('.role-card').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('role-desc').textContent = roleDescs[role];
+  renderActions();
+}
+
+function renderActions() {
+  const list = document.getElementById('actions-list');
+  list.innerHTML = roleActions[S.role].map(a => `
+    <button class="action-btn ${a.type}" id="act-${a.id}" onclick="doAction('${a.id}')" ${S.done.includes(a.id) ? 'disabled' : ''}>
+      <span class="action-label">${a.label}</span>
+      <span class="action-tag ${a.type === 'destructive' ? 'red' : a.type === 'positive' ? 'green' : ''}">${a.tag}</span>
+    </button>
+  `).join('');
+}
+
+function doAction(id) {
+  if (S.done.includes(id) || S.over) return;
+  const all = Object.values(roleActions).flat();
+  const act = all.find(a => a.id === id);
+  if (!act) return;
+  S.done.push(id);
+  const f = act.fx;
+  if (f.fish) S.fish = Math.max(0, Math.min(1000, S.fish + f.fish));
+  if (f.coral) S.coral = Math.max(0, Math.min(100, S.coral + f.coral));
+  if (f.poll) S.poll = Math.max(0, Math.min(100, S.poll + f.poll));
+  if (f.rep) S.rep = Math.max(0, Math.min(200, S.rep + f.rep));
+  if (f.catch) S.catch += f.catch;
+  addEvent(act.label, f.rep >= 0 ? 'good' : 'warn');
+  updateUI();
+  renderActions();
+}
+
+function endTurn() {
+  if (S.over) return;
+  S.turn++;
+  S.done = [];
+  S.fish = Math.min(1000, Math.round(S.fish * 1.10));
+  if (S.poll > 50) S.coral = Math.max(0, S.coral - 4);
+  const ev = randomEvents[Math.floor(Math.random() * randomEvents.length)];
+  if (ev.fx.fish) S.fish = Math.max(0, S.fish + ev.fx.fish);
+  if (ev.fx.poll) S.poll = Math.min(100, S.poll + ev.fx.poll);
+  if (ev.fx.rep) S.rep = Math.min(200, S.rep + ev.fx.rep);
+  addEvent(ev.msg, ev.type);
+  updateSeason();
+  updateUI();
+  renderActions();
+  if (S.fish < 50) triggerGameOver();
+}
+
+function triggerGameOver() {
+  S.over = true;
+  document.getElementById('game-over').style.display = 'flex';
+  document.getElementById('end-turn-btn').disabled = true;
+}
+
+function restartGame() {
+  Object.assign(S, { fish:750, coral:80, poll:20, rep:100, catch:0, turn:1, done:[], over:false });
+  document.getElementById('game-over').style.display = 'none';
+  document.getElementById('end-turn-btn').disabled = false;
+  document.getElementById('events-feed').innerHTML = '<div class="event-item good">🌊 Juego reiniciado. ¡Comienza de nuevo con conciencia!</div>';
+  updateSeason();
+  updateUI();
+  renderActions();
+  renderOcean();
+}
+
+function updateSeason() {
+  const s = seasons[(S.turn - 1) % 4];
+  document.getElementById('season-badge').textContent = `${s.emoji} ${s.name}`;
+  document.getElementById('turn-display').textContent = S.turn;
+  document.getElementById('turn-val').textContent = S.turn;
+}
+
+function addEvent(msg, type = '') {
+  const feed = document.getElementById('events-feed');
+  const div = document.createElement('div');
+  div.className = 'event-item ' + type;
+  div.textContent = msg;
+  feed.insertBefore(div, feed.firstChild);
+  while (feed.children.length > 5) feed.removeChild(feed.lastChild);
+}
+
+function updateUI() {
+  const fp = Math.round(S.fish / 10);
+  document.getElementById('fill-fish').style.width = fp + '%';
+  document.getElementById('fill-fish').style.background = S.fish < 200 ? 'var(--coral)' : S.fish < 400 ? 'var(--sand)' : 'var(--surf)';
+  document.getElementById('num-fish').textContent = S.fish + ' t';
+  document.getElementById('fill-coral').style.width = S.coral + '%';
+  document.getElementById('fill-coral').style.background = S.coral < 30 ? 'var(--coral)' : 'var(--kelp)';
+  document.getElementById('num-coral').textContent = S.coral + '%';
+  document.getElementById('fill-poll').style.width = S.poll + '%';
+  document.getElementById('num-poll').textContent = S.poll + '%';
+  document.getElementById('total-catch').textContent = S.catch + ' t';
+  document.getElementById('rep-val').textContent = S.rep;
+  document.getElementById('rep-val').style.color = S.rep > 80 ? 'var(--kelp)' : S.rep > 40 ? 'var(--sand)' : 'var(--coral)';
+  document.getElementById('biomasa-val').textContent = S.fish + ' t';
+  document.getElementById('fish-pill').textContent = `🐟 ${S.fish} peces`;
+  document.getElementById('coral-pill').textContent = `🪸 Corales ${S.coral}%`;
+
+  const fishStatus = S.fish < 200 ? ['En peligro','status-bad'] : S.fish < 400 ? ['Reducido','status-warn'] : ['Estable','status-ok'];
+  const predStatus = S.fish < 300 ? ['En riesgo','status-bad'] : ['Estable','status-ok'];
+  const baseStatus = S.poll > 60 ? ['Deteriorado','status-bad'] : ['Bueno','status-ok'];
+  const coralStatus = S.coral < 30 ? ['Crítico','status-bad'] : S.coral < 60 ? ['Deteriorado','status-warn'] : ['Saludable','status-ok'];
+
+  setChip('fish-chip', S.fish + ' t', fishStatus[1]);
+  setChip('pred-chip', predStatus[0], predStatus[1]);
+  setChip('base-chip', baseStatus[0], baseStatus[1]);
+  setChip('coral-chip', S.coral + '%', coralStatus[1]);
+
+  renderOcean();
+}
+
+function setChip(id, text, cls) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  el.className = 'chain-status ' + cls;
+}
+
+const seaCreatures = ['🐟','🐠','🐡','🦐','🐙','🦑','🐬','🐋','🦈','🐊'];
+
+function renderOcean() {
+  const view = document.getElementById('ocean-view');
+  view.querySelectorAll('.sea-creature').forEach(e => e.remove());
+  const count = Math.min(Math.floor(S.fish / 55), 15);
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('div');
+    el.className = 'sea-creature';
+    el.textContent = seaCreatures[Math.floor(Math.random() * seaCreatures.length)];
+    const topPct = 15 + Math.random() * 65;
+    const dur = 12 + Math.random() * 18;
+    const delay = Math.random() * -20;
+    el.style.cssText = `top:${topPct}%; animation-duration:${dur}s; animation-delay:${delay}s;`;
+    view.appendChild(el);
+  }
+  if (S.coral > 40) {
+    const coralEl = document.createElement('div');
+    coralEl.className = 'sea-creature';
+    coralEl.textContent = '🪸';
+    coralEl.style.cssText = `bottom: 12px; left: 40%; animation: none; font-size: 22px;`;
+    view.appendChild(coralEl);
+  }
+}
+
+function switchTab(name, el) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  el.classList.add('active');
+}
+
+/* INIT */
+document.getElementById('role-desc').textContent = roleDescs['artesanal'];
+renderActions();
+renderOcean();
+</script>
+</body>
+</html>

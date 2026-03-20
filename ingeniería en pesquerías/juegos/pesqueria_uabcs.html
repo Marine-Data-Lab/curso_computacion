@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pesquería UABCS</title>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --d1:#010d1c; --d2:#021428; --d3:#032240; --ocean:#04366b; --wave:#0a5fa8;
+  --sky:#1480d4; --foam:#4db8f5; --mist:#a8d8f0; --white:#e8f6ff;
+  --gold:#ffd23f; --coral:#ff5757; --green:#2dd881; --teal:#00e0d0;
+  --warn:#ff9f43; --purple:#a55eea;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--d1);color:var(--white);font-family:'Nunito',sans-serif;min-height:100vh;overflow-x:hidden;cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Ctext y='20' font-size='20'%3E🎣%3C/text%3E%3C/svg%3E") 4 20, auto;}
+
+/* ---- BG ---- */
+#bg{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse at 20% 80%,#032240 0%,#010d1c 60%);}
+.ray{position:absolute;width:2px;background:linear-gradient(180deg,rgba(14,120,212,0.18),transparent);transform-origin:top center;top:0;}
+.bbl{position:absolute;border-radius:50%;background:rgba(77,184,245,0.1);animation:rise linear infinite;}
+@keyframes rise{0%{transform:translateY(105vh);opacity:.7}100%{transform:translateY(-10vh);opacity:0}}
+.deepfish{position:absolute;font-size:1.8rem;opacity:.05;animation:swimdeep linear infinite;}
+@keyframes swimdeep{0%{transform:translateX(-5vw) scaleX(1)}50%{transform:translateX(50vw) scaleX(1)}50.01%{transform:translateX(50vw) scaleX(-1)}100%{transform:translateX(110vw) scaleX(-1)}}
+
+/* ---- LAYOUT ---- */
+#app{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:.8rem 1rem 3rem;}
+
+/* ---- HEADER ---- */
+header{display:flex;align-items:center;justify-content:space-between;padding:.6rem 0 .4rem;border-bottom:1px solid rgba(77,184,245,.15);margin-bottom:.7rem;flex-wrap:wrap;gap:.5rem;}
+.brand{display:flex;align-items:center;gap:.7rem;}
+.brand-icon{font-size:2.2rem;animation:bobHead 3s ease-in-out infinite;}
+@keyframes bobHead{0%,100%{transform:translateY(0) rotate(-5deg)}50%{transform:translateY(-5px) rotate(5deg)}}
+.brand-text{}
+.brand-name{font-family:'Bangers',cursive;font-size:2rem;letter-spacing:3px;background:linear-gradient(135deg,#4db8f5,#00e0d0,#ffd23f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;}
+.brand-sub{font-size:.6rem;color:var(--foam);letter-spacing:2px;text-transform:uppercase;opacity:.8;}
+.header-right{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;}
+.time-chip{background:rgba(4,54,107,.6);border:1px solid rgba(77,184,245,.2);border-radius:30px;padding:.35rem .9rem;text-align:center;backdrop-filter:blur(8px);}
+.tc-label{font-size:.55rem;color:var(--foam);text-transform:uppercase;letter-spacing:1px;}
+.tc-val{font-family:'Bangers',cursive;font-size:1.15rem;color:var(--gold);letter-spacing:1px;}
+.pts-chip{background:linear-gradient(135deg,rgba(255,210,63,.15),rgba(255,159,67,.1));border:1px solid rgba(255,210,63,.35);border-radius:30px;padding:.35rem 1rem;text-align:center;}
+.pts-big{font-family:'Bangers',cursive;font-size:1.5rem;color:var(--gold);letter-spacing:1px;}
+.pts-label{font-size:.55rem;color:var(--gold);text-transform:uppercase;letter-spacing:1px;opacity:.8;}
+
+/* ---- STATS ---- */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin-bottom:.7rem;}
+.scard{background:rgba(3,34,64,.65);border:1px solid rgba(77,184,245,.12);border-radius:14px;padding:.8rem .9rem;backdrop-filter:blur(8px);position:relative;overflow:hidden;transition:transform .2s,border-color .3s;}
+.scard:hover{transform:translateY(-3px);border-color:rgba(77,184,245,.35);}
+.scard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:14px 14px 0 0;}
+.scard.sf::before{background:var(--teal)} .scard.se::before{background:var(--green)} .scard.sm::before{background:var(--gold)} .scard.sc::before{background:var(--coral)}
+.sc-top{display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem;}
+.sc-ico{font-size:1.4rem;} .sc-name{font-size:.6rem;text-transform:uppercase;letter-spacing:1px;color:var(--foam);} 
+.sc-val{font-family:'Bangers',cursive;font-size:1.6rem;margin-bottom:.3rem;}
+.sc-bar-bg{background:rgba(255,255,255,.08);border-radius:10px;height:5px;overflow:hidden;}
+.sc-bar{height:100%;border-radius:10px;transition:width .9s cubic-bezier(.4,0,.2,1);}
+.scard.sf .sc-bar{background:linear-gradient(90deg,var(--teal),#a0fff8)} .scard.se .sc-bar{background:linear-gradient(90deg,#1a9e5c,var(--green))} .scard.sm .sc-bar{background:linear-gradient(90deg,#e0a800,var(--gold))} .scard.sc .sc-bar{background:linear-gradient(90deg,#d63031,var(--coral))}
+
+/* ---- MAIN ---- */
+.main-layout{display:grid;grid-template-columns:1fr 280px;gap:.8rem;margin-bottom:.7rem;}
+
+/* ---- LEFT PANEL ---- */
+.left-col{display:flex;flex-direction:column;gap:.7rem;}
+
+/* ---- OCEAN SCENE ---- */
+.ocean-scene{background:linear-gradient(180deg,#04203d 0%,#021428 55%,#010d1c 100%);border:1px solid rgba(77,184,245,.15);border-radius:18px;height:180px;position:relative;overflow:hidden;}
+.oc-sky{position:absolute;top:0;left:0;right:0;height:45px;background:linear-gradient(180deg,rgba(14,120,212,.25),transparent);}
+.oc-surface{position:absolute;top:40px;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,rgba(77,184,245,.5),rgba(0,224,208,.4),transparent);animation:surf 4s ease-in-out infinite;}
+@keyframes surf{0%,100%{opacity:.6;transform:scaleY(1)}50%{opacity:1;transform:scaleY(1.5)}}
+.oc-floor{position:absolute;bottom:0;left:0;right:0;height:22px;background:linear-gradient(180deg,transparent,rgba(1,13,28,.9));display:flex;align-items:flex-end;justify-content:space-evenly;padding:0 .5rem;font-size:.9rem;}
+.fish-el{position:absolute;font-size:1.3rem;animation:fishSwim ease-in-out infinite,fishY ease-in-out infinite;cursor:pointer;transition:transform .15s;user-select:none;}
+.fish-el:hover{transform:scale(1.5)!important;}
+@keyframes fishSwim{0%,100%{}50%{}}
+@keyframes fishY{0%,100%{margin-top:0}50%{margin-top:-8px}}
+.pop-label{position:absolute;bottom:26px;right:10px;font-size:.62rem;color:var(--foam);background:rgba(1,13,28,.6);padding:.15rem .5rem;border-radius:10px;}
+
+/* ---- FISHERMAN CHARACTER ---- */
+.fisherman-wrap{position:absolute;top:5px;right:12px;display:flex;flex-direction:column;align-items:center;z-index:5;}
+.fisherman{font-size:2.4rem;animation:fisherBob 2.5s ease-in-out infinite;cursor:pointer;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5));}
+@keyframes fisherBob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-6px) rotate(3deg)}}
+.rod-line{width:1px;height:35px;background:linear-gradient(180deg,rgba(255,210,63,.7),rgba(255,210,63,.1));position:relative;left:-4px;}
+.hook{font-size:.7rem;animation:hookDangle 2.5s ease-in-out infinite;display:block;}
+@keyframes hookDangle{0%,100%{transform:translateX(0)}50%{transform:translateX(6px)}}
+.fisher-msg{background:rgba(4,54,107,.85);border:1px solid rgba(77,184,245,.3);border-radius:10px 10px 10px 2px;padding:.25rem .5rem;font-size:.58rem;color:var(--mist);max-width:90px;text-align:center;margin-top:.3rem;}
+
+/* ---- DECISIONS ---- */
+.decisions-wrap{background:rgba(3,34,64,.65);border:1px solid rgba(77,184,245,.12);border-radius:18px;padding:1rem;backdrop-filter:blur(8px);}
+.panel-title{font-family:'Bangers',cursive;font-size:1rem;letter-spacing:2px;color:var(--foam);margin-bottom:.7rem;display:flex;align-items:center;gap:.5rem;text-transform:uppercase;}
+.panel-title::after{content:'';flex:1;height:1px;background:rgba(77,184,245,.15);}
+.decisions-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;}
+.dbtn{background:rgba(4,54,107,.5);border:1px solid rgba(77,184,245,.18);border-radius:12px;padding:.75rem .7rem;cursor:pointer;color:var(--white);font-family:'Nunito',sans-serif;text-align:left;transition:all .22s;position:relative;overflow:hidden;}
+.dbtn::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(77,184,245,.12),transparent);opacity:0;transition:opacity .25s;}
+.dbtn:hover:not(:disabled){border-color:rgba(77,184,245,.5);transform:translateY(-2px);box-shadow:0 6px 20px rgba(10,95,168,.3);}
+.dbtn:hover::after{opacity:1;}
+.dbtn:disabled{opacity:.35;cursor:not-allowed;transform:none;}
+.dbtn:active:not(:disabled){transform:scale(.97);}
+.dbtn-ico{font-size:1.6rem;display:block;margin-bottom:.3rem;}
+.dbtn-title{font-weight:900;font-size:.8rem;margin-bottom:.15rem;line-height:1.2;}
+.dbtn-desc{font-size:.65rem;opacity:.7;line-height:1.3;margin-bottom:.4rem;}
+.dbtn-tags{display:flex;gap:.3rem;flex-wrap:wrap;}
+.tag{font-size:.58rem;padding:.1rem .35rem;border-radius:8px;font-weight:700;}
+.tag.cost{background:rgba(255,87,87,.15);color:var(--coral);border:1px solid rgba(255,87,87,.25);}
+.tag.pos{background:rgba(45,216,129,.12);color:var(--green);border:1px solid rgba(45,216,129,.22);}
+.tag.neg{background:rgba(255,87,87,.1);color:var(--coral);border:1px solid rgba(255,87,87,.18);}
+.tag.warn{background:rgba(255,159,67,.12);color:var(--warn);border:1px solid rgba(255,159,67,.22);}
+
+/* ---- MESSAGE ---- */
+.msg-box{background:rgba(3,34,64,.75);border:1px solid rgba(77,184,245,.18);border-left:3px solid var(--sky);border-radius:14px;padding:.8rem 1rem;display:flex;gap:.7rem;align-items:flex-start;backdrop-filter:blur(8px);animation:msgIn .35s ease;}
+@keyframes msgIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.msg-ico{font-size:1.5rem;flex-shrink:0;margin-top:.1rem;}
+.msg-title{font-weight:900;font-size:.82rem;margin-bottom:.15rem;}
+.msg-text{font-size:.75rem;opacity:.85;line-height:1.5;}
+.msg-box.warn{border-left-color:var(--warn)} .msg-box.danger{border-left-color:var(--coral)} .msg-box.success{border-left-color:var(--green)} .msg-box.info{border-left-color:var(--teal)}
+
+/* ---- SUMMARY MODAL ---- */
+.sum-wrap{background:rgba(3,34,64,.75);border:1px solid rgba(77,184,245,.18);border-radius:18px;padding:1rem;backdrop-filter:blur(8px);display:none;}
+.sum-wrap.visible{display:block;animation:msgIn .4s ease;}
+.sum-title{font-family:'Bangers',cursive;font-size:1.1rem;letter-spacing:2px;color:var(--teal);margin-bottom:.7rem;display:flex;align-items:center;gap:.5rem;}
+.sum-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;margin-bottom:.6rem;}
+.sum-stat{background:rgba(1,13,28,.4);border-radius:10px;padding:.5rem;text-align:center;}
+.sum-stat-name{font-size:.58rem;text-transform:uppercase;letter-spacing:.5px;color:var(--foam);margin-bottom:.2rem;}
+.sum-stat-val{font-family:'Bangers',cursive;font-size:1.1rem;}
+.sum-stat-val.pos{color:var(--green)} .sum-stat-val.neg{color:var(--coral)} .sum-stat-val.neu{color:var(--gold)}
+.sum-consequence{background:rgba(1,13,28,.4);border-radius:10px;padding:.6rem .8rem;font-size:.72rem;line-height:1.55;color:var(--mist);margin-bottom:.5rem;}
+.sum-consequence strong{color:var(--white);}
+.sum-pts{display:flex;align-items:center;gap:.5rem;font-size:.75rem;}
+.sum-pts-badge{background:rgba(255,210,63,.15);border:1px solid rgba(255,210,63,.3);border-radius:20px;padding:.2rem .7rem;font-family:'Bangers',cursive;font-size:1rem;color:var(--gold);}
+.continue-btn{display:block;width:100%;background:linear-gradient(135deg,var(--wave),var(--sky));border:none;border-radius:10px;padding:.7rem;font-family:'Bangers',cursive;font-size:1rem;color:white;cursor:pointer;letter-spacing:2px;margin-top:.6rem;transition:all .25s;}
+.continue-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(10,95,168,.4);}
+
+/* ---- RIGHT COL ---- */
+.right-col{display:flex;flex-direction:column;gap:.7rem;}
+.rpanel{background:rgba(3,34,64,.65);border:1px solid rgba(77,184,245,.12);border-radius:18px;padding:.9rem;backdrop-filter:blur(8px);}
+.history-list{display:flex;flex-direction:column;gap:.35rem;max-height:130px;overflow-y:auto;}
+.hi{display:flex;align-items:flex-start;gap:.4rem;font-size:.67rem;color:var(--mist);padding:.25rem 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.hi-ico{font-size:.9rem;flex-shrink:0;margin-top:.05rem;}
+.hi-yr{color:var(--foam);font-weight:800;margin-right:.2rem;}
+.score-big{text-align:center;padding:.3rem 0;}
+.score-num{font-family:'Bangers',cursive;font-size:3rem;background:linear-gradient(135deg,var(--gold),var(--warn));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;}
+.score-lbl{font-size:.6rem;color:var(--foam);text-transform:uppercase;letter-spacing:1px;}
+.next-btn{display:block;width:100%;background:linear-gradient(135deg,var(--ocean),var(--wave));border:1px solid rgba(77,184,245,.25);border-radius:12px;padding:.8rem;font-family:'Bangers',cursive;font-size:.95rem;color:white;cursor:pointer;letter-spacing:2px;transition:all .25s;}
+.next-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(10,95,168,.35);border-color:rgba(77,184,245,.5);}
+.events-list{font-size:.68rem;color:var(--mist);line-height:1.8;max-height:80px;overflow-y:auto;}
+
+/* ---- TICKER ---- */
+.ticker-bar{background:rgba(10,95,168,.15);border:1px solid rgba(77,184,245,.1);border-radius:8px;padding:.35rem .8rem;overflow:hidden;white-space:nowrap;margin-bottom:.7rem;}
+.ticker-inner{display:inline-block;animation:tick 32s linear infinite;font-size:.7rem;color:var(--mist);}
+@keyframes tick{0%{transform:translateX(100vw)}100%{transform:translateX(-100%)}}
+
+/* ---- OVERLAY ---- */
+.overlay{position:fixed;inset:0;background:rgba(1,13,28,.92);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(10px);}
+.overlay.show{display:flex;}
+.ov-card{background:var(--d2);border:2px solid rgba(77,184,245,.25);border-radius:24px;padding:2.5rem 3rem;text-align:center;max-width:440px;animation:popIn .4s cubic-bezier(.4,0,.2,1);}
+@keyframes popIn{from{opacity:0;transform:scale(.82)}to{opacity:1;transform:scale(1)}}
+.ov-emoji{font-size:4rem;margin-bottom:.8rem;}
+.ov-title{font-family:'Bangers',cursive;font-size:2.2rem;letter-spacing:2px;margin-bottom:.5rem;}
+.ov-sub{font-size:.85rem;color:var(--mist);margin-bottom:1.5rem;line-height:1.7;}
+.ov-score{font-family:'Bangers',cursive;font-size:3rem;color:var(--gold);margin-bottom:1rem;}
+.restart-btn{background:linear-gradient(135deg,var(--wave),var(--teal));border:none;border-radius:12px;padding:.8rem 2rem;font-family:'Bangers',cursive;font-size:1.1rem;color:white;cursor:pointer;letter-spacing:2px;transition:transform .2s;}
+.restart-btn:hover{transform:scale(1.05);}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:3px;} ::-webkit-scrollbar-track{background:transparent;} ::-webkit-scrollbar-thumb{background:rgba(77,184,245,.25);border-radius:10px;}
+
+/* RESPONSIVE */
+@media(max-width:750px){
+  .main-layout{grid-template-columns:1fr;}
+  .stats-row{grid-template-columns:repeat(2,1fr);}
+  .decisions-grid{grid-template-columns:1fr;}
+  .sum-grid{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+<div id="bg"></div>
+
+<!-- Game Over Overlay -->
+<div class="overlay" id="overlay">
+  <div class="ov-card">
+    <div class="ov-emoji" id="ovEmoji">🐟</div>
+    <div class="ov-title" id="ovTitle">Fin del Juego</div>
+    <div class="ov-sub" id="ovSub"></div>
+    <div class="ov-score" id="ovScore"></div>
+    <button class="restart-btn" onclick="initGame()">🔄 JUGAR DE NUEVO</button>
+  </div>
+</div>
+
+<div id="app">
+  <header>
+    <div class="brand">
+      <div class="brand-icon">🦞</div>
+      <div class="brand-text">
+        <div class="brand-name">PESQUERÍA UABCS</div>
+        <div class="brand-sub">🌊 Simulador de Gestión Marina Sustentable</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="time-chip"><div class="tc-label">Año</div><div class="tc-val" id="yearD">2025</div></div>
+      <div class="time-chip"><div class="tc-label">Temporada</div><div class="tc-val" id="seasD">🌞 Verano</div></div>
+      <div class="time-chip"><div class="tc-label">Turno</div><div class="tc-val" id="turnD">1/20</div></div>
+      <div class="pts-chip"><div class="pts-big" id="ptsTop">1000</div><div class="pts-label">Puntos</div></div>
+    </div>
+  </header>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="scard sf"><div class="sc-top"><div class="sc-ico">🐟</div><div class="sc-name">Peces</div></div><div class="sc-val" id="vFish">100%</div><div class="sc-bar-bg"><div class="sc-bar" id="bFish" style="width:100%"></div></div></div>
+    <div class="scard se"><div class="sc-top"><div class="sc-ico">🌿</div><div class="sc-name">Ecosistema</div></div><div class="sc-val" id="vEco">100%</div><div class="sc-bar-bg"><div class="sc-bar" id="bEco" style="width:100%"></div></div></div>
+    <div class="scard sm"><div class="sc-top"><div class="sc-ico">💰</div><div class="sc-name">Economía</div></div><div class="sc-val" id="vMon">100%</div><div class="sc-bar-bg"><div class="sc-bar" id="bMon" style="width:100%"></div></div></div>
+    <div class="scard sc"><div class="sc-top"><div class="sc-ico">👥</div><div class="sc-name">Comunidad</div></div><div class="sc-val" id="vCom">100%</div><div class="sc-bar-bg"><div class="sc-bar" id="bCom" style="width:100%"></div></div></div>
+  </div>
+
+  <!-- Ticker -->
+  <div class="ticker-bar"><span class="ticker-inner" id="ticker">🌊 Cargando datos del océano…</span></div>
+
+  <!-- Main layout -->
+  <div class="main-layout">
+    <div class="left-col">
+
+      <!-- Ocean scene -->
+      <div class="ocean-scene" id="oceanScene">
+        <div class="oc-sky"></div>
+        <div class="oc-surface"></div>
+        <!-- Fisherman -->
+        <div class="fisherman-wrap" id="fisherWrap">
+          <div class="fisherman" id="fisher" title="¡Ese eres tú! 🎣">🧑‍🦱</div>
+          <div class="rod-line"></div>
+          <span class="hook">🪝</span>
+          <div class="fisher-msg" id="fisherMsg">¡Listo para pescar!</div>
+        </div>
+        <div class="pop-label" id="popLabel">~8,000 peces</div>
+        <div class="oc-floor">🪸🌿🦀🪨🌿🪸🦪</div>
+      </div>
+
+      <!-- Message -->
+      <div class="msg-box info" id="msgBox">
+        <div class="msg-ico">🦀</div>
+        <div><div class="msg-title">¡Bienvenido a Pesquería UABCS!</div><div class="msg-text">Toma decisiones inteligentes para mantener el equilibrio entre la pesca, el ecosistema y tu comunidad. Cada decisión tiene un costo en puntos y consecuencias reales. ¡Buena suerte, gestor! 🌊</div></div>
+      </div>
+
+      <!-- Decisions -->
+      <div class="decisions-wrap">
+        <div class="panel-title">⚓ Elige tu Decisión</div>
+        <div class="decisions-grid" id="decGrid"></div>
+      </div>
+
+      <!-- Summary (shown after decision) -->
+      <div class="sum-wrap" id="sumWrap">
+        <div class="sum-title">📋 RESUMEN DE TURNO</div>
+        <div class="sum-grid" id="sumGrid"></div>
+        <div class="sum-consequence" id="sumConseq"></div>
+        <div class="sum-pts"><span>Puntos:</span><span class="sum-pts-badge" id="sumPts">+0</span><span id="sumPtsText"></span></div>
+        <button class="continue-btn" onclick="continueGame()">🌊 CONTINUAR A LA SIGUIENTE TEMPORADA →</button>
+      </div>
+
+    </div>
+
+    <!-- Right col -->
+    <div class="right-col">
+      <div class="rpanel">
+        <div class="panel-title">🏆 Puntuación</div>
+        <div class="score-big"><div class="score-num" id="scoreNum">0</div><div class="score-lbl">Puntos Totales</div></div>
+      </div>
+      <div class="rpanel">
+        <div class="panel-title">📜 Historial</div>
+        <div class="history-list" id="histList"><div class="hi"><span class="hi-ico">🌊</span><span>Inicio — océano saludable</span></div></div>
+      </div>
+      <div class="rpanel">
+        <div class="panel-title">⚡ Eventos</div>
+        <div class="events-list" id="evList">Sin eventos todavía.</div>
+      </div>
+      <div class="rpanel">
+        <div class="panel-title">📊 Indicadores</div>
+        <div id="kpiBox" style="font-size:.68rem;line-height:1.85;color:var(--mist);"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== GAME DATA =====
+const SEASONS = ['🌸 Primavera','🌞 Verano','🍂 Otoño','❄️ Invierno'];
+const TOTAL = 20;
+
+const FISHER_MSGS = [
+  '¡Espero que piquen!','Hm… las aguas son profundas.','¿Y el cardumen?','¡Buenas aguas hoy!','Necesito más carnada.','¡Eso es sustentabilidad!','El mar lo recuerda todo.','¡Cuida el arrecife!',
+];
+
+const DECISIONS = [
+  {
+    id:'quota', ico:'📋', title:'Establecer Cuota',
+    desc:'Limitar capturas al 60% del máximo. Protege la reproducción.',
+    cost:50,
+    fish:+10, eco:+6, mon:-8, com:-4,
+    tags:[{t:'50 pts',c:'cost'},{t:'+Peces',c:'pos'},{t:'-Ingresos',c:'neg'}],
+    conseq:'Los pescadores reducen sus capturas. Al principio hay resistencia, pero con el tiempo los cardúmenes se recuperan notablemente. Los cooperativistas ven los beneficios a largo plazo.',
+    fisherMsg:'¡Cuotas justas para todos! 📋',
+  },
+  {
+    id:'reserve', ico:'🏝️', title:'Zona de Reserva Marina',
+    desc:'Proteger el 30% del área de toda actividad pesquera.',
+    cost:120,
+    fish:+18, eco:+22, mon:-14, com:+6,
+    tags:[{t:'120 pts',c:'cost'},{t:'+Ecosistema',c:'pos'},{t:'-Economía',c:'neg'}],
+    conseq:'Se delimita una zona intangible. Los peces encuentran refugio y el coral florece. La economía sufre a corto plazo, pero los turistas empiezan a notar el cambio. El ecosistema lo agradece.',
+    fisherMsg:'El mar necesita descanso. 🏝️',
+  },
+  {
+    id:'intensive', ico:'🎣', title:'Pesca Intensiva',
+    desc:'Maximizar capturas esta temporada. Riesgo alto a largo plazo.',
+    cost:30,
+    fish:-22, eco:-16, mon:+20, com:+10,
+    tags:[{t:'30 pts',c:'cost'},{t:'+Economía',c:'pos'},{t:'⚠️ Riesgoso',c:'warn'}],
+    conseq:'Las redes trabajan sin descanso. Las ganancias son altas pero los bancos de peces se agotan visiblemente. Algunos pescadores celebran, pero los más viejos de la comunidad advierten del peligro.',
+    fisherMsg:'¡Mucho dinero… pero por cuánto tiempo? 🤔',
+  },
+  {
+    id:'tourism', ico:'🤿', title:'Eco-Turismo Marino',
+    desc:'Diversificar ingresos con buceo y turismo sustentable.',
+    cost:80,
+    fish:+4, eco:+12, mon:+9, com:+16,
+    tags:[{t:'80 pts',c:'cost'},{t:'+Comunidad',c:'pos'},{t:'+Economía',c:'pos'}],
+    conseq:'Buzos y viajeros llegan atraídos por los arrecifes. Nuevos empleos aparecen en la comunidad. La presión sobre la pesca disminuye y el ecosistema respira.',
+    fisherMsg:'¡Turistas al agua! 🤿',
+  },
+  {
+    id:'training', ico:'📚', title:'Capacitar Pescadores',
+    desc:'Educar en técnicas selectivas y redes no dañinas.',
+    cost:60,
+    fish:+6, eco:+10, mon:-4, com:+20,
+    tags:[{t:'60 pts',c:'cost'},{t:'+Comunidad',c:'pos'},{t:'+Saber',c:'pos'}],
+    conseq:'Talleres y diplomados transforman la cultura pesquera. Los pescadores adoptan anzuelos selectivos y liberan especies en veda. El conocimiento es el recurso más renovable.',
+    fisherMsg:'¡Saber es poder, capi! 📚',
+  },
+  {
+    id:'reef', ico:'🪸', title:'Restaurar Arrecifes',
+    desc:'Trasplantar coral y limpiar zonas degradadas.',
+    cost:100,
+    fish:+12, eco:+28, mon:-10, com:+8,
+    tags:[{t:'100 pts',c:'cost'},{t:'+Ecosistema',c:'pos'},{t:'Alto Impacto',c:'pos'}],
+    conseq:'Equipos de voluntarios y científicos de la UABCS trabajan en el arrecife. El coral trasplantado sobrevive. En meses, los peces jóvenes colonizan las nuevas estructuras. Hermoso.',
+    fisherMsg:'¡El coral vive! ¡Yuhu! 🪸',
+  },
+  {
+    id:'surveillance', ico:'🚢', title:'Vigilancia Pesquera',
+    desc:'Patrullar para evitar pesca ilegal y furtiva.',
+    cost:70,
+    fish:+8, eco:+7, mon:-6, com:+5,
+    tags:[{t:'70 pts',c:'cost'},{t:'+Peces',c:'pos'},{t:'+Orden',c:'pos'}],
+    conseq:'Los guardacostas patrullan la zona. Las embarcaciones ilegales desaparecen. Los pescadores honestos recuperan terreno y los recursos mejoran gradualmente.',
+    fisherMsg:'¡Ojo al furtivo! 🚢',
+  },
+  {
+    id:'overfish', ico:'⚠️', title:'Ignorar Vedas',
+    desc:'Pescar durante la temporada de veda para maximizar ganancias.',
+    cost:20,
+    fish:-30, eco:-20, mon:+15, com:-10,
+    tags:[{t:'20 pts',c:'cost'},{t:'⚠️ MUY RIESGOSO',c:'warn'},{t:'-Peces',c:'neg'}],
+    conseq:'Se ignoran las vedas. Las crías y los reproductores caen en las redes. Los ingresos suben, pero la siguiente temporada el mar está mucho más vacío. Las autoridades reciben reportes.',
+    fisherMsg:'…esto no se ve bien. 😰',
+  },
+];
+
+let S = {};
+
+function initGame() {
+  S = {
+    turn:1, year:2025, si:1, pts:1000,
+    fish:100, eco:100, mon:100, com:100,
+    score:0, history:[], events:[], decided:false, lastDec:null,
+  };
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('sumWrap').classList.remove('visible');
+  renderAll(); buildBg(); spawnFish();
+  showMsg('🦀','info','¡Bienvenido a Pesquería UABCS!','Toma decisiones inteligentes para mantener el equilibrio. Cada decisión tiene un costo en puntos y consecuencias reales. ¡Buena suerte! 🌊');
+  buildDecisions();
+  setFisherMsg('¡Listo para comenzar! 🌊');
+  updateTicker();
+}
+
+function renderAll() {
+  document.getElementById('yearD').textContent = S.year;
+  document.getElementById('seasD').textContent = SEASONS[S.si%4];
+  document.getElementById('turnD').textContent = `${S.turn}/${TOTAL}`;
+  document.getElementById('ptsTop').textContent = Math.max(0,S.pts);
+
+  setBar('Fish',S.fish); setBar('Eco',S.eco); setBar('Mon',S.mon); setBar('Com',S.com);
+  document.getElementById('scoreNum').textContent = S.score;
+
+  const pop = Math.max(0,Math.round((S.fish/100)*8000));
+  document.getElementById('popLabel').textContent = `~${pop.toLocaleString()} peces`;
+  spawnFish();
+  updateKPI();
+}
+
+function setBar(id,val) {
+  val = Math.max(0,Math.min(100,val));
+  const v = document.getElementById('v'+id);
+  const b = document.getElementById('b'+id);
+  if(!v||!b) return;
+  v.textContent = Math.round(val)+'%';
+  b.style.width = val+'%';
+  const color = val<=30?'var(--coral)':val<=60?'var(--warn)':'';
+  v.style.color = color;
+}
+
+function buildDecisions() {
+  const g = document.getElementById('decGrid');
+  g.innerHTML = '';
+  DECISIONS.forEach(d => {
+    const canAfford = S.pts >= d.cost;
+    const btn = document.createElement('button');
+    btn.className = 'dbtn';
+    btn.disabled = S.decided || !canAfford;
+    btn.innerHTML = `
+      <span class="dbtn-ico">${d.ico}</span>
+      <div class="dbtn-title">${d.title}</div>
+      <div class="dbtn-desc">${d.desc}</div>
+      <div class="dbtn-tags">${d.tags.map(t=>`<span class="tag ${t.c}">${t.t}</span>`).join('')}${!canAfford?'<span class="tag neg">Sin puntos</span>':''}</div>`;
+    btn.onclick = ()=>makeDecision(d);
+    g.appendChild(btn);
+  });
+}
+
+function makeDecision(d) {
+  if(S.decided) return;
+  S.decided = true;
+  S.lastDec = d;
+  S.pts = Math.max(0, S.pts - d.cost);
+  
+  const prevFish=S.fish, prevEco=S.eco, prevMon=S.mon, prevCom=S.com;
+  S.fish = clamp(S.fish+d.fish);
+  S.eco  = clamp(S.eco+d.eco);
+  S.mon  = clamp(S.mon+d.mon);
+  S.com  = clamp(S.com+d.com);
+
+  // Score: avg gain × 3 + base
+  const net = (d.fish+d.eco+d.mon+d.com);
+  const gained = Math.max(0,net)*3 + 40;
+  S.score += Math.round(gained);
+
+  S.history.unshift({ico:d.ico,title:d.title,yr:S.year,sn:SEASONS[S.si%4].split(' ')[1]});
+  setFisherMsg(d.fisherMsg);
+  renderAll();
+  buildDecisions();
+  updateHistory();
+  showSummary(d, prevFish, prevEco, prevMon, prevCom, gained);
+  checkLose();
+}
+
+function showSummary(d, pF, pE, pM, pC, gained) {
+  const diff = (v,n,id)=>{
+    const delta = Math.round(n-v);
+    return `<div class="sum-stat"><div class="sum-stat-name">${id}</div><div class="sum-stat-val ${delta>0?'pos':delta<0?'neg':'neu'}">${delta>0?'+':''}${delta}%</div></div>`;
+  };
+  document.getElementById('sumGrid').innerHTML =
+    diff(pF,S.fish,'🐟 Peces')+diff(pE,S.eco,'🌿 Ecosistema')+diff(pM,S.mon,'💰 Economía')+diff(pC,S.com,'👥 Comunidad');
+
+  document.getElementById('sumConseq').innerHTML = `<strong>${d.ico} ${d.title}:</strong> ${d.conseq}`;
+  const netChg = Math.round((S.fish+S.eco+S.mon+S.com)/4 - (pF+pE+pM+pC)/4);
+  document.getElementById('sumPts').textContent = `-${d.cost} pts costo`;
+  document.getElementById('sumPtsText').textContent = ` + ${Math.round(gained)} pts ganados`;
+  document.getElementById('sumWrap').classList.add('visible');
+  document.getElementById('sumWrap').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function continueGame() {
+  document.getElementById('sumWrap').classList.remove('visible');
+  S.turn++;
+  S.si++;
+  if(S.si%4===0) S.year++;
+  S.decided = false;
+  S.pts = Math.min(1500, S.pts + 80); // regen points each turn
+
+  // Natural drift
+  S.fish = clamp(S.fish + rnd6() + (S.eco>70?2:-2));
+  S.eco  = clamp(S.eco  + rnd6());
+  S.mon  = clamp(S.mon  + rnd6());
+  S.com  = clamp(S.com  + rnd6() + (S.mon>70?1:-1));
+
+  triggerEvent();
+
+  if(S.turn > TOTAL){ endGame(); return; }
+
+  renderAll();
+  buildDecisions();
+  updateTicker();
+  seasonMsg();
+  setFisherMsg(FISHER_MSGS[Math.floor(Math.random()*FISHER_MSGS.length)]);
+  checkLose();
+}
+
+function triggerEvent() {
+  const evs = [
+    {p:.2,cond:()=>S.eco<50, fx:()=>{S.fish=clamp(S.fish-8);S.pts=Math.max(0,S.pts-30);},
+     msg:{ico:'🌡️',cls:'warn',t:'¡Estrés Térmico!',tx:'El calentamiento del agua afecta la reproducción. Pierdes 30 puntos de gestión. 🌡️'}},
+    {p:.15,cond:()=>S.fish<40, fx:()=>{S.mon=clamp(S.mon-12);S.com=clamp(S.com-7);S.pts=Math.max(0,S.pts-40);},
+     msg:{ico:'😢',cls:'danger',t:'Crisis Pesquera',tx:'Los cardúmenes escasean. La comunidad y la economía sufren. Pierdes 40 puntos. 😰'}},
+    {p:.15,cond:()=>S.eco>80, fx:()=>{S.fish=clamp(S.fish+9);S.pts+=50;},
+     msg:{ico:'🎉',cls:'success',t:'¡Temporada de Reproducción!',tx:'El ecosistema saludable generó una reproducción excepcional. ¡Ganas 50 puntos extra! 🐟'}},
+    {p:.12,cond:()=>true, fx:()=>{S.mon=clamp(S.mon+8);S.pts+=30;},
+     msg:{ico:'📈',cls:'success',t:'¡Buen Precio de Mercado!',tx:'El precio del marisco subió. Ingresos extra y +30 puntos de gestión. 💰'}},
+    {p:.1,cond:()=>S.pts<200, fx:()=>{S.pts+=100;},
+     msg:{ico:'🎓',cls:'info',t:'Apoyo UABCS',tx:'La universidad aporta recursos para la gestión marina. ¡Recuperas 100 puntos! 🎓'}},
+  ];
+  for(const e of evs){
+    if(Math.random()<e.p && e.cond()){
+      e.fx();
+      setTimeout(()=>showMsg(e.msg.ico,e.msg.cls,e.msg.t,e.msg.tx),350);
+      S.events.push({ico:e.msg.ico,t:e.msg.t,turn:S.turn});
+      updateEvents();
+      break;
+    }
+  }
+}
+
+function seasonMsg() {
+  const s = S.si%4;
+  const m=[
+    {ico:'🌸',t:'¡Primavera!',tx:'Temporada de reproducción. Las decisiones de protección tienen mayor impacto ahora. 🌺'},
+    {ico:'🌞',t:'¡Verano!',tx:'Alta demanda. Más presión económica pero también mayor riesgo para los recursos. ☀️'},
+    {ico:'🍂',t:'Otoño Marino',tx:'Migración de cardúmenes. Buen momento para restaurar hábitats. 🍂'},
+    {ico:'❄️',t:'Invierno Oceánico',tx:'Capturas bajas por naturaleza. El ecosistema descansa y se regenera. ❄️'},
+  ][s];
+  showMsg(m.ico,'info',m.t,m.tx);
+}
+
+function checkLose() {
+  if(S.fish<=0) gameOver('collapse');
+  else if(S.com<=0) gameOver('community');
+  else if(S.mon<=0) gameOver('economy');
+}
+
+function gameOver(type) {
+  const c = {
+    collapse:{e:'💀',t:'¡Colapso del Ecosistema!',s:'Los recursos pesqueros se agotaron. El océano quedó en silencio. La comunidad tuvo que emigrar.'},
+    community:{e:'😢',t:'¡Crisis Comunitaria!',s:'La comunidad pesquera se desintegró. Sin bienestar social, no hay pesca sustentable.'},
+    economy:{e:'📉',t:'¡Quiebra Económica!',s:'Sin ingresos, no se pueden financiar las actividades de gestión. El sistema colapsó.'},
+  }[type];
+  document.getElementById('ovEmoji').textContent=c.e;
+  document.getElementById('ovTitle').textContent=c.t;
+  document.getElementById('ovSub').textContent=c.s+' Intenta de nuevo con una estrategia más equilibrada.';
+  document.getElementById('ovScore').textContent=S.score+' pts';
+  document.getElementById('overlay').classList.add('show');
+}
+
+function endGame() {
+  const avg = (S.fish+S.eco+S.mon+S.com)/4;
+  let e,t,s;
+  if(avg>=80){e='🏆';t='¡Gestión Magistral!';s='Eres un guardián del mar. El océano prospera y la UABCS te reconoce como ejemplo de gestión sustentable.';}
+  else if(avg>=65){e='🥇';t='¡Excelente Trabajo!';s='Mantuviste un balance notable. La comunidad y el ecosistema tienen futuro gracias a ti.';}
+  else if(avg>=50){e='✅';t:'¡Buen Gestor!';s='Sobreviviste los 20 turnos con balance aceptable. Hay áreas de mejora pero el océano vive.';}
+  else{e='⚠️';t:'Gestión Mejorable';s='El ecosistema quedó debilitado. En el próximo ciclo, prioriza la sustentabilidad sobre las ganancias inmediatas.';}
+  document.getElementById('ovEmoji').textContent=e;
+  document.getElementById('ovTitle').textContent=t||'¡Buen Gestor!';
+  document.getElementById('ovSub').textContent=(s||'Terminaste los 20 turnos.')+` Promedio: ${Math.round(avg)}%.`;
+  document.getElementById('ovScore').textContent=S.score+' pts finales';
+  document.getElementById('overlay').classList.add('show');
+}
+
+// ---- helpers ----
+function clamp(v){return Math.max(0,Math.min(100,v));}
+function rnd6(){return (Math.random()-.5)*6;}
+
+function showMsg(ico,cls,title,text) {
+  const b=document.getElementById('msgBox');
+  b.className='msg-box '+(cls||'info');
+  b.innerHTML=`<div class="msg-ico">${ico}</div><div><div class="msg-title">${title}</div><div class="msg-text">${text}</div></div>`;
+}
+
+function setFisherMsg(txt) {
+  const el=document.getElementById('fisherMsg');
+  if(el) el.textContent=txt;
+}
+
+function updateHistory() {
+  const el=document.getElementById('histList');
+  el.innerHTML=S.history.slice(0,10).map(h=>`<div class="hi"><span class="hi-ico">${h.ico}</span><span><span class="hi-yr">${h.yr} ${h.sn||''}</span>${h.title}</span></div>`).join('');
+}
+
+function updateEvents() {
+  const el=document.getElementById('evList');
+  if(!S.events.length){el.textContent='Sin eventos todavía.';return;}
+  el.innerHTML=S.events.slice(-5).reverse().map(e=>`<div>${e.ico} T${e.turn}: ${e.t}</div>`).join('');
+}
+
+function updateKPI() {
+  const sus=Math.round((S.fish+S.eco)/2);
+  const dev=Math.round((S.mon+S.com)/2);
+  const risk=S.fish<35?'🔴 CRÍTICO':S.fish<55?'🟡 MODERADO':'🟢 BAJO';
+  document.getElementById('kpiBox').innerHTML=`
+    <div>🎯 Sustentabilidad: <b>${sus}%</b></div>
+    <div>📈 Desarrollo: <b>${dev}%</b></div>
+    <div>⚠️ Riesgo colapso: <b>${risk}</b></div>
+    <div>🎫 Puntos: <b style="color:var(--gold)">${Math.max(0,S.pts)}</b></div>
+    <div>📅 Temporadas: <b>${S.turn-1}</b></div>`;
+}
+
+function updateTicker() {
+  const msgs=[
+    '🐙 Temperatura del agua: normal · 🌊 Condiciones favorables · 🐠 Cardúmenes detectados al norte · 🦈 Tiburón ballena avistado a 5km · 🌿 Pradera de sargazo en expansión · 🎣 Cooperativa reporta buen acceso',
+    '🐋 Ballena gris migra hacia el norte · 🦀 Temporada de jaiba azul · 🪸 Monitoreo de arrecifes en curso · 🚢 Inspección pesquera programada · 🌡️ Temperatura superficial: 24°C · 🐬 Delfines nariz de botella avistados',
+    '📊 UABCS publica informe de pesca sustentable · 🤿 Buceo científico en La Paz Bay · 🦑 Calamar gigante capturado · 🌿 Manglar de Balandra en buena condición · 🐠 Biodiversidad marina estable',
+  ];
+  document.getElementById('ticker').textContent = msgs[Math.floor(Math.random()*msgs.length)];
+}
+
+function spawnFish() {
+  const sc=document.getElementById('oceanScene');
+  sc.querySelectorAll('.fish-el').forEach(f=>f.remove());
+  const cnt=Math.max(2,Math.round((S.fish/100)*16));
+  const types=['🐟','🐠','🐡','🦈','🐙','🦑','🐋','🐬','🦐'];
+  const avail=S.fish>60?types:types.slice(0,5);
+  for(let i=0;i<cnt;i++){
+    const f=document.createElement('div');
+    f.className='fish-el';
+    f.textContent=avail[Math.floor(Math.random()*avail.length)];
+    f.style.cssText=`left:${4+Math.random()*72}%;top:${18+Math.random()*52}%;font-size:${1+Math.random()*.7}rem;animation-duration:${3+Math.random()*4}s,${2.5+Math.random()*3}s;animation-delay:${Math.random()*4}s,${Math.random()*2}s;`;
+    f.title='🐟';
+    const floor=sc.querySelector('.oc-floor');
+    if(floor) sc.insertBefore(f,floor); else sc.appendChild(f);
+  }
+}
+
+function buildBg() {
+  const bg=document.getElementById('bg');
+  bg.innerHTML='';
+  for(let i=0;i<22;i++){
+    const b=document.createElement('div');b.className='bbl';
+    const sz=3+Math.random()*18;
+    b.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;animation-duration:${9+Math.random()*14}s;animation-delay:${Math.random()*12}s;`;
+    bg.appendChild(b);
+  }
+  for(let i=0;i<30;i++){
+    const r=document.createElement('div');r.className='ray';
+    const h=200+Math.random()*400,x=Math.random()*100,rot=(Math.random()-.5)*40;
+    r.style.cssText=`left:${x}%;height:${h}px;transform:rotate(${rot}deg);opacity:${.05+Math.random()*.15};`;
+    bg.appendChild(r);
+  }
+  ['🐟','🐠','🦈','🐡'].forEach((f,i)=>{
+    const el=document.createElement('div');el.className='deepfish';
+    el.textContent=f;
+    el.style.cssText=`top:${12+i*22}%;animation-duration:${18+i*7}s;animation-delay:${i*4}s;`;
+    bg.appendChild(el);
+  });
+}
+
+initGame();
+</script>
+</body>
+</html>

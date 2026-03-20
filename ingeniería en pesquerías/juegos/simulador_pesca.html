@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pescamar - Administrador de Pesquerías</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #001a33;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 250px 1fr 280px;
+            height: 100vh;
+            gap: 10px;
+            padding: 10px;
+        }
+
+        .left-panel, .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow-y: auto;
+        }
+
+        .center-panel {
+            border: 2px solid #00bfff;
+            border-radius: 8px;
+            background: linear-gradient(to bottom, #87CEEB 0%, #1E90FF 50%, #00008B 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .panel {
+            background: rgba(0, 26, 51, 0.95);
+            border: 2px solid #00bfff;
+            border-radius: 8px;
+            padding: 15px;
+            color: #00bfff;
+            font-size: 11px;
+            line-height: 1.4;
+        }
+
+        .panel-title {
+            color: #0ff;
+            font-weight: bold;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #0099ff;
+            padding-bottom: 5px;
+            font-size: 12px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+            color: #00bfff;
+        }
+
+        .stat-value {
+            color: #0ff;
+            font-weight: bold;
+        }
+
+        .meter {
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 50, 150, 0.5);
+            border-radius: 4px;
+            margin: 3px 0;
+            overflow: hidden;
+            border: 1px solid #0099ff;
+        }
+
+        .meter-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff00, #00dd00);
+            transition: width 0.3s ease;
+        }
+
+        .request-item {
+            background: rgba(0, 100, 200, 0.3);
+            border-left: 3px solid #0099ff;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 8px 0;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 10px;
+        }
+
+        .request-item:hover {
+            background: rgba(0, 150, 255, 0.5);
+            transform: translateX(3px);
+        }
+
+        .request-item.community {
+            border-left-color: #00ff66;
+        }
+
+        .request-item.conapesca {
+            border-left-color: #ff6633;
+        }
+
+        .request-title {
+            color: #0ff;
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+
+        .request-desc {
+            color: #00bfff;
+            font-size: 9px;
+            margin-bottom: 5px;
+        }
+
+        .request-reward {
+            color: #0f0;
+            font-size: 9px;
+            font-weight: bold;
+        }
+
+        button {
+            width: 100%;
+            padding: 8px;
+            background: linear-gradient(90deg, #0099ff, #00ccff);
+            border: 1px solid #00bfff;
+            border-radius: 4px;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 5px 0;
+            font-size: 11px;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: linear-gradient(90deg, #00ff00, #00dd00);
+        }
+
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 100, 0, 0.9);
+            border: 2px solid #ff6600;
+            border-radius: 4px;
+            padding: 12px;
+            max-width: 250px;
+            font-size: 11px;
+            animation: slideIn 0.3s ease;
+            z-index: 1000;
+        }
+
+        .alert.danger {
+            background: rgba(255, 50, 50, 0.9);
+            border-color: #ff3333;
+        }
+
+        .alert.success {
+            background: rgba(0, 200, 100, 0.9);
+            border-color: #00ff66;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(300px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .research-item {
+            background: rgba(0, 60, 120, 0.6);
+            border: 1px solid #0066cc;
+            border-radius: 4px;
+            padding: 8px;
+            margin: 6px 0;
+            font-size: 10px;
+        }
+
+        .research-item.completed {
+            background: rgba(0, 100, 50, 0.4);
+            border-color: #00ff00;
+        }
+
+        .research-name {
+            color: #0ff;
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+
+        .research-cost {
+            color: #00bfff;
+            font-size: 9px;
+        }
+
+        .boat-item {
+            background: rgba(0, 100, 200, 0.3);
+            border: 1px solid #0099ff;
+            border-radius: 4px;
+            padding: 8px;
+            margin: 6px 0;
+            font-size: 10px;
+        }
+
+        .boat-status {
+            color: #0ff;
+            font-weight: bold;
+            margin: 3px 0;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 100, 200, 0.2);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #0099ff;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- LEFT PANEL -->
+        <div class="left-panel">
+            <div class="panel">
+                <div class="panel-title">💰 Finanzas</div>
+                <div class="stat-row">
+                    <span>Dinero:</span>
+                    <span class="stat-value">$<span id="money">50000</span></span>
+                </div>
+                <div class="stat-row">
+                    <span>Ingresos/Mes:</span>
+                    <span class="stat-value">$<span id="income">0</span></span>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">📊 Estado</div>
+                <div class="stat-row">
+                    <span>Año/Mes:</span>
+                    <span class="stat-value"><span id="period">1-1</span></span>
+                </div>
+                <div style="margin: 8px 0;">
+                    <div style="font-size: 10px; margin-bottom: 3px;">Población:</div>
+                    <div class="meter">
+                        <div class="meter-fill" id="popMeter" style="width: 100%; background: #00ff00;"></div>
+                    </div>
+                    <div style="text-align: right; color: #0ff; font-size: 10px;"><span id="population">100</span>%</div>
+                </div>
+                <div style="margin: 8px 0;">
+                    <div style="font-size: 10px; margin-bottom: 3px;">CONAPESCA:</div>
+                    <div class="meter">
+                        <div class="meter-fill" id="conapMeter" style="width: 100%; background: #00ff00;"></div>
+                    </div>
+                    <div style="text-align: right; color: #0ff; font-size: 10px;"><span id="conapesca">100</span>%</div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">⛵ Embarcaciones (<span id="boatCount">1</span>)</div>
+                <div id="boatsList" style="max-height: 200px; overflow-y: auto;"></div>
+                <button onclick="game.buyBoat()">Comprar: $30000</button>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">⚙️ Tiempo</div>
+                <button onclick="game.nextMonth()">➡️ Siguiente Mes</button>
+                <button onclick="game.skipYear()">⏩ Saltar Año</button>
+            </div>
+        </div>
+
+        <!-- CENTER PANEL -->
+        <div class="center-panel">
+            <canvas id="gameCanvas"></canvas>
+        </div>
+
+        <!-- RIGHT PANEL -->
+        <div class="right-panel">
+            <div class="panel" style="flex: 1; min-height: 0;">
+                <div class="panel-title">📋 Solicitudes</div>
+                <div id="requestsList" style="overflow-y: auto; height: 100%;"></div>
+            </div>
+
+            <div class="panel" style="flex: 1; min-height: 0;">
+                <div class="panel-title">🔬 Investigación</div>
+                <div id="researchList" style="overflow-y: auto; height: 100%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alerts -->
+    <div id="alertContainer"></div>
+
+    <script>
+        const LOCATIONS = ['La Paz', 'Cabo San Lucas', 'San José del Cabo', 'Loreto'];
+
+        const SPECIES = [
+            { name: 'Dorado', emoji: '🐟', price: 150, maxStock: 100 },
+            { name: 'Atún', emoji: '🐠', price: 200, maxStock: 80 },
+            { name: 'Marlin', emoji: '🐋', price: 300, maxStock: 50 },
+            { name: 'Camarón', emoji: '🦐', price: 80, maxStock: 120 },
+            { name: 'Langosta', emoji: '🦞', price: 250, maxStock: 60 },
+            { name: 'Pargo', emoji: '🐠', price: 100, maxStock: 90 }
+        ];
+
+        const VEDAS = {
+            'Dorado': { start: 5, end: 8 },
+            'Atún': { start: 11, end: 1 },
+            'Marlin': { start: 7, end: 9 },
+            'Camarón': { start: 4, end: 6 },
+            'Langosta': { start: 8, end: 10 },
+            'Pargo': { start: 8, end: 10 }
+        };
+
+        class Game {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.resize();
+
+                this.location = LOCATIONS[Math.floor(Math.random() * LOCATIONS.length)];
+                this.money = 50000;
+                this.year = 1;
+                this.month = 1;
+                this.population = 100;
+                this.conapesca = 100;
+                this.monthIncome = 0;
+
+                this.boats = [{ id: 1, status: 'idle', condition: 100, targetSpecies: 'Dorado' }];
+                this.boatIdCounter = 2;
+
+                this.stocks = {};
+                SPECIES.forEach(s => { this.stocks[s.name] = s.maxStock; });
+
+                this.research = [
+                    { name: 'Red Mejorada', cost: 5000, completed: false },
+                    { name: 'Sonar Avanzado', cost: 8000, completed: false },
+                    { name: 'Combustible Eficiente', cost: 6000, completed: false },
+                    { name: 'Reparaciones Rápidas', cost: 7000, completed: false }
+                ];
+
+                this.requestQueue = [];
+                this.generateRequests();
+                this.animationTime = 0;
+
+                this.updateUI();
+                this.gameLoop();
+
+                window.addEventListener('resize', () => this.resize());
+            }
+
+            resize() {
+                this.canvas.width = this.canvas.offsetWidth;
+                this.canvas.height = this.canvas.offsetHeight;
+            }
+
+            isInVeda(species) {
+                const veda = VEDAS[species];
+                if (!veda) return false;
+                if (veda.start <= veda.end) {
+                    return this.month >= veda.start && this.month <= veda.end;
+                }
+                return this.month >= veda.start || this.month <= veda.end;
+            }
+
+            generateRequests() {
+                this.requestQueue = [
+                    { type: 'community', title: '👥 Expandir Equipo', desc: 'Contratar pescadores', reward: 2000, cost: 0 },
+                    { type: 'community', title: '🏘️ Mejorar Puerto', desc: 'Reparar muelles', reward: 1500, cost: 0 },
+                    { type: 'community', title: '⚽ Centro Social', desc: 'Espacio comunitario', reward: 2500, cost: 0 },
+                    { type: 'conapesca', title: '✅ Cumplir Vedas', desc: 'No pescar vedadas', reward: 3000, cost: 0 },
+                    { type: 'conapesca', title: '📋 Reportes', desc: 'Enviar documentos', reward: 1000, cost: 0 },
+                    { type: 'conapesca', title: '🔍 Inspección', desc: 'Permitir auditoría', reward: 2000, cost: 0 }
+                ];
+            }
+
+            assignBoatFishing(boatId, species) {
+                const boat = this.boats.find(b => b.id === boatId);
+                if (boat && boat.status === 'idle') {
+                    boat.targetSpecies = species;
+                    boat.status = 'fishing';
+                    if (this.isInVeda(species)) {
+                        this.showAlert(`⚠️ ${species} VEDADA - CONAPESCA molesto`, 'warning');
+                        this.conapesca -= 10;
+                    }
+                    this.updateUI();
+                }
+            }
+
+            processMonth() {
+                this.monthIncome = 0;
+
+                this.boats.forEach(boat => {
+                    if (boat.status === 'fishing') {
+                        const stock = this.stocks[boat.targetSpecies];
+                        if (stock > 0) {
+                            const catch_ = Math.min(Math.floor(Math.random() * 20 + 10), stock);
+                            const price = SPECIES.find(s => s.name === boat.targetSpecies).price;
+                            const revenue = catch_ * price;
+                            const inVeda = this.isInVeda(boat.targetSpecies);
+
+                            this.money += revenue;
+                            this.monthIncome += revenue;
+                            this.stocks[boat.targetSpecies] -= catch_;
+
+                            if (inVeda) {
+                                this.conapesca -= 15;
+                                this.showAlert(`🚨 Pesca ilegal: ${boat.targetSpecies}`, 'danger');
+                            } else {
+                                this.conapesca += 2;
+                            }
+                        }
+
+                        if (Math.random() < 0.1) {
+                            boat.condition -= 20;
+                            boat.status = 'damaged';
+                            this.showAlert(`⚠️ Bote ${boat.id} dañado`, 'warning');
+                        } else {
+                            boat.status = 'idle';
+                        }
+                    } else if (boat.status === 'damaged') {
+                        boat.condition = Math.min(100, boat.condition + 30);
+                        if (boat.condition >= 100) {
+                            boat.status = 'idle';
+                        }
+                    }
+                });
+
+                SPECIES.forEach(s => {
+                    const regen = s.maxStock * 0.1;
+                    this.stocks[s.name] = Math.min(this.stocks[s.name] + regen, s.maxStock);
+                });
+
+                const avgStock = Object.values(this.stocks).reduce((a, b) => a + b) / SPECIES.length;
+                if (avgStock < 40) this.population -= 3;
+                else if (avgStock > 70) this.population += 1;
+
+                if (this.conapesca < 30) {
+                    const fine = Math.floor(this.money * 0.1);
+                    this.money -= fine;
+                    this.showAlert(`💸 MULTA: -$${fine}`, 'danger');
+                }
+
+                if (this.population < 20) {
+                    this.showAlert(`🚨 CRISIS`, 'danger');
+                    this.money -= 5000;
+                }
+
+                this.population = Math.max(0, Math.min(100, this.population));
+                this.conapesca = Math.max(0, Math.min(100, this.conapesca));
+            }
+
+            nextMonth() {
+                this.processMonth();
+                this.month++;
+                if (this.month > 12) {
+                    this.month = 1;
+                    this.year++;
+                    this.money += 5000;
+                }
+                this.updateUI();
+            }
+
+            skipYear() {
+                for (let i = 0; i < 12; i++) this.nextMonth();
+            }
+
+            buyBoat() {
+                if (this.money >= 30000) {
+                    this.money -= 30000;
+                    this.boats.push({ id: this.boatIdCounter++, status: 'idle', condition: 100, targetSpecies: 'Dorado' });
+                    this.showAlert(`✅ Nueva embarcación`, 'success');
+                    this.updateUI();
+                } else {
+                    this.showAlert(`💸 Fondos insuficientes`, 'warning');
+                }
+            }
+
+            completeResearch(idx) {
+                const research = this.research[idx];
+                if (research.completed) return;
+                if (this.money >= research.cost) {
+                    this.money -= research.cost;
+                    research.completed = true;
+                    this.showAlert(`🔬 ${research.name}`, 'success');
+                    this.updateUI();
+                }
+            }
+
+            completeRequest(idx) {
+                const request = this.requestQueue[idx];
+                if (request.type === 'conapesca') {
+                    this.conapesca += 15;
+                    this.showAlert(`✅ CONAPESCA feliz`, 'success');
+                } else {
+                    this.money += request.reward;
+                    this.population += 5;
+                    this.showAlert(`✅ Comunidad feliz`, 'success');
+                }
+                this.requestQueue.splice(idx, 1);
+                this.generateRequests();
+                this.updateUI();
+            }
+
+            showAlert(msg, type = 'warning') {
+                const container = document.getElementById('alertContainer');
+                const alert = document.createElement('div');
+                alert.className = `alert ${type}`;
+                alert.textContent = msg;
+                container.appendChild(alert);
+                setTimeout(() => alert.remove(), 3000);
+            }
+
+            updateUI() {
+                document.getElementById('money').textContent = Math.floor(this.money);
+                document.getElementById('income').textContent = Math.floor(this.monthIncome);
+                document.getElementById('period').textContent = `${this.year}-${this.month}`;
+                document.getElementById('population').textContent = Math.floor(this.population);
+                document.getElementById('conapesca').textContent = Math.floor(this.conapesca);
+                document.getElementById('boatCount').textContent = this.boats.length;
+
+                document.getElementById('popMeter').style.width = this.population + '%';
+                document.getElementById('popMeter').style.background = this.population > 60 ? '#00ff00' : this.population > 30 ? '#ffaa00' : '#ff3333';
+                document.getElementById('conapMeter').style.width = this.conapesca + '%';
+                document.getElementById('conapMeter').style.background = this.conapesca > 60 ? '#00ff00' : this.conapesca > 30 ? '#ffaa00' : '#ff3333';
+
+                const boatsHTML = this.boats.map(b => `
+                    <div class="boat-item">
+                        <div class="boat-status">⛵ Bote ${b.id} ${b.status === 'fishing' ? '🎣' : b.status === 'damaged' ? '⚠️' : '✓'}</div>
+                        <div style="color: #00bfff; font-size: 9px;">Condición: ${Math.floor(b.condition)}%</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 4px;">
+                            ${SPECIES.map(s => `<button style="padding: 4px; font-size: 9px; margin: 0;" ${b.status !== 'idle' ? 'disabled' : ''} onclick="game.assignBoatFishing(${b.id}, '${s.name}')">${s.emoji}</button>`).join('')}
+                        </div>
+                    </div>
+                `).join('');
+                document.getElementById('boatsList').innerHTML = boatsHTML;
+
+                const requestsHTML = this.requestQueue.slice(0, 6).map((r, i) => `
+                    <div class="request-item ${r.type}" onclick="game.completeRequest(${i})">
+                        <div class="request-title">${r.title}</div>
+                        <div class="request-desc">${r.desc}</div>
+                        <div class="request-reward">${r.type === 'conapesca' ? '+15% CONAPESCA' : `+$${r.reward}`}</div>
+                    </div>
+                `).join('');
+                document.getElementById('requestsList').innerHTML = requestsHTML;
+
+                const researchHTML = this.research.map((r, i) => `
+                    <div class="research-item ${r.completed ? 'completed' : ''}">
+                        <div class="research-name">${r.completed ? '✓' : ''} ${r.name}</div>
+                        <div class="research-cost">${r.completed ? 'Completada' : `$${r.cost}`}</div>
+                        <button style="font-size: 9px; padding: 4px; margin-top: 4px;" ${r.completed || this.money < r.cost ? 'disabled' : ''} onclick="game.completeResearch(${i})">Hacer</button>
+                    </div>
+                `).join('');
+                document.getElementById('researchList').innerHTML = researchHTML;
+            }
+
+            gameLoop() {
+                this.animationTime++;
+                this.draw();
+                requestAnimationFrame(() => this.gameLoop());
+            }
+
+            draw() {
+                const w = this.canvas.width;
+                const h = this.canvas.height;
+
+                this.ctx.fillStyle = '#87CEEB';
+                this.ctx.fillRect(0, 0, w, h * 0.3);
+
+                this.ctx.strokeStyle = '#00AAFF';
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, h * 0.3);
+                this.ctx.lineTo(w, h * 0.3);
+                this.ctx.stroke();
+
+                const grad = this.ctx.createLinearGradient(0, h * 0.3, 0, h);
+                grad.addColorStop(0, '#1E90FF');
+                grad.addColorStop(1, '#00008B');
+                this.ctx.fillStyle = grad;
+                this.ctx.fillRect(0, h * 0.3, w, h * 0.7);
+
+                this.ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+                this.ctx.lineWidth = 1;
+                for (let i = 0; i < 4; i++) {
+                    const y = h * 0.3 + i * 50;
+                    this.ctx.beginPath();
+                    for (let x = 0; x < w; x += 30) {
+                        const py = y + Math.sin(x * 0.02 + this.animationTime * 0.02) * 8;
+                        if (x === 0) this.ctx.moveTo(x, py);
+                        else this.ctx.lineTo(x, py);
+                    }
+                    this.ctx.stroke();
+                }
+
+                this.boats.forEach((boat, idx) => {
+                    const x = 60 + idx * 140;
+                    const y = h * 0.25 + Math.sin(this.animationTime * 0.02 + idx) * 5;
+
+                    this.ctx.fillStyle = boat.condition < 50 ? '#aa6600' : '#FF8C00';
+                    this.ctx.fillRect(x - 30, y - 15, 60, 30);
+
+                    this.ctx.strokeStyle = '#8B4513';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, y - 15);
+                    this.ctx.lineTo(x, y - 40);
+                    this.ctx.stroke();
+
+                    this.ctx.fillStyle = boat.status === 'fishing' ? 'rgba(255,100,100,0.7)' : 'rgba(255,255,255,0.6)';
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, y - 15);
+                    this.ctx.lineTo(x + 15, y - 30);
+                    this.ctx.lineTo(x, y - 35);
+                    this.ctx.closePath();
+                    this.ctx.fill();
+
+                    this.ctx.font = 'bold 14px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    const icon = boat.status === 'fishing' ? '🎣' : boat.status === 'damaged' ? '⚠️' : '✓';
+                    this.ctx.fillText(icon, x, y + 25);
+
+                    this.ctx.font = 'bold 10px Arial';
+                    this.ctx.fillStyle = '#0ff';
+                    this.ctx.fillText(`B${boat.id}`, x, y + 38);
+                });
+
+                this.ctx.font = 'bold 16px Arial';
+                this.ctx.fillStyle = '#0ff';
+                this.ctx.textAlign = 'left';
+                this.ctx.textBaseline = 'top';
+                this.ctx.fillText(`Pesquerías: ${this.location}`, 20, 20);
+            }
+        }
+
+        const game = new Game();
+    </script>
+</body>
+</html>

@@ -1,0 +1,502 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;700&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Rajdhani',sans-serif;background:#0a0a0f;color:#e8e8e8;overflow-x:hidden;}
+  
+  .header{background:linear-gradient(135deg,#0d1e3a 0%,#1a0a0a 100%);border-bottom:2px solid #c41e2a;padding:10px 16px;display:flex;align-items:center;gap:12px;}
+  .logo-circle{width:42px;height:42px;border:2px solid #c41e2a;border-radius:50%;background:#0d1e3a;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#4a90e2;text-align:center;line-height:1.1;flex-shrink:0;}
+  .header-text h1{font-size:13px;font-weight:700;color:#4a90e2;letter-spacing:1px;text-transform:uppercase;}
+  .header-text p{font-size:10px;color:#888;letter-spacing:0.5px;}
+  .status-badge{margin-left:auto;background:#c41e2a;color:#fff;font-size:9px;font-weight:700;padding:3px 8px;border-radius:2px;letter-spacing:1px;animation:pulse 2s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.7}}
+
+  .main{display:grid;grid-template-columns:200px 1fr 180px;gap:0;height:calc(100vh - 62px);min-height:500px;}
+  
+  .panel-left{background:#0d1020;border-right:1px solid #1a2a4a;padding:10px;overflow-y:auto;}
+  .panel-right{background:#0d1020;border-left:1px solid #1a2a4a;padding:10px;overflow-y:auto;}
+  
+  .section-title{font-size:9px;font-weight:700;color:#4a90e2;letter-spacing:2px;text-transform:uppercase;border-bottom:1px solid #1a2a4a;padding-bottom:4px;margin-bottom:10px;}
+  
+  .param-group{margin-bottom:12px;}
+  .param-label{font-size:10px;color:#aaa;margin-bottom:3px;display:flex;justify-content:space-between;align-items:center;}
+  .param-value{color:#4a90e2;font-family:'Share Tech Mono',monospace;font-size:11px;}
+  input[type=range]{width:100%;height:3px;accent-color:#c41e2a;margin:4px 0;}
+  select{width:100%;background:#0a0a15;border:1px solid #1a2a4a;color:#e8e8e8;font-size:10px;padding:4px;border-radius:3px;font-family:'Rajdhani',sans-serif;}
+  
+  .btn{width:100%;padding:7px;background:transparent;border:1px solid #4a90e2;color:#4a90e2;font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;border-radius:2px;text-transform:uppercase;margin-bottom:6px;transition:all 0.2s;}
+  .btn:hover{background:#4a90e2;color:#0a0a15;}
+  .btn-danger{border-color:#c41e2a;color:#c41e2a;}
+  .btn-danger:hover{background:#c41e2a;color:#fff;}
+  .btn-active{background:#c41e2a;border-color:#c41e2a;color:#fff;}
+  
+  canvas{display:block;width:100%;height:100%;image-rendering:pixelated;}
+  .canvas-wrap{position:relative;flex:1;background:#050510;}
+  
+  .overlay-info{position:absolute;top:8px;left:8px;font-family:'Share Tech Mono',monospace;font-size:9px;color:#4a90e2;background:rgba(5,5,16,0.85);padding:6px 8px;border-radius:2px;border:1px solid #1a2a4a;line-height:1.8;}
+  .overlay-compass{position:absolute;top:8px;right:8px;}
+  
+  .metric-card{background:#050510;border:1px solid #1a2a4a;border-radius:3px;padding:8px;margin-bottom:8px;}
+  .metric-val{font-family:'Share Tech Mono',monospace;font-size:18px;font-weight:400;color:#c41e2a;}
+  .metric-unit{font-size:10px;color:#666;}
+  .metric-label{font-size:10px;color:#888;margin-top:2px;}
+  
+  .legend{margin-top:10px;}
+  .legend-row{display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:10px;color:#aaa;}
+  .legend-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+  
+  .alert-box{background:#1a0505;border:1px solid #c41e2a;border-radius:3px;padding:6px 8px;font-size:9px;color:#e88;line-height:1.6;margin-bottom:8px;}
+  
+  .wind-dir{display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr 1fr;gap:3px;width:80px;margin:0 auto 10px;}
+  .wind-btn{padding:3px;background:#050510;border:1px solid #1a2a4a;color:#666;font-size:9px;text-align:center;cursor:pointer;border-radius:2px;transition:all 0.15s;}
+  .wind-btn:hover{border-color:#4a90e2;color:#4a90e2;}
+  .wind-btn.active{background:#4a90e2;border-color:#4a90e2;color:#0a0a15;font-weight:700;}
+  .wind-center{background:#0d1020;display:flex;align-items:center;justify-content:center;font-size:8px;color:#555;border:1px solid #1a2a4a;border-radius:2px;}
+  
+  .timeline{margin-top:10px;}
+  .timeline-bar{background:#050510;border:1px solid #1a2a4a;border-radius:2px;height:8px;overflow:hidden;margin:4px 0;}
+  .timeline-fill{height:100%;background:linear-gradient(90deg,#4a90e2,#c41e2a);width:0%;transition:width 0.3s;}
+  
+  #center-col{display:flex;flex-direction:column;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo-circle">UABCS<br>IPCD</div>
+  <div class="header-text">
+    <h1>SimFire — Módulo de Dispersión de Incendios</h1>
+    <p>Ingeniería en Prevención y Desastres · Protección Civil · CA-BCS</p>
+  </div>
+  <div class="status-badge">● EN LÍNEA</div>
+</div>
+
+<div class="main">
+
+  <!-- PANEL IZQUIERDO: parámetros -->
+  <div class="panel-left">
+    <div class="section-title">Parámetros Amb.</div>
+    
+    <div class="param-group">
+      <div class="param-label">Vel. Viento (km/h) <span class="param-value" id="vv">18</span></div>
+      <input type="range" min="0" max="80" value="18" id="windSpeed" oninput="document.getElementById('vv').textContent=this.value">
+    </div>
+    <div class="param-group">
+      <div class="param-label">Humedad Rel. (%) <span class="param-value" id="hr">32</span></div>
+      <input type="range" min="5" max="95" value="32" id="humidity" oninput="document.getElementById('hr').textContent=this.value">
+    </div>
+    <div class="param-group">
+      <div class="param-label">Temp. Ambiente (°C) <span class="param-value" id="ta">34</span></div>
+      <input type="range" min="10" max="50" value="34" id="ambTemp" oninput="document.getElementById('ta').textContent=this.value">
+    </div>
+    <div class="param-group">
+      <div class="param-label">Pend. Terreno (°) <span class="param-value" id="pt">8</span></div>
+      <input type="range" min="0" max="45" value="8" id="slope" oninput="document.getElementById('pt').textContent=this.value">
+    </div>
+
+    <div class="section-title" style="margin-top:14px;">Combustible</div>
+    <div class="param-group">
+      <select id="fuelType">
+        <option value="chaparral">Chaparral / Matorral</option>
+        <option value="pasture">Pastizal seco</option>
+        <option value="pine">Pinar / Coníferas</option>
+        <option value="urban">Interfaz urbano-forestal</option>
+      </select>
+    </div>
+    <div class="param-group">
+      <div class="param-label">Carga combustible (t/ha) <span class="param-value" id="fc">12</span></div>
+      <input type="range" min="1" max="40" value="12" id="fuelLoad" oninput="document.getElementById('fc').textContent=this.value">
+    </div>
+    <div class="param-group">
+      <div class="param-label">Cont. humedad combust. (%) <span class="param-value" id="fm">8</span></div>
+      <input type="range" min="2" max="30" value="8" id="fuelMoisture" oninput="document.getElementById('fm').textContent=this.value">
+    </div>
+
+    <div class="section-title" style="margin-top:14px;">Dirección Viento</div>
+    <div class="wind-dir" id="windDirGrid"></div>
+    <div style="text-align:center;font-size:9px;color:#4a90e2;margin-bottom:10px;" id="windDirLabel">SW → NE</div>
+
+    <button class="btn btn-danger" id="btnStart" onclick="startFire()">▶ INICIAR IGNICIÓN</button>
+    <button class="btn" onclick="resetSim()">↺ RESETEAR SIM</button>
+    <button class="btn" onclick="placeBarrier()">▬ CORTAFUEGO</button>
+  </div>
+
+  <!-- CENTRO: canvas -->
+  <div id="center-col">
+    <div class="canvas-wrap" id="canvasWrap">
+      <canvas id="fireCanvas"></canvas>
+      <div class="overlay-info" id="overlayInfo">
+        T+<span id="simTime">00:00</span>&nbsp;&nbsp;|&nbsp;&nbsp;Área: <span id="areaHa">0.0</span> ha<br>
+        Frente: <span id="frontWidth">0</span> m&nbsp;&nbsp;|&nbsp;&nbsp;ROS: <span id="rosVal">0.0</span> m/min<br>
+        Coord ignición: <span id="ignCoord">—</span>
+      </div>
+      <svg class="overlay-compass" width="50" height="50" viewBox="0 0 50 50">
+        <circle cx="25" cy="25" r="22" fill="rgba(5,5,16,0.85)" stroke="#1a2a4a" stroke-width="1"/>
+        <text x="25" y="10" text-anchor="middle" font-size="8" fill="#4a90e2" font-family="Rajdhani,sans-serif" font-weight="700">N</text>
+        <text x="25" y="44" text-anchor="middle" font-size="8" fill="#aaa" font-family="Rajdhani,sans-serif">S</text>
+        <text x="43" y="28" text-anchor="middle" font-size="8" fill="#aaa" font-family="Rajdhani,sans-serif">E</text>
+        <text x="7" y="28" text-anchor="middle" font-size="8" fill="#aaa" font-family="Rajdhani,sans-serif">W</text>
+        <line id="windArrow" x1="25" y1="25" x2="25" y2="12" stroke="#c41e2a" stroke-width="2" marker-end="url(#ah)"/>
+        <defs><marker id="ah" viewBox="0 0 10 10" refX="5" refY="10" markerWidth="4" markerHeight="4" orient="auto"><path d="M0 0 L5 10 L10 0Z" fill="#c41e2a"/></marker></defs>
+      </svg>
+    </div>
+  </div>
+
+  <!-- PANEL DERECHO: métricas -->
+  <div class="panel-right">
+    <div class="section-title">Métricas Operativas</div>
+    
+    <div class="metric-card">
+      <div class="metric-val" id="metROS">0.0</div>
+      <div class="metric-unit">m/min</div>
+      <div class="metric-label">Rate of Spread (ROS)</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val" id="metArea">0.0</div>
+      <div class="metric-unit">hectáreas</div>
+      <div class="metric-label">Área afectada</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val" id="metIntens">0</div>
+      <div class="metric-unit">kW/m</div>
+      <div class="metric-label">Intensidad línea de fuego</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val" id="metThreat" style="color:#4a90e2">BAJO</div>
+      <div class="metric-unit"></div>
+      <div class="metric-label">Nivel de amenaza PC</div>
+    </div>
+
+    <div class="section-title" style="margin-top:12px;">Progreso Simulación</div>
+    <div style="font-size:10px;color:#888;margin-bottom:3px;">Tiempo transcurrido</div>
+    <div class="timeline-bar"><div class="timeline-fill" id="timelineFill"></div></div>
+    <div style="font-size:9px;color:#555;display:flex;justify-content:space-between;"><span>0 min</span><span>60 min</span></div>
+
+    <div class="section-title" style="margin-top:12px;">Leyenda</div>
+    <div class="legend">
+      <div class="legend-row"><div class="legend-dot" style="background:#1a1a2e"></div>Sin quemar</div>
+      <div class="legend-row"><div class="legend-dot" style="background:#ff6a00"></div>Frente activo</div>
+      <div class="legend-row"><div class="legend-dot" style="background:#ff2200"></div>Combustión intensa</div>
+      <div class="legend-row"><div class="legend-dot" style="background:#8b0000"></div>Rescoldo</div>
+      <div class="legend-row"><div class="legend-dot" style="background:#1a1a1a"></div>Ceniza / quemado</div>
+      <div class="legend-row"><div class="legend-dot" style="background:#003366"></div>Cortafuego</div>
+    </div>
+
+    <div class="alert-box" id="alertBox" style="display:none">
+      <strong>⚠ ALERTA PROTECCIÓN CIVIL</strong><br>
+      <span id="alertText"></span>
+    </div>
+
+    <div class="section-title" style="margin-top:12px;">Modelo</div>
+    <div style="font-size:9px;color:#555;line-height:1.7;">
+      Rothermel (1972)<br>
+      Ecuación ROS modificada<br>
+      Corrección viento BL<br>
+      Factor pendiente Φ<br>
+      Grid celular 5m/celda
+    </div>
+  </div>
+
+</div>
+
+<script>
+const COLS = 120, ROWS = 90, CELL = 5;
+const EMPTY=0, FUEL=1, BURNING=2, EMBER=3, ASH=4, BARRIER=5;
+
+let grid=[], fireAge=[], intensityGrid=[];
+let running=false, tick=0, intervalId=null;
+let ignX=-1, ignY=-1, barrierMode=false;
+let windDirVec={x:0.7,y:-0.7};
+let windDirLabel="SW → NE";
+let simStarted=false;
+
+const canvas=document.getElementById('fireCanvas');
+const ctx=canvas.getContext('2d');
+
+// Direcc. viento
+const DIRS=[
+  {label:'NO',dx:-1,dy:-1},{label:'N',dx:0,dy:-1},{label:'NE',dx:1,dy:-1},
+  {label:'O',dx:-1,dy:0}, null,                    {label:'E',dx:1,dy:0},
+  {label:'SO',dx:-1,dy:1},{label:'S',dx:0,dy:1},  {label:'SE',dx:1,dy:1}
+];
+let selectedDir=2;
+function buildWindGrid(){
+  const g=document.getElementById('windDirGrid');
+  g.innerHTML='';
+  DIRS.forEach((d,i)=>{
+    if(!d){const c=document.createElement('div');c.className='wind-center';c.textContent='·';g.appendChild(c);return;}
+    const b=document.createElement('div');
+    b.className='wind-btn'+(i===selectedDir?' active':'');
+    b.textContent=d.label;
+    b.onclick=()=>{
+      selectedDir=i;windDirVec={x:d.dx,y:d.dy};
+      document.getElementById('windDirLabel').textContent=d.label+' →';
+      updateCompass(d.dx,d.dy);
+      buildWindGrid();
+    };
+    g.appendChild(b);
+  });
+}
+function updateCompass(dx,dy){
+  const cx=25,cy=25,len=13;
+  const angle=Math.atan2(dy,dx);
+  const ex=cx+Math.cos(angle)*len, ey=cy+Math.sin(angle)*len;
+  document.getElementById('windArrow').setAttribute('x2',ex);
+  document.getElementById('windArrow').setAttribute('y2',ey);
+}
+buildWindGrid();
+updateCompass(1,-1);
+
+function initGrid(){
+  grid=[];fireAge=[];intensityGrid=[];
+  for(let r=0;r<ROWS;r++){
+    grid.push(new Uint8Array(COLS).fill(FUEL));
+    fireAge.push(new Float32Array(COLS));
+    intensityGrid.push(new Float32Array(COLS));
+  }
+  // Add terrain features
+  for(let c=0;c<COLS;c++) for(let r=0;r<ROWS;r++){
+    if(Math.random()<0.03) grid[r][c]=EMPTY; // bare spots
+  }
+}
+
+function calcROS(){
+  const ws=parseFloat(document.getElementById('windSpeed').value);
+  const hum=parseFloat(document.getElementById('humidity').value);
+  const temp=parseFloat(document.getElementById('ambTemp').value);
+  const slope=parseFloat(document.getElementById('slope').value);
+  const fm=parseFloat(document.getElementById('fuelMoisture').value);
+  const fl=parseFloat(document.getElementById('fuelLoad').value);
+  const fuelMod={chaparral:1.2,pasture:1.6,pine:1.0,urban:0.85};
+  const ft=document.getElementById('fuelType').value;
+  
+  // Rothermel simplificado
+  const Wf=1-fm/30;
+  const Ww=Math.max(0,(1-hum/80));
+  const Wt=1+temp/80;
+  const Ws=1+slope/60;
+  const Wwind=1+ws/40;
+  const base=0.8*fuelMod[ft]*fl/10;
+  return Math.max(0.05, base*Wf*Ww*Wt*Ws*Wwind);
+}
+
+function calcIntensity(ros){
+  const fl=parseFloat(document.getElementById('fuelLoad').value);
+  const hv=18000; // kJ/kg calor de combustión
+  return Math.round((fl*hv*ros/60)/100);
+}
+
+function spreadFire(){
+  const ros=calcROS();
+  const ws=parseFloat(document.getElementById('windSpeed').value);
+  const windInfluence=Math.min(0.85,ws/60);
+  const newGrid=grid.map(r=>new Uint8Array(r));
+  let activeCells=0;
+  
+  for(let r=1;r<ROWS-1;r++) for(let c=1;c<COLS-1;c++){
+    if(grid[r][c]===BURNING){
+      activeCells++;
+      fireAge[r][c]+=ros;
+      intensityGrid[r][c]=calcIntensity(ros);
+      
+      if(fireAge[r][c]>12+Math.random()*8) newGrid[r][c]=EMBER;
+      
+      const nbrs=[[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]];
+      nbrs.forEach(([dr,dc])=>{
+        const nr=r+dr, nc=c+dc;
+        if(nr<0||nr>=ROWS||nc<0||nc>=COLS) return;
+        if(grid[nr][nc]!==FUEL) return;
+        
+        // prob base
+        let prob=ros*0.06;
+        // wind boost
+        const dot=dc*windDirVec.x+dr*windDirVec.y;
+        const windBoost=windInfluence*Math.max(0,dot*1.8);
+        prob+=windBoost;
+        
+        if(Math.random()<prob) newGrid[nr][nc]=BURNING;
+      });
+    }
+    if(grid[r][c]===EMBER){ fireAge[r][c]+=1; if(fireAge[r][c]>20) newGrid[r][c]=ASH; }
+  }
+  
+  for(let r=0;r<ROWS;r++) grid[r]=newGrid[r];
+  
+  return {activeCells,ros};
+}
+
+function countArea(){
+  let n=0;
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) if(grid[r][c]===BURNING||grid[r][c]===EMBER||grid[r][c]===ASH) n++;
+  return n*CELL*CELL/10000;
+}
+
+function drawGrid(){
+  canvas.width=canvas.offsetWidth||canvas.parentElement.offsetWidth;
+  canvas.height=canvas.offsetHeight||canvas.parentElement.offsetHeight;
+  const cw=canvas.width/COLS, ch=canvas.height/ROWS;
+  
+  ctx.fillStyle='#0a0a14';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  
+  // Draw topographic lines (subtle)
+  ctx.strokeStyle='rgba(74,144,226,0.06)';
+  ctx.lineWidth=0.5;
+  for(let i=0;i<5;i++){
+    const y=canvas.height*(i+1)/6;
+    ctx.beginPath();ctx.moveTo(0,y);
+    for(let x=0;x<canvas.width;x+=8) ctx.lineTo(x,y+Math.sin(x/30+i)*3);
+    ctx.stroke();
+  }
+  
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+    const s=grid[r][c];
+    let color;
+    if(s===FUEL)     color=`hsl(${110+Math.sin(r*c)*8},${30+Math.random()*5}%,${12+Math.random()*3}%)`;
+    else if(s===BURNING){
+      const age=fireAge[r][c];
+      const t=Math.min(1,age/8);
+      const r2=Math.round(255),g2=Math.round(106*(1-t)+Math.random()*30),b2=0;
+      color=`rgb(${r2},${Math.max(0,g2)},${b2})`;
+    }
+    else if(s===EMBER)   color=`hsl(${10+Math.random()*15},90%,${25+Math.random()*10}%)`;
+    else if(s===ASH)     color='#141414';
+    else if(s===BARRIER) color='#003366';
+    else                 color='#0a0a14';
+    
+    ctx.fillStyle=color;
+    ctx.fillRect(Math.round(c*cw),Math.round(r*ch),Math.ceil(cw)+1,Math.ceil(ch)+1);
+  }
+  
+  // Draw ignition marker
+  if(ignX>=0){
+    ctx.strokeStyle='#fff';ctx.lineWidth=1.5;
+    const px=ignX*cw,py=ignY*ch;
+    ctx.beginPath();ctx.arc(px,py,5,0,Math.PI*2);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(px-8,py);ctx.lineTo(px+8,py);ctx.moveTo(px,py-8);ctx.lineTo(px,py+8);ctx.stroke();
+  }
+}
+
+function updateMetrics(ros,activeCells){
+  const area=countArea();
+  const intensity=calcIntensity(ros);
+  document.getElementById('metROS').textContent=ros.toFixed(1);
+  document.getElementById('metArea').textContent=area.toFixed(2);
+  document.getElementById('metIntens').textContent=intensity;
+  document.getElementById('rosVal').textContent=ros.toFixed(1);
+  document.getElementById('areaHa').textContent=area.toFixed(2);
+  document.getElementById('frontWidth').textContent=Math.round(Math.sqrt(activeCells)*CELL);
+  
+  const pct=Math.min(100,tick/360*100);
+  document.getElementById('timelineFill').style.width=pct+'%';
+  const m=Math.floor(tick/6),s=Math.floor((tick%6)*10);
+  document.getElementById('simTime').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  
+  let threat='BAJO'; let tc='#4a90e2';
+  if(intensity>500){threat='CRÍTICO';tc='#ff0000';}
+  else if(intensity>250){threat='ALTO';tc='#c41e2a';}
+  else if(intensity>100){threat='MODERADO';tc='#f0a500';}
+  document.getElementById('metThreat').textContent=threat;
+  document.getElementById('metThreat').style.color=tc;
+  
+  if(intensity>250){
+    document.getElementById('alertBox').style.display='block';
+    document.getElementById('alertText').textContent=
+      `Intensidad crítica ${intensity} kW/m. Evacuar zona de influencia ${Math.round(area*100)/100} ha. Activar Plan de Emergencia PC.`;
+  }
+}
+
+function step(){
+  tick++;
+  const {activeCells,ros}=spreadFire();
+  drawGrid();
+  updateMetrics(ros,activeCells);
+  if(activeCells===0||tick>360){stopFire();}
+}
+
+function startFire(){
+  if(!simStarted){alert('Haz clic en el mapa para colocar el punto de ignición primero.');return;}
+  if(running) return;
+  running=true;
+  document.getElementById('btnStart').classList.add('btn-active');
+  document.getElementById('btnStart').textContent='■ SIMULANDO...';
+  intervalId=setInterval(step,80);
+}
+
+function stopFire(){
+  running=false;
+  clearInterval(intervalId);
+  document.getElementById('btnStart').classList.remove('btn-active');
+  document.getElementById('btnStart').textContent='▶ INICIAR IGNICIÓN';
+}
+
+function resetSim(){
+  stopFire();tick=0;simStarted=false;ignX=-1;ignY=-1;
+  document.getElementById('alertBox').style.display='none';
+  document.getElementById('metROS').textContent='0.0';
+  document.getElementById('metArea').textContent='0.0';
+  document.getElementById('metIntens').textContent='0';
+  document.getElementById('simTime').textContent='00:00';
+  document.getElementById('areaHa').textContent='0.0';
+  document.getElementById('timelineFill').style.width='0%';
+  document.getElementById('ignCoord').textContent='—';
+  document.getElementById('metThreat').textContent='BAJO';
+  document.getElementById('metThreat').style.color='#4a90e2';
+  initGrid();drawGrid();
+}
+
+function placeBarrier(){
+  barrierMode=!barrierMode;
+  document.querySelector('.btn:nth-of-type(3)').style.borderColor=barrierMode?'#fff':'';
+  document.querySelector('.btn:nth-of-type(3)').style.color=barrierMode?'#fff':'';
+}
+
+canvas.addEventListener('click',e=>{
+  const rect=canvas.getBoundingClientRect();
+  const x=e.clientX-rect.left, y=e.clientY-rect.top;
+  const c=Math.floor(x/rect.width*COLS);
+  const r=Math.floor(y/rect.height*ROWS);
+  if(c<0||c>=COLS||r<0||r>=ROWS) return;
+  
+  if(barrierMode){
+    for(let dr=-1;dr<=1;dr++) for(let dc=-2;dc<=2;dc++){
+      const nr=r+dr,nc=c+dc;
+      if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS) grid[nr][nc]=BARRIER;
+    }
+    drawGrid();
+  } else if(!running){
+    ignX=c;ignY=r;
+    grid[r][c]=BURNING;fireAge[r][c]=0;
+    simStarted=true;
+    document.getElementById('ignCoord').textContent=`${c*CELL}m, ${r*CELL}m`;
+    drawGrid();
+  }
+});
+
+canvas.addEventListener('mousemove',e=>{
+  if(!barrierMode||!e.buttons) return;
+  const rect=canvas.getBoundingClientRect();
+  const c=Math.floor((e.clientX-rect.left)/rect.width*COLS);
+  const r=Math.floor((e.clientY-rect.top)/rect.height*ROWS);
+  if(c<0||c>=COLS||r<0||r>=ROWS) return;
+  grid[r][c]=BARRIER;
+  drawGrid();
+});
+
+// Resize handler
+function resizeCanvas(){
+  const wrap=document.getElementById('canvasWrap');
+  canvas.width=wrap.offsetWidth;
+  canvas.height=wrap.offsetHeight;
+  drawGrid();
+}
+window.addEventListener('resize',resizeCanvas);
+
+initGrid();
+setTimeout(()=>{resizeCanvas();},100);
+</script>
+</body>
+</html>

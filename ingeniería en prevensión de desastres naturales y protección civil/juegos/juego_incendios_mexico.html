@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔥 Guardián del Bosque — Juego de Incendios Forestales</title>
+<link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=Nunito:wght@400;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --fire1:#FF3A00; --fire2:#FF7A00; --fire3:#FFD000;
+  --forest:#1a3a1a; --forest2:#2d5a2d; --forest3:#3a7a3a;
+  --smoke:#0d1117; --ash:#1e2330;
+  --text:#fff8f0; --muted:#a89080;
+  --correct:#2ECC71; --wrong:#e74c3c; --info:#3498db;
+  --card:#1e2a1e;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'Nunito',sans-serif;
+  background:var(--smoke);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+  cursor:default;
+}
+
+/* ── FIRE PARTICLES ── */
+.fire-bg{
+  position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;
+}
+.ember{
+  position:absolute;bottom:-20px;width:6px;height:6px;
+  border-radius:50%;
+  background:var(--fire2);
+  box-shadow:0 0 8px var(--fire1);
+  animation:rise linear infinite;
+  opacity:0;
+}
+@keyframes rise{
+  0%{transform:translateY(0) scale(1);opacity:0.8;}
+  80%{opacity:0.5;}
+  100%{transform:translateY(-100vh) translateX(var(--drift)) scale(0);opacity:0;}
+}
+
+/* ── FOREST FLOOR ── */
+.forest-floor{
+  position:fixed;bottom:0;left:0;right:0;height:80px;pointer-events:none;z-index:1;
+  background:linear-gradient(to top,#0d1f0d,transparent);
+}
+.trees{
+  position:fixed;bottom:0;left:0;right:0;height:120px;pointer-events:none;z-index:1;
+  display:flex;align-items:flex-end;gap:0;
+}
+.tree{
+  flex-shrink:0;width:40px;display:flex;flex-direction:column;align-items:center;
+  animation:sway 3s ease-in-out infinite;
+}
+.tree:nth-child(even){animation-delay:-1.5s;}
+.tree-top{width:0;height:0;border-left:18px solid transparent;border-right:18px solid transparent;border-bottom:40px solid #2d5a2d;margin-bottom:2px;}
+.tree-trunk{width:8px;height:18px;background:#5a3a1a;}
+@keyframes sway{0%,100%{transform:rotate(-1deg);}50%{transform:rotate(1deg);}}
+
+/* ── SCREEN SYSTEM ── */
+.screen{display:none;position:relative;z-index:10;min-height:100vh;flex-direction:column;align-items:center;justify-content:center;padding:20px;}
+.screen.active{display:flex;}
+
+/* ── START SCREEN ── */
+#screen-start{
+  background:radial-gradient(ellipse at 50% 70%, rgba(255,100,0,0.18) 0%, transparent 70%),
+             radial-gradient(ellipse at 50% 0%, rgba(0,50,0,0.5) 0%, transparent 60%);
+  text-align:center;
+}
+.game-logo{
+  font-family:'Boogaloo',cursive;
+  font-size:clamp(48px,10vw,90px);
+  line-height:1;
+  text-shadow:0 0 40px rgba(255,100,0,0.7), 0 4px 0 #a33;
+  background:linear-gradient(135deg,#fff 0%,var(--fire3) 35%,var(--fire1) 70%,#a00 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:6px;
+  animation:logoFlicker 3s ease-in-out infinite;
+}
+@keyframes logoFlicker{0%,100%{filter:brightness(1);}50%{filter:brightness(1.15);}}
+.logo-sub{
+  font-family:'Share Tech Mono',monospace;
+  font-size:12px;letter-spacing:4px;color:var(--fire2);
+  text-transform:uppercase;margin-bottom:30px;
+}
+.fire-icon-big{font-size:80px;animation:bounce 1.5s ease-in-out infinite;display:block;margin:0 auto 20px;}
+@keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-12px);}  }
+.start-desc{
+  max-width:480px;font-size:15px;color:#c8b8a0;
+  line-height:1.7;margin-bottom:36px;
+  background:rgba(0,0,0,0.3);border-radius:14px;padding:18px 22px;
+  border:1px solid rgba(255,100,0,0.2);
+}
+.btn-start{
+  font-family:'Boogaloo',cursive;font-size:26px;letter-spacing:1px;
+  background:linear-gradient(135deg,var(--fire1),var(--fire2));
+  border:none;color:#fff;padding:16px 52px;border-radius:50px;
+  cursor:pointer;box-shadow:0 0 30px rgba(255,80,0,0.5);
+  transition:transform 0.15s,box-shadow 0.15s;
+}
+.btn-start:hover{transform:scale(1.06);box-shadow:0 0 45px rgba(255,80,0,0.7);}
+.difficulty-row{display:flex;gap:10px;margin-bottom:26px;justify-content:center;flex-wrap:wrap;}
+.diff-btn{
+  padding:8px 22px;border-radius:30px;border:2px solid;
+  font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;
+  cursor:pointer;transition:all 0.15s;background:transparent;
+  letter-spacing:0.5px;
+}
+.diff-btn[data-d="facil"]{border-color:var(--correct);color:var(--correct);}
+.diff-btn[data-d="medio"]{border-color:var(--fire2);color:var(--fire2);}
+.diff-btn[data-d="dificil"]{border-color:var(--fire1);color:var(--fire1);}
+.diff-btn.selected,.diff-btn:hover{color:#fff;}
+.diff-btn[data-d="facil"].selected,.diff-btn[data-d="facil"]:hover{background:var(--correct);}
+.diff-btn[data-d="medio"].selected,.diff-btn[data-d="medio"]:hover{background:var(--fire2);}
+.diff-btn[data-d="dificil"].selected,.diff-btn[data-d="dificil"]:hover{background:var(--fire1);}
+
+/* ── GAME SCREEN ── */
+#screen-game{
+  justify-content:flex-start;padding:0;
+  background:radial-gradient(ellipse at 50% 100%, rgba(255,80,0,0.1) 0%, transparent 60%);
+}
+.game-header{
+  width:100%;padding:14px 24px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);
+  border-bottom:1px solid rgba(255,100,0,0.2);
+  position:sticky;top:0;z-index:20;
+}
+.hud{display:flex;align-items:center;gap:8px;}
+.hud-label{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);}
+.hud-val{font-family:'Share Tech Mono',monospace;font-size:20px;color:var(--fire3);}
+.lives{display:flex;gap:4px;}
+.heart{font-size:18px;transition:transform 0.3s;}
+.heart.lost{filter:grayscale(1);opacity:0.3;transform:scale(0.8);}
+
+/* TIMER BAR */
+.timer-wrap{flex:1;max-width:300px;}
+.timer-bar{height:6px;border-radius:3px;background:rgba(255,255,255,0.1);overflow:hidden;}
+.timer-fill{
+  height:100%;border-radius:3px;
+  background:linear-gradient(90deg,var(--correct),var(--fire3),var(--fire1));
+  transition:width 1s linear, background 0.5s;
+}
+
+.q-container{
+  width:100%;max-width:720px;margin:0 auto;
+  padding:24px 20px 120px;
+  display:flex;flex-direction:column;align-items:center;gap:20px;
+}
+.q-meta{
+  display:flex;gap:10px;align-items:center;width:100%;
+}
+.q-num{
+  font-family:'Share Tech Mono',monospace;
+  font-size:11px;letter-spacing:2px;color:var(--muted);
+}
+.q-badge{
+  padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;
+  letter-spacing:1px;text-transform:uppercase;
+}
+.q-badge.facil{background:rgba(46,204,113,0.2);color:var(--correct);border:1px solid rgba(46,204,113,0.3);}
+.q-badge.medio{background:rgba(255,122,0,0.2);color:var(--fire2);border:1px solid rgba(255,122,0,0.3);}
+.q-badge.dificil{background:rgba(255,58,0,0.2);color:var(--fire1);border:1px solid rgba(255,58,0,0.3);}
+.q-badge.dato{background:rgba(52,152,219,0.2);color:var(--info);border:1px solid rgba(52,152,219,0.3);}
+
+.q-card{
+  width:100%;background:rgba(30,42,30,0.7);
+  border:1px solid rgba(255,100,0,0.2);border-radius:20px;
+  padding:28px 28px 24px;
+  backdrop-filter:blur(10px);
+  box-shadow:0 8px 40px rgba(0,0,0,0.4);
+  animation:fadeUp 0.35s ease;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+.q-icon{font-size:36px;margin-bottom:12px;display:block;}
+.q-text{
+  font-size:clamp(16px,3vw,20px);font-weight:700;line-height:1.5;
+  color:var(--text);
+}
+.q-source{font-size:11px;color:var(--muted);margin-top:10px;font-family:'Share Tech Mono',monospace;}
+
+.options{width:100%;display:grid;gap:10px;}
+.opt{
+  width:100%;padding:14px 20px;
+  border-radius:12px;border:2px solid rgba(255,100,0,0.2);
+  background:rgba(20,30,20,0.7);color:var(--text);
+  font-family:'Nunito',sans-serif;font-size:15px;font-weight:600;
+  cursor:pointer;text-align:left;
+  transition:all 0.15s;
+  display:flex;align-items:center;gap:12px;
+  backdrop-filter:blur(6px);
+}
+.opt:hover:not(:disabled){
+  border-color:var(--fire2);background:rgba(255,122,0,0.12);
+  transform:translateX(4px);
+}
+.opt.correct{border-color:var(--correct);background:rgba(46,204,113,0.18);color:#fff;}
+.opt.wrong{border-color:var(--wrong);background:rgba(231,76,60,0.18);}
+.opt:disabled{cursor:default;}
+.opt-letter{
+  width:28px;height:28px;border-radius:50%;flex-shrink:0;
+  background:rgba(255,100,0,0.15);border:1px solid rgba(255,100,0,0.3);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--fire2);
+  font-weight:700;
+}
+.opt.correct .opt-letter{background:var(--correct);border-color:var(--correct);color:#fff;}
+.opt.wrong .opt-letter{background:var(--wrong);border-color:var(--wrong);color:#fff;}
+
+/* FEEDBACK */
+.feedback{
+  width:100%;border-radius:14px;padding:16px 20px;
+  font-size:14px;line-height:1.6;
+  animation:fadeUp 0.3s ease;display:none;
+}
+.feedback.show{display:block;}
+.feedback.correct-fb{background:rgba(46,204,113,0.12);border:1px solid rgba(46,204,113,0.3);}
+.feedback.wrong-fb{background:rgba(231,76,60,0.12);border:1px solid rgba(231,76,60,0.3);}
+.feedback-title{font-weight:800;font-size:15px;margin-bottom:6px;}
+.feedback-title.c{color:var(--correct);}
+.feedback-title.w{color:var(--wrong);}
+
+.btn-next{
+  font-family:'Boogaloo',cursive;font-size:20px;
+  background:linear-gradient(135deg,var(--fire1),var(--fire2));
+  border:none;color:#fff;padding:13px 40px;border-radius:40px;
+  cursor:pointer;box-shadow:0 4px 20px rgba(255,80,0,0.4);
+  transition:transform 0.15s;display:none;margin-top:4px;
+}
+.btn-next.show{display:block;}
+.btn-next:hover{transform:scale(1.04);}
+
+/* PROGRESS DOTS */
+.progress-dots{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;}
+.dot{
+  width:10px;height:10px;border-radius:50%;
+  background:rgba(255,255,255,0.15);
+  transition:all 0.3s;
+}
+.dot.done-c{background:var(--correct);box-shadow:0 0 6px var(--correct);}
+.dot.done-w{background:var(--wrong);}
+.dot.current{background:var(--fire3);box-shadow:0 0 8px var(--fire3);transform:scale(1.3);}
+
+/* COMBO */
+.combo-badge{
+  position:fixed;top:80px;right:20px;z-index:30;
+  font-family:'Boogaloo',cursive;font-size:22px;
+  background:linear-gradient(135deg,var(--fire1),var(--fire3));
+  padding:8px 18px;border-radius:30px;color:#fff;
+  box-shadow:0 4px 20px rgba(255,80,0,0.5);
+  animation:popIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  display:none;
+}
+@keyframes popIn{from{transform:scale(0) rotate(-10deg);}to{transform:scale(1) rotate(0);}}
+
+/* ── END SCREEN ── */
+#screen-end{
+  background:radial-gradient(ellipse at 50% 60%, rgba(255,100,0,0.2) 0%, transparent 70%);
+  text-align:center;
+}
+.end-trophy{font-size:80px;display:block;margin-bottom:10px;animation:bounce 2s ease-in-out infinite;}
+.end-title{
+  font-family:'Boogaloo',cursive;font-size:clamp(36px,7vw,64px);
+  background:linear-gradient(135deg,#fff,var(--fire3),var(--fire1));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:4px;
+}
+.end-score-big{
+  font-family:'Share Tech Mono',monospace;font-size:clamp(40px,8vw,80px);
+  color:var(--fire3);text-shadow:0 0 30px rgba(255,200,0,0.5);
+  margin:10px 0;
+}
+.end-stats{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+  gap:12px;max-width:480px;margin:20px auto;
+}
+.end-stat{background:rgba(30,42,30,0.7);border:1px solid rgba(255,100,0,0.2);border-radius:12px;padding:14px;}
+.end-stat-v{font-family:'Share Tech Mono',monospace;font-size:24px;color:var(--fire2);}
+.end-stat-l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:4px;}
+.end-msg{
+  font-size:15px;color:#c8b8a0;line-height:1.7;max-width:460px;
+  background:rgba(0,0,0,0.3);border-radius:14px;padding:16px 20px;
+  border:1px solid rgba(255,100,0,0.2);margin:0 auto 28px;
+}
+.end-btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
+.btn-end{
+  font-family:'Boogaloo',cursive;font-size:20px;
+  border:none;color:#fff;padding:13px 34px;border-radius:40px;
+  cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;
+}
+.btn-end.primary{
+  background:linear-gradient(135deg,var(--fire1),var(--fire2));
+  box-shadow:0 4px 20px rgba(255,80,0,0.4);
+}
+.btn-end.secondary{
+  background:rgba(255,100,0,0.15);border:2px solid rgba(255,100,0,0.4);
+}
+.btn-end:hover{transform:scale(1.05);}
+
+/* SHAKE ANIMATION */
+@keyframes shake{
+  0%,100%{transform:translateX(0);}
+  20%{transform:translateX(-8px);}
+  40%{transform:translateX(8px);}
+  60%{transform:translateX(-5px);}
+  80%{transform:translateX(5px);}
+}
+.shake{animation:shake 0.4s ease;}
+
+/* PARTICLES ON CORRECT */
+.confetti-piece{
+  position:fixed;pointer-events:none;z-index:100;
+  width:8px;height:8px;border-radius:2px;
+  animation:confettiFall 1s ease forwards;
+}
+@keyframes confettiFall{
+  from{opacity:1;transform:translateY(0) rotate(0);}
+  to{opacity:0;transform:translateY(120px) rotate(360deg);}
+}
+
+/* MEDAL */
+.medal{display:inline-block;font-size:28px;margin-left:8px;vertical-align:middle;}
+</style>
+</head>
+<body>
+
+<!-- FIRE BACKGROUND -->
+<div class="fire-bg" id="fireBg"></div>
+<div class="forest-floor"></div>
+<div class="trees" id="trees"></div>
+
+<!-- COMBO BADGE -->
+<div class="combo-badge" id="comboBadge">🔥 RACHA ×<span id="comboNum">2</span></div>
+
+<!-- ════════════════════════════════════════════ -->
+<!--  SCREEN: START                               -->
+<!-- ════════════════════════════════════════════ -->
+<div class="screen active" id="screen-start">
+  <span class="fire-icon-big">🌲🔥🌲</span>
+  <div class="game-logo">Guardián<br>del Bosque</div>
+  <div class="logo-sub">Trivia · Incendios Forestales · México</div>
+  <div class="start-desc">
+    ¿Cuánto sabes sobre los incendios forestales en México?<br>
+    Responde <strong>15 preguntas</strong> con datos reales de CONAFOR y SEMARNAT. Gana puntos extra por velocidad y rachas. ¡Salva el bosque con tu conocimiento!
+  </div>
+  <div style="margin-bottom:12px;font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;">Dificultad</div>
+  <div class="difficulty-row">
+    <button class="diff-btn selected" data-d="facil" onclick="setDiff(this)">🌱 Fácil</button>
+    <button class="diff-btn" data-d="medio" onclick="setDiff(this)">🌿 Medio</button>
+    <button class="diff-btn" data-d="dificil" onclick="setDiff(this)">🔥 Difícil</button>
+  </div>
+  <button class="btn-start" onclick="startGame()">¡Jugar ahora!</button>
+  <div style="margin-top:20px;font-size:11px;color:var(--muted);letter-spacing:1px;">Datos: CONAFOR · SEMARNAT · 2015–2024</div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!--  SCREEN: GAME                                -->
+<!-- ════════════════════════════════════════════ -->
+<div class="screen" id="screen-game">
+  <div class="game-header">
+    <div class="hud">
+      <div>
+        <div class="hud-label">Puntos</div>
+        <div class="hud-val" id="hudScore">0</div>
+      </div>
+    </div>
+    <div class="timer-wrap">
+      <div style="text-align:center;font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--muted);margin-bottom:4px;" id="timerText">20s</div>
+      <div class="timer-bar"><div class="timer-fill" id="timerFill" style="width:100%"></div></div>
+    </div>
+    <div class="hud" style="flex-direction:column;align-items:flex-end;gap:2px;">
+      <div class="hud-label">Vidas</div>
+      <div class="lives" id="livesRow"></div>
+    </div>
+  </div>
+
+  <div class="q-container">
+    <div class="progress-dots" id="progressDots"></div>
+    <div class="q-meta">
+      <span class="q-num" id="qNum">Pregunta 1 / 15</span>
+      <span class="q-badge" id="qBadge">Medio</span>
+    </div>
+    <div class="q-card" id="qCard">
+      <span class="q-icon" id="qIcon">🌲</span>
+      <div class="q-text" id="qText">Cargando…</div>
+      <div class="q-source" id="qSource"></div>
+    </div>
+    <div class="options" id="optionsGrid"></div>
+    <div class="feedback" id="feedbackBox">
+      <div class="feedback-title" id="fbTitle"></div>
+      <div id="fbBody"></div>
+    </div>
+    <button class="btn-next" id="btnNext" onclick="nextQuestion()">Siguiente →</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!--  SCREEN: END                                 -->
+<!-- ════════════════════════════════════════════ -->
+<div class="screen" id="screen-end">
+  <span class="end-trophy" id="endTrophy">🏆</span>
+  <div class="end-title" id="endTitle">¡Excelente!</div>
+  <div style="font-size:14px;color:var(--muted);margin-bottom:4px;">Puntuación final</div>
+  <div class="end-score-big" id="endScore">0</div>
+  <div class="end-stats">
+    <div class="end-stat"><div class="end-stat-v" id="esCorrect">0</div><div class="end-stat-l">✅ Correctas</div></div>
+    <div class="end-stat"><div class="end-stat-v" id="esWrong">0</div><div class="end-stat-l">❌ Errores</div></div>
+    <div class="end-stat"><div class="end-stat-v" id="esCombo">0</div><div class="end-stat-l">🔥 Racha max</div></div>
+    <div class="end-stat"><div class="end-stat-v" id="esAccuracy">0%</div><div class="end-stat-l">🎯 Precisión</div></div>
+  </div>
+  <div class="end-msg" id="endMsg"></div>
+  <div class="end-btns">
+    <button class="btn-end primary" onclick="startGame()">🔄 Jugar de nuevo</button>
+    <button class="btn-end secondary" onclick="showScreen('screen-start')">🏠 Menú</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  PREGUNTAS — Datos reales CONAFOR / SEMARNAT
+// ══════════════════════════════════════════════════════
+const ALL_QUESTIONS = [
+  // ── FÁCILES ──
+  {
+    icon:'🔥', diff:'facil',
+    text:'¿Qué porcentaje de los incendios forestales en México son causados por actividad humana según CONAFOR?',
+    opts:['Aproximadamente 60%','Aproximadamente 75%','Aproximadamente 95%','Prácticamente el 100%'],
+    ans:2,
+    explain:'Según CONAFOR, el 95% de los incendios en México tienen origen humano: actividades agropecuarias, incendios intencionales y descuidos. Solo el 1.34% es de origen natural (rayos).',
+    source:'CONAFOR · Reporte anual 2024'
+  },
+  {
+    icon:'🌲', diff:'facil',
+    text:'¿En qué meses del año se concentra la mayor temporada de incendios forestales en México?',
+    opts:['Enero a marzo','Marzo a junio','Julio a septiembre','Octubre a diciembre'],
+    ans:1,
+    explain:'La temporada crítica de incendios en México va de marzo a junio, coincidiendo con el período de secas y altas temperaturas previo a las lluvias. En algunas regiones puede extenderse a julio.',
+    source:'CONAFOR · Temporada de incendios 2024'
+  },
+  {
+    icon:'📍', diff:'facil',
+    text:'¿Cuál fue el estado de México con mayor número de incendios forestales registrados en 2024?',
+    opts:['Jalisco','Chihuahua','Estado de México','Oaxaca'],
+    ans:2,
+    explain:'El Estado de México registró 1,079 incendios en 2024, el mayor número del país. Le siguieron Ciudad de México (993) y Jalisco (950), aunque en términos de hectáreas afectadas el norte encabeza.',
+    source:'CONAFOR · Estadísticas 2024'
+  },
+  {
+    icon:'🌿', diff:'facil',
+    text:'¿Qué tipo de vegetación se ve más afectada por los incendios forestales en México?',
+    opts:['Bosques de coníferas','Pastizales y arbustos','Manglares','Selvas tropicales'],
+    ans:1,
+    explain:'El 95% de la superficie quemada corresponde a pastizales y vegetación arbustiva (herbáceo). Solo el 5% afecta vegetación arbórea como bosques. Esto se debe a la mayor presencia de pastizales en las zonas secas.',
+    source:'CONAFOR · Tipo de vegetación afectada 2024'
+  },
+  {
+    icon:'🌡️', diff:'facil',
+    text:'¿Cuál de estas causas humanas es la más frecuente en los incendios forestales mexicanos?',
+    opts:['Fogatas de campistas','Líneas eléctricas','Actividad agrícola y ganadera','Cigarros mal apagados'],
+    ans:2,
+    explain:'Las actividades agrícolas (quemas para preparar siembra) y ganaderas (quemas para rebrote de pasto) representan más del 30% de los incendios con causa identificada en México.',
+    source:'CONAFOR · Causas de incendios 2024'
+  },
+  {
+    icon:'💧', diff:'facil',
+    text:'¿Cuál es el nombre del organismo federal mexicano encargado de combatir y prevenir los incendios forestales?',
+    opts:['SEMARNAT','CONAFOR','PROFEPA','CONAGUA'],
+    ans:1,
+    explain:'La Comisión Nacional Forestal (CONAFOR), adscrita a SEMARNAT, es el organismo responsable de la prevención, combate y restauración de zonas afectadas por incendios forestales en México.',
+    source:'Gobierno de México · CONAFOR'
+  },
+
+  // ── MEDIOS ──
+  {
+    icon:'📊', diff:'medio',
+    text:'¿Cuántas hectáreas aproximadas fueron afectadas por incendios forestales en México durante 2024?',
+    opts:['Aproximadamente 500,000 ha','Aproximadamente 800,000 ha','Aproximadamente 1.67 millones de ha','Aproximadamente 3 millones de ha'],
+    ans:2,
+    explain:'En 2024 se quemaron aproximadamente 1.67 millones de hectáreas en México, un aumento del 59.6% respecto a 2023 (1.05 millones). Fue uno de los años más devastadores de la última década.',
+    source:'CONAFOR · Cierre estadístico 2024'
+  },
+  {
+    icon:'📅', diff:'medio',
+    text:'¿Cuántos incendios forestales registró México en 2024?',
+    opts:['Alrededor de 5,000','Alrededor de 6,700','Alrededor de 8,000','Alrededor de 12,000'],
+    ans:2,
+    explain:'CONAFOR reportó 8,002 incendios forestales en 2024, el número más alto desde 1998. Esto representa un incremento respecto a los 7,611 registrados en 2023.',
+    source:'CONAFOR · Estadísticas 2024'
+  },
+  {
+    icon:'💀', diff:'medio',
+    text:'¿Cuántos brigadistas y combatientes de incendios fallecieron en México durante la temporada de incendios de 2024?',
+    opts:['3 personas','8 personas','18 personas','32 personas'],
+    ans:2,
+    explain:'Al menos 18 brigadistas y combatientes forestales perdieron la vida durante los incendios de 2024 en México, evidenciando las condiciones extremas de riesgo que enfrentan quienes luchan contra el fuego.',
+    source:'Reportes de campo CONAFOR 2024'
+  },
+  {
+    icon:'🗺️', diff:'medio',
+    text:'Baja California fue uno de los estados con mayor superficie quemada en 2024. ¿Cuántas hectáreas se estima que perdió?',
+    opts:['Unas 30,000 ha','Unas 90,000 ha','Alrededor de 195,000 ha','Más de 400,000 ha'],
+    ans:2,
+    explain:'Baja California sufrió la pérdida de aproximadamente 195,000 hectáreas, siendo uno de los estados con mayor superficie afectada por incendios en 2024, impulsados por sequía extrema y olas de calor.',
+    source:'CONAFOR · BC 2024'
+  },
+  {
+    icon:'🌎', diff:'medio',
+    text:'¿Cuál fue el año entre 2015 y 2024 con MENOR número de incendios forestales en México?',
+    opts:['2015','2017','2020','2022'],
+    ans:2,
+    explain:'El año 2020 registró 5,913 incendios forestales, el menor número del período 2015–2024. Esto se atribuye parcialmente a las restricciones de movilidad por la pandemia de COVID-19 y a un año más lluvioso en algunas regiones.',
+    source:'CONAFOR · Histórico 2015–2024'
+  },
+  {
+    icon:'🌱', diff:'medio',
+    text:'¿Cuánto tiempo tarda aproximadamente un bosque de pino-encino en México en recuperarse después de un incendio severo?',
+    opts:['5 a 10 años','15 a 30 años','50 a 100 años','Más de 200 años'],
+    ans:2,
+    explain:'Un bosque de pino-encino severamente afectado puede tardar entre 50 y 100 años en recuperar su estructura y biodiversidad original. Los incendios recurrentes pueden impedir esta recuperación permanentemente.',
+    source:'CONAFOR · Restauración forestal'
+  },
+
+  // ── DIFÍCILES ──
+  {
+    icon:'📈', diff:'dificil',
+    text:'¿En qué porcentaje aumentaron las hectáreas afectadas por incendios en 2024 respecto a 2023 en México?',
+    opts:['Aproximadamente 20%','Aproximadamente 40%','Aproximadamente 60%','Aproximadamente 80%'],
+    ans:2,
+    explain:'Las hectáreas afectadas pasaron de 1,047,500 en 2023 a 1,672,200 en 2024, un aumento del 59.6%. Este incremento se vincula a sequías prolongadas, el fenómeno El Niño y el cambio climático.',
+    source:'CONAFOR · Comparativo 2023–2024'
+  },
+  {
+    icon:'🧪', diff:'dificil',
+    text:'Según CONAFOR, ¿qué porcentaje de los incendios forestales en México tiene una causa clasificada como "desconocida"?',
+    opts:['Menos del 10%','Alrededor del 20%','Cerca del 30%','Más del 45%'],
+    ans:2,
+    explain:'Aproximadamente el 29.8% de los incendios se registra con causa desconocida. Esto complica las estrategias de prevención, ya que no se puede actuar sobre causas no identificadas. La investigación de campo es insuficiente.',
+    source:'CONAFOR · Reporte de causas 2024'
+  },
+  {
+    icon:'🌍', diff:'dificil',
+    text:'¿Cuántas toneladas de CO₂ equivalente emiten los incendios forestales en México por cada millón de hectáreas quemadas aproximadamente?',
+    opts:['Unos 5 millones de toneladas','Alrededor de 50 millones de toneladas','Entre 150 y 300 millones de toneladas','Más de 500 millones de toneladas'],
+    ans:2,
+    explain:'Se estima que por cada millón de hectáreas quemadas en México se liberan entre 150 y 300 millones de toneladas de CO₂ equivalente, dependiendo del tipo de vegetación. En 2024, con 1.67M ha, las emisiones fueron enormes.',
+    source:'SEMARNAT · Inventario nacional de emisiones GEI'
+  },
+  {
+    icon:'🏔️', diff:'dificil',
+    text:'¿En qué estado de México se registró el mayor incendio de la historia reciente del país en términos de superficie en 2024?',
+    opts:['Chihuahua','Guerrero','Jalisco','Baja California'],
+    ans:3,
+    explain:'Baja California concentró uno de los incendios más extensos de 2024 en México. El Parque Nacional Sierra de San Pedro Mártir fue afectado, así como zonas de matorral y chaparral únicas en el país, con condiciones de sequía extrema.',
+    source:'CONAFOR · Grandes incendios 2024'
+  },
+];
+
+// ══════════════════════════════════════════════════════
+//  GAME STATE
+// ══════════════════════════════════════════════════════
+let state = {
+  questions:[],
+  current:0,
+  score:0,
+  lives:3,
+  combo:0,
+  maxCombo:0,
+  correct:0,
+  wrong:0,
+  timeLeft:20,
+  timerInterval:null,
+  answered:false,
+  difficulty:'facil',
+  dotStates:[], // 'c', 'w', ''
+};
+
+const TIMERS = {facil:25, medio:20, dificil:15};
+const POINTS_BASE = {facil:100, medio:150, dificil:220};
+
+// ══════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════
+function buildTrees(){
+  const cont = document.getElementById('trees');
+  cont.innerHTML='';
+  const n = Math.ceil(window.innerWidth/40)+2;
+  for(let i=0;i<n;i++){
+    cont.innerHTML+=`<div class="tree"><div class="tree-top"></div><div class="tree-trunk"></div></div>`;
+  }
+}
+function buildEmbers(){
+  const bg = document.getElementById('fireBg');
+  bg.innerHTML='';
+  for(let i=0;i<35;i++){
+    const e = document.createElement('div');
+    e.className='ember';
+    e.style.cssText=`
+      left:${Math.random()*100}%;
+      width:${3+Math.random()*6}px;height:${3+Math.random()*6}px;
+      animation-duration:${3+Math.random()*5}s;
+      animation-delay:${Math.random()*6}s;
+      --drift:${(Math.random()-0.5)*80}px;
+      background:hsl(${20+Math.random()*30},100%,${50+Math.random()*30}%);
+    `;
+    bg.appendChild(e);
+  }
+}
+buildTrees(); buildEmbers();
+
+// ══════════════════════════════════════════════════════
+//  SCREENS
+// ══════════════════════════════════════════════════════
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function setDiff(btn){
+  document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  state.difficulty = btn.dataset.d;
+}
+
+// ══════════════════════════════════════════════════════
+//  START
+// ══════════════════════════════════════════════════════
+function startGame(){
+  // Filter + shuffle
+  const diff = state.difficulty;
+  let pool;
+  if(diff==='facil') pool = ALL_QUESTIONS.filter(q=>q.diff==='facil');
+  else if(diff==='medio') pool = ALL_QUESTIONS.filter(q=>q.diff!=='dificil');
+  else pool = [...ALL_QUESTIONS];
+
+  // shuffle
+  for(let i=pool.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [pool[i],pool[j]]=[pool[j],pool[i]];
+  }
+  state.questions = pool.slice(0,15);
+  state.current=0; state.score=0; state.lives=3;
+  state.combo=0; state.maxCombo=0;
+  state.correct=0; state.wrong=0;
+  state.dotStates = new Array(state.questions.length).fill('');
+
+  renderLives();
+  buildDots();
+  updateHUD();
+  showScreen('screen-game');
+  loadQuestion();
+}
+
+// ══════════════════════════════════════════════════════
+//  HUD
+// ══════════════════════════════════════════════════════
+function renderLives(){
+  const row = document.getElementById('livesRow');
+  row.innerHTML='';
+  for(let i=0;i<3;i++){
+    const h=document.createElement('span');
+    h.className='heart'+(i>=state.lives?' lost':'');
+    h.textContent='❤️';
+    row.appendChild(h);
+  }
+}
+function updateHUD(){
+  document.getElementById('hudScore').textContent = state.score.toLocaleString('es-MX');
+}
+function buildDots(){
+  const cont=document.getElementById('progressDots');
+  cont.innerHTML='';
+  state.questions.forEach((_,i)=>{
+    const d=document.createElement('div');
+    d.className='dot'+(i===0?' current':'');
+    d.id=`dot-${i}`;
+    cont.appendChild(d);
+  });
+}
+function updateDot(idx,result){
+  const d=document.getElementById(`dot-${idx}`);
+  if(d){ d.className='dot '+(result==='c'?'done-c':'done-w'); }
+}
+function setCurrentDot(idx){
+  const d=document.getElementById(`dot-${idx}`);
+  if(d) d.classList.add('current');
+}
+
+// ══════════════════════════════════════════════════════
+//  TIMER
+// ══════════════════════════════════════════════════════
+function startTimer(){
+  clearInterval(state.timerInterval);
+  const maxTime = TIMERS[state.difficulty];
+  state.timeLeft = maxTime;
+  const fill = document.getElementById('timerFill');
+  const txt = document.getElementById('timerText');
+  fill.style.transition='none';
+  fill.style.width='100%';
+
+  state.timerInterval = setInterval(()=>{
+    state.timeLeft--;
+    const pct = (state.timeLeft/maxTime)*100;
+    fill.style.transition='width 1s linear';
+    fill.style.width=pct+'%';
+    txt.textContent=state.timeLeft+'s';
+    if(state.timeLeft<=5){
+      fill.style.background='var(--fire1)';
+      txt.style.color='var(--fire1)';
+    } else {
+      fill.style.background='';
+      txt.style.color='var(--muted)';
+    }
+    if(state.timeLeft<=0){
+      clearInterval(state.timerInterval);
+      if(!state.answered) timeOut();
+    }
+  },1000);
+}
+function stopTimer(){ clearInterval(state.timerInterval); }
+
+function timeOut(){
+  state.answered=true;
+  state.wrong++;
+  state.combo=0;
+  loseLife();
+  // Reveal correct
+  const q=state.questions[state.current];
+  const opts=document.querySelectorAll('.opt');
+  opts.forEach((o,i)=>{
+    o.disabled=true;
+    if(i===q.ans) o.classList.add('correct');
+  });
+  showFeedback(false,q,'⏰ ¡Tiempo agotado!');
+  updateDot(state.current,'w');
+  document.getElementById('btnNext').classList.add('show');
+}
+
+// ══════════════════════════════════════════════════════
+//  LOAD QUESTION
+// ══════════════════════════════════════════════════════
+function loadQuestion(){
+  state.answered=false;
+  const q=state.questions[state.current];
+  const total=state.questions.length;
+
+  document.getElementById('qNum').textContent=`Pregunta ${state.current+1} / ${total}`;
+  const badge=document.getElementById('qBadge');
+  badge.textContent={facil:'🌱 Fácil',medio:'🌿 Medio',dificil:'🔥 Difícil'}[q.diff];
+  badge.className='q-badge '+q.diff;
+
+  document.getElementById('qIcon').textContent=q.icon;
+  document.getElementById('qText').textContent=q.text;
+  document.getElementById('qSource').textContent='📚 '+q.source;
+
+  // Options
+  const grid=document.getElementById('optionsGrid');
+  grid.innerHTML='';
+  const letters=['A','B','C','D'];
+  q.opts.forEach((opt,i)=>{
+    const btn=document.createElement('button');
+    btn.className='opt';
+    btn.innerHTML=`<span class="opt-letter">${letters[i]}</span>${opt}`;
+    btn.onclick=()=>answer(i,btn,q);
+    grid.appendChild(btn);
+  });
+
+  // Reset feedback
+  const fb=document.getElementById('feedbackBox');
+  fb.className='feedback';
+  fb.style.display='none';
+  document.getElementById('btnNext').classList.remove('show');
+
+  setCurrentDot(state.current);
+  startTimer();
+}
+
+// ══════════════════════════════════════════════════════
+//  ANSWER
+// ══════════════════════════════════════════════════════
+function answer(idx,btn,q){
+  if(state.answered) return;
+  state.answered=true;
+  stopTimer();
+
+  const opts=document.querySelectorAll('.opt');
+  opts.forEach(o=>o.disabled=true);
+
+  const isCorrect = idx===q.ans;
+
+  if(isCorrect){
+    btn.classList.add('correct');
+    state.correct++;
+    state.combo++;
+    if(state.combo>state.maxCombo) state.maxCombo=state.combo;
+
+    // Points: base + speed bonus + combo bonus
+    const maxT=TIMERS[state.difficulty];
+    const speedBonus = Math.floor((state.timeLeft/maxT)*60);
+    const comboBonus = state.combo>=3 ? Math.floor(state.combo*20) : 0;
+    const pts = POINTS_BASE[q.diff] + speedBonus + comboBonus;
+    state.score += pts;
+    updateHUD();
+
+    if(state.combo>=2) showCombo(state.combo);
+    spawnConfetti(btn);
+    showFeedback(true, q, `+${pts} pts${comboBonus>0?' 🔥 RACHA':''}${speedBonus>40?' ⚡ Velocidad':''}`);
+    updateDot(state.current,'c');
+  } else {
+    btn.classList.add('wrong');
+    opts[q.ans].classList.add('correct');
+    state.wrong++;
+    state.combo=0;
+    loseLife();
+    document.getElementById('qCard').classList.add('shake');
+    setTimeout(()=>document.getElementById('qCard').classList.remove('shake'),500);
+    showFeedback(false, q, '❌ Incorrecto');
+    updateDot(state.current,'w');
+  }
+
+  document.getElementById('btnNext').classList.add('show');
+}
+
+function loseLife(){
+  state.lives = Math.max(0,state.lives-1);
+  renderLives();
+  if(state.lives===0){
+    stopTimer();
+    setTimeout(endGame,1200);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  FEEDBACK
+// ══════════════════════════════════════════════════════
+function showFeedback(correct,q,header){
+  const fb=document.getElementById('feedbackBox');
+  fb.className='feedback show '+(correct?'correct-fb':'wrong-fb');
+  fb.style.display='block';
+  document.getElementById('fbTitle').className='feedback-title '+(correct?'c':'w');
+  document.getElementById('fbTitle').textContent=header;
+  document.getElementById('fbBody').textContent=q.explain;
+}
+
+// ══════════════════════════════════════════════════════
+//  NEXT
+// ══════════════════════════════════════════════════════
+function nextQuestion(){
+  if(state.lives===0){ endGame(); return; }
+  state.current++;
+  if(state.current>=state.questions.length){ endGame(); return; }
+  loadQuestion();
+}
+
+// ══════════════════════════════════════════════════════
+//  COMBO DISPLAY
+// ══════════════════════════════════════════════════════
+function showCombo(n){
+  const badge=document.getElementById('comboBadge');
+  document.getElementById('comboNum').textContent=n;
+  badge.style.display='block';
+  clearTimeout(badge._t);
+  badge._t=setTimeout(()=>badge.style.display='none',1800);
+}
+
+// ══════════════════════════════════════════════════════
+//  CONFETTI
+// ══════════════════════════════════════════════════════
+function spawnConfetti(el){
+  const r=el.getBoundingClientRect();
+  const colors=['#FF4500','#FF8C00','#FFD700','#2ECC71','#fff'];
+  for(let i=0;i<10;i++){
+    const c=document.createElement('div');
+    c.className='confetti-piece';
+    c.style.cssText=`
+      left:${r.left+Math.random()*r.width}px;
+      top:${r.top}px;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      transform:rotate(${Math.random()*360}deg);
+    `;
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(),1000);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  END GAME
+// ══════════════════════════════════════════════════════
+function endGame(){
+  stopTimer();
+  const total=state.questions.length;
+  const acc=Math.round((state.correct/total)*100);
+  const pct=state.correct/total;
+
+  document.getElementById('endScore').textContent=state.score.toLocaleString('es-MX');
+  document.getElementById('esCorrect').textContent=state.correct;
+  document.getElementById('esWrong').textContent=state.wrong;
+  document.getElementById('esCombo').textContent=state.maxCombo;
+  document.getElementById('esAccuracy').textContent=acc+'%';
+
+  let trophy,title,msg;
+  if(pct>=0.9){
+    trophy='🏆🌲'; title='¡Guardián Supremo!';
+    msg='Conocimiento extraordinario. Eres un verdadero experto en la conservación forestal de México. Tu comprensión sobre incendios podría marcar la diferencia en la protección de nuestros bosques.';
+  } else if(pct>=0.7){
+    trophy='🥇🌿'; title='¡Gran Guardián!';
+    msg='Excelente desempeño. Tienes un sólido conocimiento sobre los incendios forestales en México. Con personas como tú, la concientización ambiental avanza.';
+  } else if(pct>=0.5){
+    trophy='🥈🌱'; title='Guardián en Formación';
+    msg='Buen intento. Aprendiste datos reales sobre una de las mayores amenazas a nuestros bosques. Te invitamos a visitar conafor.gob.mx para profundizar tu conocimiento.';
+  } else {
+    trophy='🌱'; title='Sigue Aprendiendo';
+    msg='Los incendios forestales son una crisis real en México: 8,002 incendios y 1.67 millones de hectáreas perdidas en 2024. ¡Vuelve a intentarlo y ayuda a difundir la conciencia forestal!';
+  }
+
+  document.getElementById('endTrophy').textContent=trophy;
+  document.getElementById('endTitle').textContent=title;
+  document.getElementById('endMsg').textContent=msg;
+  showScreen('screen-end');
+}
+</script>
+</body>
+</html>

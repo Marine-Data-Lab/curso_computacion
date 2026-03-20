@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mar Vivo – Simulador de Pesca Sustentable</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&display=swap');
+
+  :root {
+    --ocean-deep: #0a1628;
+    --ocean-mid: #0d2240;
+    --ocean-surf: #1a4a6b;
+    --ocean-light: #2980b9;
+    --wave: #5dade2;
+    --sand: #f0d080;
+    --sand-dark: #c8a84b;
+    --green: #27ae60;
+    --green-dark: #1e8449;
+    --red: #e74c3c;
+    --gold: #f1c40f;
+    --white: #ecf0f1;
+    --pixel: 4px;
+    --ui-bg: rgba(10,22,40,0.93);
+    --ui-border: #2980b9;
+    --font-pixel: 'Press Start 2P', monospace;
+    --font-vt: 'VT323', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; image-rendering: pixelated; }
+
+  body {
+    background: var(--ocean-deep);
+    font-family: var(--font-pixel);
+    color: var(--white);
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    user-select: none;
+  }
+
+  #game-container {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ===== CANVAS ===== */
+  #gameCanvas {
+    display: block;
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+  }
+
+  /* ===== SCREENS ===== */
+  .screen {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    z-index: 100;
+    background: var(--ocean-deep);
+  }
+  .screen.hidden { display: none; }
+
+  /* ===== TITLE SCREEN ===== */
+  #title-screen {
+    background: radial-gradient(ellipse at 50% 60%, #0d3a5c 0%, #050f1a 100%);
+  }
+  #title-screen .pixel-ocean {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 35%;
+    background: repeating-linear-gradient(
+      90deg,
+      #1a4a6b 0px, #1a4a6b 8px,
+      #0d2240 8px, #0d2240 16px
+    );
+    animation: waveScroll 2s linear infinite;
+    opacity: 0.7;
+  }
+  @keyframes waveScroll {
+    0% { background-position-x: 0; }
+    100% { background-position-x: 32px; }
+  }
+
+  .game-title {
+    font-size: clamp(14px, 3vw, 28px);
+    color: var(--wave);
+    text-shadow: 4px 4px 0 #0a3a5c, 0 0 30px #5dade280;
+    letter-spacing: 2px;
+    text-align: center;
+    z-index: 1;
+    animation: titlePulse 3s ease-in-out infinite;
+  }
+  .game-subtitle {
+    font-size: clamp(6px, 1.2vw, 10px);
+    color: var(--sand);
+    margin-top: 10px;
+    z-index: 1;
+    letter-spacing: 1px;
+  }
+  @keyframes titlePulse {
+    0%,100% { text-shadow: 4px 4px 0 #0a3a5c, 0 0 20px #5dade240; }
+    50% { text-shadow: 4px 4px 0 #0a3a5c, 0 0 50px #5dade2aa; }
+  }
+
+  .pixel-fish-deco {
+    font-size: 40px;
+    animation: fishSwim 4s ease-in-out infinite;
+    z-index: 1;
+    margin: 10px;
+  }
+  @keyframes fishSwim {
+    0%,100% { transform: translateX(-10px) scaleX(1); }
+    50% { transform: translateX(10px) scaleX(-1); }
+  }
+
+  .menu-btn {
+    font-family: var(--font-pixel);
+    font-size: clamp(7px, 1.4vw, 12px);
+    padding: 12px 24px;
+    margin: 6px;
+    background: transparent;
+    border: 3px solid var(--wave);
+    color: var(--wave);
+    cursor: pointer;
+    transition: all 0.1s;
+    letter-spacing: 1px;
+    z-index: 1;
+    position: relative;
+  }
+  .menu-btn:hover, .menu-btn.active {
+    background: var(--wave);
+    color: var(--ocean-deep);
+    transform: translate(-2px,-2px);
+    box-shadow: 4px 4px 0 #0a3a5c;
+  }
+  .menu-btn:active { transform: translate(0,0); box-shadow: none; }
+
+  /* ===== HUD ===== */
+  #hud {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    z-index: 50;
+    pointer-events: none;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  #hud.hidden { display: none; }
+
+  .hud-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .hud-panel {
+    background: var(--ui-bg);
+    border: 2px solid var(--ui-border);
+    padding: 6px 10px;
+    font-size: clamp(5px, 1vw, 8px);
+    line-height: 1.8;
+    min-width: 120px;
+  }
+  .hud-panel span { color: var(--gold); }
+  .bar-container { display: flex; align-items: center; gap: 4px; margin: 1px 0; }
+  .bar-label { font-size: clamp(4px, 0.8vw, 7px); min-width: 55px; }
+  .bar-bg {
+    background: #1a2a3a;
+    border: 1px solid #2980b9;
+    height: 8px;
+    width: 80px;
+    position: relative;
+  }
+  .bar-fill {
+    height: 100%;
+    transition: width 0.3s;
+  }
+  .bar-fill.energy { background: linear-gradient(90deg, #f39c12, #f1c40f); }
+  .bar-fill.hunger { background: linear-gradient(90deg, #e74c3c, #e67e22); }
+  .bar-fill.thirst { background: linear-gradient(90deg, #3498db, #5dade2); }
+  .bar-fill.eco { background: linear-gradient(90deg, #e74c3c, #27ae60); }
+  .bar-fill.hp { background: linear-gradient(90deg, #c0392b, #e74c3c); }
+
+  .hud-center {
+    display: flex;
+    justify-content: center;
+    margin-top: 4px;
+  }
+
+  .time-display {
+    background: var(--ui-bg);
+    border: 2px solid var(--gold);
+    padding: 4px 12px;
+    font-size: clamp(5px, 0.9vw, 8px);
+    text-align: center;
+    color: var(--gold);
+  }
+
+  /* ===== BOTTOM PANEL ===== */
+  #bottom-panel {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    z-index: 50;
+    pointer-events: none;
+  }
+  #bottom-panel.hidden { display: none; }
+
+  .action-bar {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px;
+    background: var(--ui-bg);
+    border-top: 2px solid var(--ui-border);
+    flex-wrap: wrap;
+  }
+
+  .action-btn {
+    font-family: var(--font-pixel);
+    font-size: clamp(5px, 0.9vw, 7px);
+    padding: 8px 12px;
+    background: var(--ocean-mid);
+    border: 2px solid var(--ui-border);
+    color: var(--white);
+    cursor: pointer;
+    pointer-events: all;
+    transition: all 0.1s;
+    line-height: 1.4;
+    text-align: center;
+  }
+  .action-btn:hover {
+    background: var(--ocean-surf);
+    border-color: var(--wave);
+    transform: translateY(-2px);
+  }
+  .action-btn.fishing {
+    border-color: var(--gold);
+    color: var(--gold);
+    animation: fishingPulse 1s ease-in-out infinite;
+  }
+  @keyframes fishingPulse {
+    0%,100% { box-shadow: 0 0 4px var(--gold); }
+    50% { box-shadow: 0 0 14px var(--gold); }
+  }
+  .action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ===== LOG / MESSAGES ===== */
+  #message-log {
+    position: absolute;
+    bottom: 80px;
+    left: 8px;
+    width: min(340px, 45vw);
+    max-height: 120px;
+    overflow-y: auto;
+    z-index: 50;
+    pointer-events: none;
+  }
+  #message-log.hidden { display: none; }
+
+  .log-entry {
+    background: rgba(10,22,40,0.85);
+    border-left: 3px solid var(--wave);
+    padding: 4px 8px;
+    font-family: var(--font-vt);
+    font-size: clamp(11px, 1.8vw, 16px);
+    margin-bottom: 3px;
+    animation: logFade 0.3s ease;
+  }
+  .log-entry.warn { border-color: var(--gold); color: var(--gold); }
+  .log-entry.danger { border-color: var(--red); color: var(--red); }
+  .log-entry.success { border-color: var(--green); color: var(--green); }
+  .log-entry.rare { border-color: #9b59b6; color: #d2a8f0; }
+  @keyframes logFade { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; } }
+
+  /* ===== ZONE INDICATOR ===== */
+  #zone-indicator {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    background: var(--ui-bg);
+    border: 2px solid var(--ui-border);
+    padding: 8px;
+    font-size: clamp(5px, 0.85vw, 7px);
+    text-align: center;
+    z-index: 50;
+    pointer-events: none;
+    max-width: 110px;
+  }
+  #zone-indicator.hidden { display: none; }
+  .zone-name { color: var(--wave); margin-bottom: 4px; font-size: clamp(5px, 0.9vw, 8px); }
+  .zone-species { color: var(--sand); font-family: var(--font-vt); font-size: clamp(10px,1.6vw,14px); }
+
+  /* ===== MODAL ===== */
+  #modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(5,15,26,0.85);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #modal-overlay.hidden { display: none; }
+  .modal-box {
+    background: var(--ocean-deep);
+    border: 3px solid var(--ui-border);
+    padding: 20px;
+    max-width: min(420px, 90vw);
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  .modal-title {
+    font-size: clamp(8px, 1.4vw, 12px);
+    color: var(--wave);
+    margin-bottom: 14px;
+    text-align: center;
+    border-bottom: 2px solid var(--ui-border);
+    padding-bottom: 8px;
+  }
+  .modal-close {
+    font-family: var(--font-pixel);
+    font-size: clamp(6px, 1vw, 9px);
+    background: transparent;
+    border: 2px solid var(--red);
+    color: var(--red);
+    cursor: pointer;
+    padding: 6px 14px;
+    float: right;
+    margin-bottom: 10px;
+  }
+  .modal-close:hover { background: var(--red); color: var(--ocean-deep); }
+
+  .inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px,1fr));
+    gap: 6px;
+    margin: 10px 0;
+  }
+  .inv-item {
+    background: var(--ocean-mid);
+    border: 2px solid var(--ocean-surf);
+    padding: 8px 4px;
+    text-align: center;
+    font-family: var(--font-vt);
+    font-size: clamp(11px,1.8vw,15px);
+    cursor: pointer;
+  }
+  .inv-item:hover { border-color: var(--gold); }
+  .inv-item .inv-icon { font-size: 22px; display: block; }
+  .inv-item .inv-name { font-size: clamp(9px,1.4vw,12px); color: var(--sand); }
+  .inv-item .inv-qty { color: var(--gold); }
+
+  .logbook-entry {
+    background: var(--ocean-mid);
+    border-left: 3px solid var(--green);
+    padding: 6px 10px;
+    margin-bottom: 6px;
+    font-family: var(--font-vt);
+    font-size: clamp(12px,1.8vw,16px);
+  }
+  .logbook-entry .lb-name { color: var(--wave); }
+  .logbook-entry .lb-data { color: var(--sand); }
+
+  .shop-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--ocean-mid);
+    border: 2px solid var(--ocean-surf);
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    gap: 10px;
+  }
+  .shop-item-name { font-family: var(--font-vt); font-size: clamp(12px,1.8vw,16px); color: var(--sand); }
+  .shop-item-price { color: var(--gold); font-size: clamp(7px,1.1vw,10px); }
+  .shop-buy-btn {
+    font-family: var(--font-pixel);
+    font-size: clamp(5px,0.8vw,7px);
+    background: var(--green-dark);
+    border: 2px solid var(--green);
+    color: var(--white);
+    cursor: pointer;
+    padding: 5px 10px;
+  }
+  .shop-buy-btn:hover { background: var(--green); }
+
+  /* ===== CATCH ANIMATION ===== */
+  #catch-popup {
+    position: absolute;
+    top: 35%;
+    left: 50%;
+    transform: translateX(-50%) scale(0);
+    background: var(--ui-bg);
+    border: 3px solid var(--gold);
+    padding: 16px 24px;
+    text-align: center;
+    z-index: 150;
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    pointer-events: none;
+  }
+  #catch-popup.show { transform: translateX(-50%) scale(1); }
+  .catch-fish-icon { font-size: 48px; }
+  .catch-name { font-size: clamp(7px,1.2vw,10px); color: var(--wave); margin: 6px 0; }
+  .catch-value { font-size: clamp(6px,1vw,9px); color: var(--gold); }
+
+  /* ===== STORM OVERLAY ===== */
+  #storm-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(5,10,20,0.6);
+    z-index: 45;
+    pointer-events: none;
+    display: none;
+  }
+  #storm-overlay.active { display: block; animation: stormFlash 0.8s linear infinite; }
+  @keyframes stormFlash {
+    0%,90%,100% { background: rgba(5,10,20,0.6); }
+    95% { background: rgba(200,220,255,0.15); }
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 600px) {
+    .action-btn { padding: 6px 8px; }
+    .hud-panel { padding: 4px 6px; min-width: 90px; }
+    #message-log { width: 95vw; }
+  }
+</style>
+</head>
+<body>
+<div id="game-container">
+  <canvas id="gameCanvas"></canvas>
+  <div id="storm-overlay"></div>
+
+  <!-- TITLE SCREEN -->
+  <div class="screen" id="title-screen">
+    <div class="pixel-ocean"></div>
+    <div class="pixel-fish-deco">🐟</div>
+    <div class="game-title">MAR VIVO</div>
+    <div class="game-subtitle">Simulador de Pesca Sustentable</div>
+    <br>
+    <button class="menu-btn" onclick="startGame()">▶ NUEVA PARTIDA</button>
+    <button class="menu-btn" onclick="showHelp()">📖 CÓMO JUGAR</button>
+    <br>
+    <div style="font-family:var(--font-vt);font-size:clamp(11px,1.7vw,15px);color:#5dade280;text-align:center;z-index:1;margin-top:8px;">
+      Un proyecto sobre pesca sustentable y manejo de recursos marinos
+    </div>
+  </div>
+
+  <!-- HELP SCREEN -->
+  <div class="screen hidden" id="help-screen">
+    <div style="background:var(--ui-bg);border:3px solid var(--ui-border);padding:20px;max-width:min(500px,90vw);max-height:80vh;overflow-y:auto;">
+      <div style="font-size:clamp(8px,1.4vw,12px);color:var(--wave);margin-bottom:12px;">📖 CÓMO JUGAR</div>
+      <div style="font-family:var(--font-vt);font-size:clamp(13px,2vw,17px);line-height:1.7;color:var(--sand);">
+        🎣 <b style="color:var(--wave)">PESCA:</b> Usa los botones de acción para cambiar de zona y pescar con diferentes métodos.<br><br>
+        🗺️ <b style="color:var(--wave)">ZONAS:</b> Manglar (peces pequeños), Arrecife (especies raras), Mar Abierto (pesca industrial).<br><br>
+        ⚖️ <b style="color:var(--wave)">SUSTENTABILIDAD:</b> El índice ECO muestra la salud del océano. No sobrepesques.<br><br>
+        🛒 <b style="color:var(--wave)">MERCADO:</b> Vende tus capturas, compra equipamiento y habla con aldeanos.<br><br>
+        📓 <b style="color:var(--wave)">BITÁCORA:</b> Registra especies descubiertas para obtener bonificaciones.<br><br>
+        ⚡ <b style="color:var(--wave)">RECURSOS:</b> Cuida tu energía, hambre y sed. Los tornmentas son peligrosas.<br><br>
+        🏆 <b style="color:var(--wave)">OBJETIVO:</b> Mantener el equilibrio entre la pesca y el bienestar del océano.
+      </div>
+      <br>
+      <button class="menu-btn" onclick="hideHelp()">← VOLVER</button>
+    </div>
+  </div>
+
+  <!-- HUD -->
+  <div id="hud" class="hidden">
+    <div class="hud-top">
+      <!-- Stats left -->
+      <div class="hud-panel">
+        <div>💰 Pesos: <span id="hud-money">0</span></div>
+        <div>⛽ Comb.: <span id="hud-fuel">100</span>%</div>
+        <div class="bar-container">
+          <span class="bar-label">⚡ Energía</span>
+          <div class="bar-bg"><div class="bar-fill energy" id="bar-energy" style="width:100%"></div></div>
+        </div>
+        <div class="bar-container">
+          <span class="bar-label">🍖 Hambre</span>
+          <div class="bar-bg"><div class="bar-fill hunger" id="bar-hunger" style="width:100%"></div></div>
+        </div>
+        <div class="bar-container">
+          <span class="bar-label">💧 Sed</span>
+          <div class="bar-bg"><div class="bar-fill thirst" id="bar-thirst" style="width:100%"></div></div>
+        </div>
+      </div>
+      <!-- Center time -->
+      <div>
+        <div class="time-display">
+          <div id="hud-time">06:00</div>
+          <div id="hud-season" style="color:var(--sand)">🌸 PRIMAVERA</div>
+          <div id="hud-weather" style="color:var(--wave)">☀️ Soleado</div>
+          <div id="hud-temp" style="color:#e74c3c">🌡 24°C</div>
+        </div>
+        <div style="text-align:center;margin-top:4px;font-size:clamp(5px,0.85vw,7px);">
+          DÍA <span id="hud-day" style="color:var(--gold)">1</span>
+        </div>
+      </div>
+      <!-- Eco right -->
+      <div class="hud-panel">
+        <div>🐟 Capturados: <span id="hud-caught">0</span></div>
+        <div>📦 Inventario: <span id="hud-inv">0</span>/20</div>
+        <div class="bar-container">
+          <span class="bar-label">🌿 ECO</span>
+          <div class="bar-bg" style="width:100px"><div class="bar-fill eco" id="bar-eco" style="width:80%"></div></div>
+        </div>
+        <div id="eco-warning" style="color:var(--red);font-size:clamp(4px,0.7vw,6px);display:none;">⚠ SOBREPESCA</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Zone indicator -->
+  <div id="zone-indicator" class="hidden">
+    <div class="zone-name" id="zone-name">MANGLAR</div>
+    <div class="zone-species" id="zone-species">Robalo, Mojarra<br>Cangrejo</div>
+  </div>
+
+  <!-- Message log -->
+  <div id="message-log" class="hidden"></div>
+
+  <!-- Bottom panel -->
+  <div id="bottom-panel" class="hidden">
+    <div class="action-bar">
+      <button class="action-btn" onclick="changeZone('manglar')">🌿 Manglar</button>
+      <button class="action-btn" onclick="changeZone('arrecife')">🪸 Arrecife</button>
+      <button class="action-btn" onclick="changeZone('abierto')">🌊 Mar Abierto</button>
+      <button class="action-btn" id="btn-fish" onclick="fish()">🎣 Pescar</button>
+      <button class="action-btn" onclick="changeMethod()">🔄 Método</button>
+      <button class="action-btn" onclick="openMarket()">🏪 Mercado</button>
+      <button class="action-btn" onclick="openLogbook()">📓 Bitácora</button>
+      <button class="action-btn" onclick="rest()">😴 Descansar</button>
+    </div>
+  </div>
+
+  <!-- Catch popup -->
+  <div id="catch-popup">
+    <div class="catch-fish-icon" id="catch-icon">🐟</div>
+    <div class="catch-name" id="catch-name">Robalo</div>
+    <div class="catch-value" id="catch-value">+$120 • 1.2 kg</div>
+  </div>
+
+  <!-- Modal -->
+  <div id="modal-overlay" class="hidden">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal()">✕ CERRAR</button>
+      <div class="modal-title" id="modal-title">TÍTULO</div>
+      <div id="modal-content"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========================
+// GAME STATE
+// ========================
+const G = {
+  running: false,
+  day: 1,
+  hour: 6,
+  minute: 0,
+  season: 0, // 0=spring,1=summer,2=autumn,3=winter
+  seasons: ['🌸 PRIMAVERA','☀️ VERANO','🍂 OTOÑO','❄️ INVIERNO'],
+  weather: 'sunny', // sunny, cloudy, storm, windy
+  temp: 24,
+  zone: 'manglar',
+  method: 'anzuelo',
+  methods: ['anzuelo','red','trampa','artesanal','industrial'],
+  methodIdx: 0,
+  money: 500,
+  fuel: 100,
+  energy: 100,
+  hunger: 100,
+  thirst: 100,
+  eco: 80,
+  caught: 0,
+  inventory: [], // {species, qty, value}
+  logbook: {}, // species name -> count
+  fishing: false,
+  fishTimer: null,
+  tickTimer: null,
+  storm: false,
+  stormTimer: null,
+  messageQueue: [],
+  ticks: 0,
+};
+
+// ========================
+// SPECIES DATABASE
+// ========================
+const SPECIES = {
+  manglar: [
+    { name:'Robalo',      icon:'🐟', weight:[0.5,2.5], value:[80,200],  rarity:0.5, eco:1 },
+    { name:'Mojarra',     icon:'🐡', weight:[0.2,0.8], value:[30,80],   rarity:0.6, eco:1 },
+    { name:'Cangrejo',    icon:'🦀', weight:[0.1,0.5], value:[50,120],  rarity:0.4, eco:1 },
+    { name:'Camarón',     icon:'🦐', weight:[0.05,0.2],value:[60,150],  rarity:0.5, eco:1 },
+    { name:'Trucha Mangle',icon:'🐠',weight:[0.3,1.2], value:[90,180],  rarity:0.3, eco:2 },
+    { name:'Bagre',       icon:'🐟', weight:[0.4,1.8], value:[40,100],  rarity:0.5, eco:1 },
+  ],
+  arrecife: [
+    { name:'Pez Ángel',   icon:'🐠', weight:[0.2,0.8], value:[150,350], rarity:0.25, eco:2 },
+    { name:'Pez Loro',    icon:'🦜', weight:[0.5,2.0], value:[100,250], rarity:0.3,  eco:2 },
+    { name:'Mero',        icon:'🐡', weight:[1.0,5.0], value:[200,500], rarity:0.2,  eco:3 },
+    { name:'Langosta',    icon:'🦞', weight:[0.3,1.5], value:[300,700], rarity:0.15, eco:3 },
+    { name:'Pulpo',       icon:'🐙', weight:[0.5,3.0], value:[200,450], rarity:0.2,  eco:2 },
+    { name:'Pez Globo',   icon:'🐡', weight:[0.1,0.4], value:[50,120],  rarity:0.4,  eco:1 },
+    { name:'Mantarraya',  icon:'🦈', weight:[5,20],    value:[0,0],     rarity:0.05, eco:5, release:true },
+  ],
+  abierto: [
+    { name:'Atún',        icon:'🐟', weight:[5,30],    value:[500,2000],rarity:0.2,  eco:4 },
+    { name:'Pargo',       icon:'🐠', weight:[1,6],     value:[150,400], rarity:0.3,  eco:2 },
+    { name:'Sierra',      icon:'🐟', weight:[2,10],    value:[200,600], rarity:0.25, eco:3 },
+    { name:'Dorado',      icon:'🐡', weight:[3,15],    value:[300,900], rarity:0.15, eco:3 },
+    { name:'Marlin',      icon:'⚔️',  weight:[50,200],  value:[0,0],     rarity:0.03, eco:8, release:true },
+    { name:'Tiburón Ballena',icon:'🐳',weight:[1000,5000],value:[0,0], rarity:0.01, eco:0, release:true, rare:true },
+    { name:'Calamar Gigante',icon:'🦑',weight:[10,50], value:[400,1000],rarity:0.05, eco:4, rare:true },
+    { name:'Ballena Jorobada',icon:'🐋',weight:[0,0],  value:[0,0],     rarity:0.005,eco:0, release:true, rare:true },
+  ]
+};
+
+const ZONE_INFO = {
+  manglar: { name:'🌿 MANGLAR', species:'Robalo, Mojarra\nCangrejo, Camarón', color:'#1a4a2e', fuelCost:5 },
+  arrecife:{ name:'🪸 ARRECIFE', species:'Pez Ángel, Mero\nLangosta, Pulpo', color:'#1a2a6b', fuelCost:12 },
+  abierto: { name:'🌊 MAR ABIERTO',species:'Atún, Pargo\nDorado, Sierra', color:'#0a1a4a', fuelCost:20 },
+};
+
+const METHOD_INFO = {
+  anzuelo:   { label:'🪝 Anzuelo',   time:4000, eco:0.5, bonus:{arrecife:1.2}, miss:0.3 },
+  red:       { label:'🕸 Red',       time:6000, eco:2,   bonus:{abierto:1.4},  miss:0.15 },
+  trampa:    { label:'🪤 Trampa',    time:8000, eco:1,   bonus:{manglar:1.3},  miss:0.2 },
+  artesanal: { label:'⛵ Artesanal', time:5000, eco:0.3, bonus:{manglar:1.1},  miss:0.25 },
+  industrial:{ label:'🚢 Industrial',time:3000, eco:5,   bonus:{abierto:1.6},  miss:0.05 },
+};
+
+// ========================
+// CANVAS RENDERING
+// ========================
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let animFrame = 0;
+let boatX = 0.5, boatY = 0.55;
+let waves = [];
+let particles = [];
+let fishEntities = [];
+let villagers = [];
+
+function initCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  boatX = canvas.width * 0.5;
+  boatY = canvas.height * 0.52;
+  initWaves();
+  initFishEntities();
+  initVillagers();
+  renderLoop();
+}
+
+function initWaves() {
+  waves = [];
+  for (let i = 0; i < 12; i++) {
+    waves.push({ x: Math.random() * canvas.width, y: 0.3 + Math.random() * 0.3, speed: 0.3 + Math.random() * 0.8, amp: 4 + Math.random() * 8, freq: 0.02 + Math.random() * 0.03 });
+  }
+}
+
+function initFishEntities() {
+  fishEntities = [];
+  const zone = SPECIES[G.zone] || SPECIES.manglar;
+  for (let i = 0; i < 8; i++) {
+    const sp = zone[Math.floor(Math.random() * zone.length)];
+    fishEntities.push({
+      x: Math.random() * canvas.width,
+      y: canvas.height * (0.45 + Math.random() * 0.35),
+      dir: Math.random() > 0.5 ? 1 : -1,
+      speed: 0.3 + Math.random() * 1.2,
+      icon: sp.icon,
+      bob: Math.random() * Math.PI * 2,
+    });
+  }
+}
+
+function initVillagers() {
+  villagers = [
+    { x: canvas.width * 0.12, y: canvas.height * 0.75, icon:'👨‍🌾', name:'Don Marcos', dir:1 },
+    { x: canvas.width * 0.18, y: canvas.height * 0.78, icon:'👩‍🔬', name:'Dra. Luna', dir:-1 },
+    { x: canvas.width * 0.08, y: canvas.height * 0.8,  icon:'🧓', name:'Abuela Rosa', dir:1 },
+  ];
+}
+
+function getZoneColors() {
+  switch(G.zone) {
+    case 'manglar':  return { sky:['#1a3a2e','#0d2a20'], water:['#1a5a3a','#0d3020'], floor:'#0a2015' };
+    case 'arrecife': return { sky:['#0d1a4a','#050f2a'], water:['#1a3a8a','#0d2a6a'], floor:'#0a1540' };
+    case 'abierto':  return { sky:['#050f2a','#030818'], water:['#0a2a6a','#051540'], floor:'#030d28' };
+  }
+}
+
+function getWeatherColors() {
+  const h = G.hour;
+  const dawn = h < 6 || h > 20;
+  if (G.storm) return { top:'#0a0d12', mid:'#101520' };
+  if (dawn) return { top:'#050818', mid:'#0a1228' };
+  if (h < 10) return { top:'#1a3a5a', mid:'#1a4a6b' };
+  if (h < 17) return { top:'#0d2a5a', mid:'#1a4a7a' };
+  return { top:'#0a1a3a', mid:'#1a2a5a' };
+}
+
+let wt = 0;
+function renderLoop() {
+  wt += 0.016;
+  animFrame++;
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const wc = getWeatherColors();
+  const zc = getZoneColors();
+
+  // Sky gradient
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, H * 0.5);
+  skyGrad.addColorStop(0, wc.top);
+  skyGrad.addColorStop(1, wc.mid);
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, W, H * 0.5);
+
+  // Stars if night
+  if (G.hour < 7 || G.hour > 19) {
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    for (let i = 0; i < 40; i++) {
+      const sx = ((i * 137 + 50) % W);
+      const sy = ((i * 79 + 20) % (H * 0.4));
+      const blink = Math.sin(wt * 2 + i) > 0.7 ? 2 : 1;
+      ctx.fillRect(sx, sy, blink, blink);
+    }
+  }
+
+  // Sun / Moon
+  const sunX = W * 0.7 + Math.sin(wt * 0.05) * 20;
+  const dayProgress = (G.hour - 6) / 12;
+  const sunY = H * 0.22 - Math.sin(dayProgress * Math.PI) * H * 0.15;
+  if (G.hour >= 6 && G.hour <= 18 && !G.storm) {
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, 16, 0, Math.PI * 2);
+    ctx.fillStyle = '#f1c40f';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(241,196,15,0.3)';
+    ctx.lineWidth = 8;
+    ctx.stroke();
+  } else if (!G.storm) {
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, 12, 0, Math.PI * 2);
+    ctx.fillStyle = '#ecf0f1';
+    ctx.fill();
+  }
+
+  // Storm clouds
+  if (G.storm || G.weather === 'cloudy') {
+    ctx.fillStyle = G.storm ? '#1a1a2a' : '#2a3a4a';
+    for (let i = 0; i < 4; i++) {
+      const cx = (i * W / 4 + wt * 20) % W;
+      ctx.beginPath();
+      ctx.ellipse(cx, H * 0.1 + i * 10, 80 + i * 20, 30, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    if (G.storm) {
+      // Lightning
+      if (Math.sin(wt * 7) > 0.95) {
+        ctx.strokeStyle = '#fff8c0';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(W * 0.4, H * 0.05);
+        ctx.lineTo(W * 0.38, H * 0.2);
+        ctx.lineTo(W * 0.42, H * 0.22);
+        ctx.lineTo(W * 0.39, H * 0.35);
+        ctx.stroke();
+      }
+      // Rain
+      ctx.strokeStyle = 'rgba(100,150,220,0.5)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 60; i++) {
+        const rx = ((i * 57 + wt * 200) % W);
+        const ry = ((i * 83 + wt * 300) % H);
+        ctx.beginPath();
+        ctx.moveTo(rx, ry);
+        ctx.lineTo(rx - 2, ry + 12);
+        ctx.stroke();
+      }
+    }
+  }
+
+  // Shore / village background
+  const shoreGrad = ctx.createLinearGradient(0, H * 0.6, 0, H);
+  shoreGrad.addColorStop(0, '#c8a84b');
+  shoreGrad.addColorStop(0.4, '#a07830');
+  shoreGrad.addColorStop(1, '#604820');
+  ctx.fillStyle = shoreGrad;
+  ctx.fillRect(0, H * 0.68, W, H * 0.32);
+
+  // Draw village elements
+  drawVillage(W, H);
+
+  // Water
+  const waterGrad = ctx.createLinearGradient(0, H * 0.35, 0, H * 0.68);
+  waterGrad.addColorStop(0, zc.water[0]);
+  waterGrad.addColorStop(1, zc.water[1]);
+  ctx.fillStyle = waterGrad;
+  ctx.fillRect(0, H * 0.35, W, H * 0.34);
+
+  // Wave lines
+  for (let w = 0; w < waves.length; w++) {
+    const wv = waves[w];
+    wv.x -= wv.speed * (G.storm ? 3 : 1);
+    if (wv.x < -100) wv.x = W + 100;
+    const wy = H * wv.y + Math.sin(wt * 1.5 + w) * wv.amp;
+    ctx.strokeStyle = `rgba(93,173,226,${0.1 + 0.15 * Math.sin(wt + w)})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(wv.x - 30, wy);
+    ctx.quadraticCurveTo(wv.x, wy - wv.amp * 0.5, wv.x + 30, wy);
+    ctx.stroke();
+  }
+
+  // Fish entities
+  ctx.font = '16px serif';
+  ctx.textAlign = 'center';
+  for (let f of fishEntities) {
+    f.bob += 0.04;
+    f.x += f.dir * f.speed;
+    if (f.x > W + 30) { f.x = -30; f.dir = 1; }
+    if (f.x < -30) { f.x = W + 30; f.dir = -1; }
+    const fy = f.y + Math.sin(f.bob) * 5;
+    ctx.save();
+    ctx.translate(f.x, fy);
+    if (f.dir < 0) ctx.scale(-1, 1);
+    ctx.fillText(f.icon, 0, 0);
+    ctx.restore();
+  }
+
+  // Boat
+  drawBoat(boatX, boatY, W, H);
+
+  // Particles
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx; p.y += p.vy; p.life -= 0.02;
+    p.vy -= 0.05;
+    if (p.life <= 0) { particles.splice(i, 1); continue; }
+    ctx.globalAlpha = p.life;
+    ctx.font = (p.size || 16) + 'px serif';
+    ctx.fillText(p.icon, p.x, p.y);
+    ctx.globalAlpha = 1;
+  }
+
+  // Fishing line animation
+  if (G.fishing) {
+    const lineY = boatY + 20 + Math.sin(wt * 3) * 10;
+    ctx.strokeStyle = 'rgba(255,255,200,0.6)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(boatX + 15, boatY - 5);
+    ctx.lineTo(boatX + 20 + Math.sin(wt * 2) * 15, lineY + 40);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // Bobber
+    ctx.fillStyle = '#e74c3c';
+    ctx.fillRect(boatX + 18 + Math.sin(wt * 2) * 15, lineY + 42, 6, 4);
+  }
+
+  requestAnimationFrame(renderLoop);
+}
+
+function drawBoat(bx, by, W, H) {
+  ctx.save();
+  const bob = Math.sin(wt * 1.2) * (G.storm ? 6 : 2);
+  ctx.translate(bx, by + bob);
+
+  // Hull
+  ctx.fillStyle = '#8B4513';
+  ctx.beginPath();
+  ctx.moveTo(-30, 0);
+  ctx.lineTo(30, 0);
+  ctx.lineTo(22, 14);
+  ctx.lineTo(-22, 14);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#5a2d0c';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Deck
+  ctx.fillStyle = '#a0522d';
+  ctx.fillRect(-20, -4, 40, 6);
+
+  // Mast
+  ctx.strokeStyle = '#654321';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(0, -4);
+  ctx.lineTo(0, -28);
+  ctx.stroke();
+
+  // Sail
+  ctx.fillStyle = 'rgba(236,240,241,0.85)';
+  ctx.beginPath();
+  ctx.moveTo(0, -26);
+  ctx.lineTo(18, -12);
+  ctx.lineTo(0, -8);
+  ctx.closePath();
+  ctx.fill();
+
+  // Fishing rod
+  ctx.strokeStyle = '#8B6914';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(14, -2);
+  ctx.lineTo(26, -14);
+  ctx.stroke();
+
+  // Flag
+  ctx.fillStyle = '#27ae60';
+  ctx.fillRect(0, -28, 10, 6);
+
+  ctx.restore();
+}
+
+function drawVillage(W, H) {
+  // Houses
+  const houseData = [
+    { x: 0.06, color:'#c0392b', roofColor:'#922b21' },
+    { x: 0.14, color:'#e67e22', roofColor:'#a84300' },
+    { x: 0.22, color:'#f1c40f', roofColor:'#c8a204' },
+  ];
+  for (const h of houseData) {
+    const hx = W * h.x, hy = H * 0.68;
+    ctx.fillStyle = h.color;
+    ctx.fillRect(hx, hy - 36, 32, 36);
+    ctx.fillStyle = h.roofColor;
+    ctx.beginPath();
+    ctx.moveTo(hx - 4, hy - 36);
+    ctx.lineTo(hx + 16, hy - 56);
+    ctx.lineTo(hx + 36, hy - 36);
+    ctx.closePath();
+    ctx.fill();
+    // Door
+    ctx.fillStyle = '#5a2d0c';
+    ctx.fillRect(hx + 10, hy - 16, 10, 16);
+    // Window
+    ctx.fillStyle = '#aed6f1';
+    ctx.fillRect(hx + 4, hy - 28, 8, 8);
+  }
+
+  // Palm trees
+  for (let i = 0; i < 3; i++) {
+    const tx = W * (0.28 + i * 0.04);
+    const ty = H * 0.68;
+    ctx.strokeStyle = '#6d4c41';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(tx, ty);
+    ctx.quadraticCurveTo(tx + 5, ty - 30, tx + 2, ty - 50);
+    ctx.stroke();
+    ctx.font = '20px serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🌴', tx + 2, ty - 48);
+  }
+
+  // Dock
+  ctx.fillStyle = '#8B6914';
+  ctx.fillRect(W * 0.45, H * 0.6, 6, H * 0.08);
+  ctx.fillRect(W * 0.48, H * 0.6, 6, H * 0.08);
+  ctx.fillStyle = '#a07828';
+  ctx.fillRect(W * 0.43, H * 0.6, 14, 4);
+  ctx.fillRect(W * 0.43, H * 0.63, 14, 4);
+
+  // Market sign
+  ctx.fillStyle = '#8B4513';
+  ctx.fillRect(W * 0.32, H * 0.65, 48, 28);
+  ctx.fillStyle = '#f1c40f';
+  ctx.font = `${Math.max(8, W*0.012)}px 'Press Start 2P', monospace`;
+  ctx.textAlign = 'center';
+  ctx.fillText('MERCADO', W * 0.344, H * 0.685);
+
+  // Villagers
+  ctx.font = '20px serif';
+  for (let v of villagers) {
+    v.x += v.dir * 0.2;
+    if (v.x > W * 0.35 || v.x < W * 0.06) v.dir *= -1;
+    ctx.fillText(v.icon, v.x, v.y + Math.sin(wt * 2 + v.x) * 2);
+  }
+
+  // Ocean bottom elements (coral, seaweed) near shore
+  const elements = ['🪸','🌿','🪨','🐚'];
+  for (let i = 0; i < 6; i++) {
+    const ex = W * (0.1 + i * 0.15);
+    ctx.font = '14px serif';
+    ctx.fillText(elements[i % elements.length], ex, H * 0.66);
+  }
+}
+
+// ========================
+// GAME LOGIC
+// ========================
+function startGame() {
+  document.getElementById('title-screen').classList.add('hidden');
+  document.getElementById('hud').classList.remove('hidden');
+  document.getElementById('bottom-panel').classList.remove('hidden');
+  document.getElementById('message-log').classList.remove('hidden');
+  document.getElementById('zone-indicator').classList.remove('hidden');
+  G.running = true;
+  G.tickTimer = setInterval(gameTick, 3000);
+  updateHUD();
+  logMsg('¡Bienvenido al pueblo pesquero de Bahía Viva!', 'success');
+  logMsg('Elige tu zona y método de pesca para comenzar.', '');
+  setTimeout(() => logMsg('💡 Tip: Cuida el índice ECO para no agotar el mar.', 'warn'), 2000);
+  initFishEntities();
+}
+
+function gameTick() {
+  if (!G.running) return;
+  G.ticks++;
+
+  // Advance time
+  G.minute += 30;
+  if (G.minute >= 60) { G.minute = 0; G.hour++; }
+  if (G.hour >= 24) {
+    G.hour = 6;
+    G.day++;
+    G.eco = Math.min(100, G.eco + 2); // Slight ocean recovery
+    if (G.day % 30 === 1) { G.season = (G.season + 1) % 4; updateSeason(); }
+    logMsg(`🌅 Día ${G.day}. El océano recupera algo de fuerza.`, 'success');
+  }
+
+  // Update temp based on time
+  const h = G.hour;
+  G.temp = (G.season === 1 ? 30 : G.season === 3 ? 18 : 24) + Math.sin((h - 6) / 12 * Math.PI) * 6;
+  G.temp = Math.round(G.temp);
+
+  // Weather changes
+  if (G.ticks % 8 === 0) changeWeather();
+
+  // Drain resources
+  G.energy = Math.max(0, G.energy - 1);
+  G.hunger = Math.max(0, G.hunger - 0.8);
+  G.thirst = Math.max(0, G.thirst - 1.2);
+  if (G.zone === 'abierto') G.fuel = Math.max(0, G.fuel - 0.5);
+
+  // Danger checks
+  if (G.hunger < 15 && G.ticks % 4 === 0) logMsg('⚠️ ¡Tienes mucha hambre! Ve al mercado.', 'danger');
+  if (G.thirst < 15 && G.ticks % 4 === 0) logMsg('⚠️ ¡Tienes mucha sed! Necesitas agua.', 'danger');
+  if (G.energy < 10) logMsg('😴 Estás agotado. ¡Descansa pronto!', 'danger');
+  if (G.eco < 20) { document.getElementById('eco-warning').style.display = 'block'; }
+  else { document.getElementById('eco-warning').style.display = 'none'; }
+
+  // Eco recovery
+  if (G.eco < 80 && G.ticks % 6 === 0) G.eco = Math.min(100, G.eco + 0.5);
+
+  updateHUD();
+}
+
+function changeWeather() {
+  const weathers = ['sunny','sunny','sunny','cloudy','windy'];
+  if (Math.random() < 0.05 && G.zone === 'abierto') {
+    startStorm();
+    return;
+  }
+  const prev = G.weather;
+  G.weather = weathers[Math.floor(Math.random() * weathers.length)];
+  if (G.weather !== prev) {
+    const icons = { sunny:'☀️', cloudy:'☁️', windy:'💨' };
+    logMsg(`${icons[G.weather] || '🌤'} El tiempo cambió: ${G.weather}.`, '');
+  }
+}
+
+function startStorm() {
+  if (G.storm) return;
+  G.storm = true;
+  G.weather = 'storm';
+  document.getElementById('storm-overlay').classList.add('active');
+  logMsg('⛈ ¡TORMENTA! Las olas son peligrosas. ¡Vuelve a la costa!', 'danger');
+  logMsg('🚨 La pesca está suspendida por tu seguridad.', 'danger');
+  G.stormTimer = setTimeout(() => {
+    G.storm = false;
+    G.weather = 'sunny';
+    document.getElementById('storm-overlay').classList.remove('active');
+    logMsg('☀️ La tormenta pasó. Puedes salir al mar de nuevo.', 'success');
+  }, 20000);
+}
+
+function updateSeason() {
+  logMsg(`🌍 Nueva temporada: ${G.seasons[G.season]}`, 'success');
+  const tempBase = [22, 30, 20, 16];
+  G.temp = tempBase[G.season];
+  initFishEntities();
+}
+
+function changeZone(zone) {
+  if (G.storm) { logMsg('⛈ No puedes salir con esta tormenta.', 'danger'); return; }
+  if (G.fuel < ZONE_INFO[zone].fuelCost) { logMsg('⛽ Sin combustible suficiente. Compra en el mercado.', 'warn'); return; }
+  G.zone = zone;
+  G.fuel = Math.max(0, G.fuel - ZONE_INFO[zone].fuelCost);
+  const zi = ZONE_INFO[zone];
+  document.getElementById('zone-name').textContent = zi.name;
+  document.getElementById('zone-species').textContent = zi.species;
+  logMsg(`🚢 Navegaste al ${zi.name.replace(/[🌿🪸🌊]/g,'').trim()}. (−${zi.fuelCost}% combustible)`, '');
+  initFishEntities();
+  updateHUD();
+}
+
+function changeMethod() {
+  G.methodIdx = (G.methodIdx + 1) % G.methods.length;
+  G.method = G.methods[G.methodIdx];
+  const mi = METHOD_INFO[G.method];
+  logMsg(`🔄 Método: ${mi.label} | Eco: ${mi.eco > 1 ? '⚠' : '✓'}`, mi.eco > 2 ? 'warn' : '');
+  document.getElementById('btn-fish').textContent = `${mi.label.split(' ')[0]} Pescar`;
+}
+
+function fish() {
+  if (G.fishing) { logMsg('Ya estás pescando, ¡espera!', 'warn'); return; }
+  if (G.storm) { logMsg('⛈ No puedes pescar en la tormenta.', 'danger'); return; }
+  if (G.energy < 5) { logMsg('😴 Sin energía para pescar.', 'danger'); return; }
+  if (G.inventory.length >= 20) { logMsg('📦 Inventario lleno. Vende en el mercado.', 'warn'); return; }
+
+  const method = METHOD_INFO[G.method];
+  G.fishing = true;
+  document.getElementById('btn-fish').classList.add('fishing');
+  document.getElementById('btn-fish').textContent = '🎣 Pescando…';
+
+  // Time modifier based on hour
+  const hourMod = (G.hour >= 5 && G.hour <= 8) || (G.hour >= 17 && G.hour <= 20) ? 0.8 : 1;
+  const tempMod = G.temp > 28 ? 1.15 : G.temp < 18 ? 0.85 : 1;
+
+  G.fishTimer = setTimeout(() => {
+    G.fishing = false;
+    document.getElementById('btn-fish').classList.remove('fishing');
+    const mi = METHOD_INFO[G.method];
+    document.getElementById('btn-fish').textContent = `${mi.label.split(' ')[0]} Pescar`;
+
+    // Energy cost
+    G.energy = Math.max(0, G.energy - 8);
+
+    // Miss check
+    const miss = method.miss * hourMod;
+    if (Math.random() < miss) {
+      logMsg('🎣 El pez se escapó…', '');
+      updateHUD();
+      return;
+    }
+
+    // Pick species
+    const pool = SPECIES[G.zone];
+    const weights = pool.map(s => s.rarity * (method.bonus?.[G.zone] || 1) * tempMod);
+    const total = weights.reduce((a,b)=>a+b, 0);
+    let r = Math.random() * total;
+    let chosen = pool[0];
+    for (let i = 0; i < pool.length; i++) {
+      r -= weights[i];
+      if (r <= 0) { chosen = pool[i]; break; }
+    }
+
+    // Eco impact
+    G.eco = Math.max(0, G.eco - method.eco * chosen.eco);
+
+    // Rare event
+    if (chosen.rare) {
+      showRareEvent(chosen);
+    } else if (chosen.release) {
+      logMsg(`🌊 ¡${chosen.icon} ${chosen.name} encontrado! Es una especie protegida. Lo liberaste.`, 'success');
+      recordLogbook(chosen);
+    } else {
+      const w = chosen.weight[0] + Math.random() * (chosen.weight[1] - chosen.weight[0]);
+      const val = Math.round(chosen.value[0] + Math.random() * (chosen.value[1] - chosen.value[0]));
+      const wRound = w.toFixed(1);
+
+      // Add to inventory
+      const existing = G.inventory.find(i => i.name === chosen.name);
+      if (existing) { existing.qty++; existing.totalValue += val; }
+      else G.inventory.push({ name: chosen.name, icon: chosen.icon, qty: 1, totalValue: val, unitValue: val });
+
+      G.caught++;
+      recordLogbook(chosen);
+      showCatchPopup(chosen, wRound, val);
+      spawnCatchParticles(chosen.icon);
+      logMsg(`🎉 Capturaste: ${chosen.icon} ${chosen.name} | ${wRound}kg | $${val}`, 'success');
+    }
+
+    updateHUD();
+  }, method.time * hourMod);
+}
+
+function recordLogbook(species) {
+  if (!G.logbook[species.name]) {
+    G.logbook[species.name] = { count: 0, icon: species.icon, rare: species.rare || false };
+    logMsg(`📓 ¡Nueva especie en bitácora: ${species.icon} ${species.name}!`, 'success');
+  }
+  G.logbook[species.name].count++;
+}
+
+function showCatchPopup(species, weight, value) {
+  const popup = document.getElementById('catch-popup');
+  document.getElementById('catch-icon').textContent = species.icon;
+  document.getElementById('catch-name').textContent = species.name;
+  document.getElementById('catch-value').textContent = `+$${value} • ${weight} kg`;
+  popup.classList.add('show');
+  setTimeout(() => popup.classList.remove('show'), 2500);
+}
+
+function showRareEvent(species) {
+  recordLogbook(species);
+  logMsg(`🌟 ¡EVENTO RARO! ${species.icon} ${species.name} avistado. ¡Una vez en la vida!`, 'rare');
+  openModal(`🌟 AVISTAMIENTO RARO`, `
+    <div style="text-align:center;padding:20px;">
+      <div style="font-size:60px;margin-bottom:10px;">${species.icon}</div>
+      <div style="font-family:var(--font-vt);font-size:20px;color:var(--wave);">${species.name}</div>
+      <br>
+      <div style="font-family:var(--font-vt);font-size:16px;color:var(--sand);line-height:1.6;">
+        ¡Un avistamiento extraordinario! Esta especie es vital para el ecosistema marino.
+        Has registrado este evento en tu bitácora científica.
+        <br><br>
+        🌿 <b style="color:var(--green)">+10 puntos ECO</b> por respetar la naturaleza.
+      </div>
+    </div>
+  `);
+  G.eco = Math.min(100, G.eco + 10);
+  updateHUD();
+}
+
+function spawnCatchParticles(icon) {
+  for (let i = 0; i < 5; i++) {
+    particles.push({
+      x: boatX + (Math.random() - 0.5) * 30,
+      y: boatY,
+      vx: (Math.random() - 0.5) * 3,
+      vy: -(2 + Math.random() * 3),
+      icon: icon,
+      life: 1,
+      size: 18
+    });
+  }
+}
+
+function rest() {
+  if (G.energy >= 100 && G.hunger >= 100 && G.thirst >= 100) {
+    logMsg('Ya estás descansado.', '');
+    return;
+  }
+  G.energy = Math.min(100, G.energy + 40);
+  G.hunger = Math.min(100, G.hunger + 20);
+  G.thirst = Math.min(100, G.thirst + 30);
+  G.hour = Math.min(23, G.hour + 4);
+  logMsg('😴 Descansaste unas horas. Energía recuperada.', 'success');
+  updateHUD();
+}
+
+function openMarket() {
+  const sellItems = G.inventory.map(item => `
+    <div class="shop-item">
+      <span style="font-size:22px">${item.icon}</span>
+      <div class="shop-item-name">${item.name} x${item.qty}</div>
+      <div class="shop-item-price">$${item.unitValue || Math.round(item.totalValue/item.qty)} c/u</div>
+      <button class="shop-buy-btn" onclick="sellItem('${item.name}')">VENDER</button>
+      <button class="shop-buy-btn" style="background:var(--ocean-surf);border-color:var(--wave)" onclick="sellAllItem('${item.name}')">TODO</button>
+    </div>
+  `).join('');
+
+  const supplies = `
+    <div style="margin-top:16px;border-top:2px solid var(--ui-border);padding-top:12px;">
+      <div style="color:var(--wave);font-size:clamp(7px,1.2vw,10px);margin-bottom:8px;">🛒 TIENDA DE SUMINISTROS</div>
+      <div class="shop-item">
+        <span>🍖</span><div class="shop-item-name">Comida</div>
+        <div class="shop-item-price">$80</div>
+        <button class="shop-buy-btn" onclick="buySupply('food')">COMPRAR</button>
+      </div>
+      <div class="shop-item">
+        <span>💧</span><div class="shop-item-name">Agua</div>
+        <div class="shop-item-price">$40</div>
+        <button class="shop-buy-btn" onclick="buySupply('water')">COMPRAR</button>
+      </div>
+      <div class="shop-item">
+        <span>⛽</span><div class="shop-item-name">Combustible</div>
+        <div class="shop-item-price">$150</div>
+        <button class="shop-buy-btn" onclick="buySupply('fuel')">COMPRAR</button>
+      </div>
+      <div class="shop-item">
+        <span>🎣</span><div class="shop-item-name">Línea Premium</div>
+        <div class="shop-item-price">$300</div>
+        <button class="shop-buy-btn" onclick="buySupply('line')">COMPRAR</button>
+      </div>
+    </div>
+  `;
+
+  openModal('🏪 MERCADO DE BAHÍA VIVA', `
+    <div style="font-family:var(--font-vt);font-size:clamp(12px,1.8vw,16px);">
+      <div style="color:var(--gold);margin-bottom:8px;">💰 Dinero: $${G.money}</div>
+      <div style="color:var(--wave);margin-bottom:8px;font-size:clamp(7px,1.2vw,10px)">TU CAPTURA</div>
+      ${sellItems || '<div style="color:#5a7a8a">No hay nada para vender.</div>'}
+      ${supplies}
+    </div>
+  `);
+}
+
+function sellItem(name) {
+  const idx = G.inventory.findIndex(i => i.name === name);
+  if (idx === -1) return;
+  const item = G.inventory[idx];
+  const price = item.unitValue || Math.round(item.totalValue / item.qty);
+  G.money += price;
+  item.qty--;
+  item.totalValue -= price;
+  if (item.qty <= 0) G.inventory.splice(idx, 1);
+  logMsg(`💰 Vendiste 1 ${name} por $${price}`, 'success');
+  openMarket();
+  updateHUD();
+}
+
+function sellAllItem(name) {
+  const idx = G.inventory.findIndex(i => i.name === name);
+  if (idx === -1) return;
+  const item = G.inventory[idx];
+  const total = item.totalValue;
+  G.money += total;
+  G.inventory.splice(idx, 1);
+  logMsg(`💰 Vendiste todo el ${name} por $${total}`, 'success');
+  openMarket();
+  updateHUD();
+}
+
+function buySupply(type) {
+  const costs = { food: 80, water: 40, fuel: 150, line: 300 };
+  const cost = costs[type];
+  if (G.money < cost) { logMsg('💸 No tienes suficiente dinero.', 'danger'); return; }
+  G.money -= cost;
+  if (type === 'food') { G.hunger = Math.min(100, G.hunger + 60); logMsg('🍖 Comiste bien. +60 hambre', 'success'); }
+  if (type === 'water') { G.thirst = Math.min(100, G.thirst + 60); logMsg('💧 Hidratado. +60 sed', 'success'); }
+  if (type === 'fuel') { G.fuel = Math.min(100, G.fuel + 50); logMsg('⛽ +50% combustible', 'success'); }
+  if (type === 'line') { logMsg('🎣 Línea premium equipada. Mejor captura.', 'success'); }
+  openMarket();
+  updateHUD();
+}
+
+function openLogbook() {
+  const entries = Object.entries(G.logbook);
+  if (entries.length === 0) {
+    openModal('📓 BITÁCORA CIENTÍFICA', '<div style="font-family:var(--font-vt);font-size:16px;color:#5a7a8a">Aún no has registrado ninguna especie. ¡Sal a pescar!</div>');
+    return;
+  }
+  const html = entries.map(([name, data]) => `
+    <div class="logbook-entry">
+      <span style="font-size:20px">${data.icon}</span>
+      <span class="lb-name"> ${name}</span>
+      <span class="lb-data"> — ${data.count} capturas${data.rare ? ' 🌟 RARA' : ''}</span>
+    </div>
+  `).join('');
+  openModal('📓 BITÁCORA CIENTÍFICA', `
+    <div style="font-family:var(--font-vt);font-size:clamp(10px,1.6vw,14px);color:var(--sand);margin-bottom:10px;">
+      Especies registradas: <b style="color:var(--gold)">${entries.length}</b>
+    </div>
+    ${html}
+    <div style="margin-top:12px;color:var(--green);font-family:var(--font-vt);font-size:clamp(10px,1.6vw,14px);">
+      📊 Investigación: ${entries.length >= 10 ? '¡Investigador experto!' : entries.length >= 5 ? 'Buena colección' : 'Iniciando investigación'}
+    </div>
+  `);
+}
+
+function updateHUD() {
+  document.getElementById('hud-money').textContent = `$${G.money}`;
+  document.getElementById('hud-fuel').textContent = `${Math.round(G.fuel)}%`;
+  document.getElementById('hud-caught').textContent = G.caught;
+  document.getElementById('hud-inv').textContent = G.inventory.length;
+  document.getElementById('hud-day').textContent = G.day;
+
+  const hh = String(G.hour).padStart(2,'0');
+  const mm = String(G.minute).padStart(2,'0');
+  document.getElementById('hud-time').textContent = `${hh}:${mm}`;
+  document.getElementById('hud-season').textContent = G.seasons[G.season];
+  const wIcons = { sunny:'☀️ Soleado', cloudy:'☁️ Nublado', windy:'💨 Ventoso', storm:'⛈ Tormenta' };
+  document.getElementById('hud-weather').textContent = wIcons[G.weather] || '☀️';
+  document.getElementById('hud-temp').textContent = `🌡 ${G.temp}°C`;
+
+  document.getElementById('bar-energy').style.width = G.energy + '%';
+  document.getElementById('bar-hunger').style.width = G.hunger + '%';
+  document.getElementById('bar-thirst').style.width = G.thirst + '%';
+  document.getElementById('bar-eco').style.width = G.eco + '%';
+
+  // Eco bar color warning
+  const ecoBar = document.getElementById('bar-eco');
+  if (G.eco < 30) ecoBar.style.background = '#e74c3c';
+  else if (G.eco < 60) ecoBar.style.background = 'linear-gradient(90deg,#e67e22,#f1c40f)';
+  else ecoBar.style.background = 'linear-gradient(90deg,#e74c3c,#27ae60)';
+}
+
+function logMsg(text, type='') {
+  const log = document.getElementById('message-log');
+  const el = document.createElement('div');
+  el.className = 'log-entry' + (type ? ' ' + type : '');
+  el.textContent = text;
+  log.appendChild(el);
+  log.scrollTop = log.scrollHeight;
+  // Limit log entries
+  while (log.children.length > 12) log.removeChild(log.firstChild);
+}
+
+function openModal(title, content) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-content').innerHTML = content;
+  document.getElementById('modal-overlay').classList.remove('hidden');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.add('hidden');
+}
+
+function showHelp() {
+  document.getElementById('help-screen').classList.remove('hidden');
+}
+
+function hideHelp() {
+  document.getElementById('help-screen').classList.add('hidden');
+}
+
+// ========================
+// INIT
+// ========================
+window.addEventListener('resize', () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  boatX = canvas.width * 0.5;
+  boatY = canvas.height * 0.52;
+  initWaves();
+  initVillagers();
+});
+
+initCanvas();
+</script>
+</body>
+</html>

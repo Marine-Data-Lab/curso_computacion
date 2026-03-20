@@ -1,0 +1,17 @@
+# Claude Code
+.claude/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+node_modules/
+.env
+.env.local

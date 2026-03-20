@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FIRESIM-PRO | Simulador de Dispersión de Incendios Forestales</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;500;600;700&family=Barlow:wght@400;500;600&display=swap');
+
+  :root {
+    --pc-rojo: #C0392B;
+    --pc-rojo-oscuro: #922B21;
+    --pc-rojo-claro: #E74C3C;
+    --pc-naranja: #E67E22;
+    --pc-amarillo: #F39C12;
+    --pc-verde: #1E8449;
+    --pc-verde-claro: #27AE60;
+    --pc-azul: #1A5276;
+    --pc-azul-claro: #2980B9;
+    --pc-negro: #0A0A0A;
+    --pc-gris-oscuro: #1C1C1C;
+    --pc-gris-med: #2A2A2A;
+    --pc-gris: #333;
+    --pc-gris-claro: #555;
+    --pc-texto: #E8E8E8;
+    --pc-texto-sec: #A0A0A0;
+    --pc-borde: #3A3A3A;
+    --font-mono: 'Share Tech Mono', monospace;
+    --font-cond: 'Barlow Condensed', sans-serif;
+    --font-body: 'Barlow', sans-serif;
+    --cell: 10px;
+    --grid-w: 60;
+    --grid-h: 55;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--pc-negro);
+    color: var(--pc-texto);
+    font-family: var(--font-body);
+    font-size: 13px;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── HEADER ────────────────────────────────── */
+  #header {
+    background: var(--pc-gris-oscuro);
+    border-bottom: 2px solid var(--pc-rojo);
+    padding: 6px 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+  #header .logo {
+    display: flex; align-items: center; gap: 8px;
+  }
+  #header .logo-icon {
+    width: 32px; height: 32px;
+    background: var(--pc-rojo);
+    clip-path: polygon(50% 0%, 100% 35%, 85% 100%, 15% 100%, 0% 35%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; color: #fff; flex-shrink: 0;
+  }
+  #header .app-title {
+    font-family: var(--font-cond);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: #fff;
+  }
+  #header .app-subtitle {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--pc-texto-sec);
+    letter-spacing: 1px;
+  }
+  .header-badges {
+    display: flex; gap: 6px; margin-left: auto; align-items: center;
+  }
+  .badge {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    padding: 2px 6px;
+    border: 1px solid;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .badge-red   { border-color: var(--pc-rojo);   color: var(--pc-rojo);   }
+  .badge-green { border-color: var(--pc-verde);  color: var(--pc-verde-claro); }
+  .badge-blue  { border-color: var(--pc-azul-claro); color: var(--pc-azul-claro); }
+  #sim-status {
+    font-family: var(--font-mono); font-size: 10px; color: var(--pc-naranja);
+    min-width: 120px; text-align: right;
+  }
+
+  /* ── LAYOUT PRINCIPAL ─────────────────────── */
+  #main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    gap: 0;
+  }
+
+  /* ── PANEL IZQUIERDO ──────────────────────── */
+  #panel-left {
+    width: 220px;
+    background: var(--pc-gris-oscuro);
+    border-right: 1px solid var(--pc-borde);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+
+  .panel-section {
+    border-bottom: 1px solid var(--pc-borde);
+    padding: 8px 10px;
+  }
+  .section-title {
+    font-family: var(--font-cond);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: var(--pc-rojo-claro);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .section-title::before {
+    content: '';
+    display: inline-block;
+    width: 3px; height: 10px;
+    background: var(--pc-rojo);
+  }
+
+  .param-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    gap: 4px;
+  }
+  .param-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--pc-texto-sec);
+    flex: 1;
+  }
+  .param-value {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--pc-amarillo);
+    min-width: 40px;
+    text-align: right;
+  }
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 3px;
+    background: var(--pc-gris);
+    outline: none;
+    margin: 2px 0 6px;
+    border-radius: 2px;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 10px; height: 10px;
+    background: var(--pc-rojo-claro);
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  select, input[type="text"] {
+    background: var(--pc-gris);
+    border: 1px solid var(--pc-borde);
+    color: var(--pc-texto);
+    font-family: var(--font-mono);
+    font-size: 9px;
+    padding: 3px 5px;
+    width: 100%;
+    margin-bottom: 5px;
+    outline: none;
+  }
+  select:focus, input:focus {
+    border-color: var(--pc-rojo);
+  }
+
+  .btn {
+    font-family: var(--font-cond);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    border: 1px solid;
+    padding: 5px 8px;
+    cursor: pointer;
+    width: 100%;
+    margin-bottom: 4px;
+    transition: all 0.15s;
+    background: transparent;
+  }
+  .btn-primary {
+    border-color: var(--pc-rojo);
+    color: var(--pc-rojo-claro);
+  }
+  .btn-primary:hover, .btn-primary.active {
+    background: var(--pc-rojo);
+    color: #fff;
+  }
+  .btn-success {
+    border-color: var(--pc-verde);
+    color: var(--pc-verde-claro);
+  }
+  .btn-success:hover {
+    background: var(--pc-verde);
+    color: #fff;
+  }
+  .btn-info {
+    border-color: var(--pc-azul-claro);
+    color: var(--pc-azul-claro);
+  }
+  .btn-info:hover {
+    background: var(--pc-azul-claro);
+    color: #fff;
+  }
+  .btn-warn {
+    border-color: var(--pc-naranja);
+    color: var(--pc-naranja);
+  }
+  .btn-warn:hover {
+    background: var(--pc-naranja);
+    color: #fff;
+  }
+  .btn-sm {
+    font-size: 9px;
+    padding: 3px 6px;
+    width: auto;
+    margin-bottom: 2px;
+  }
+  .btn-row { display: flex; gap: 4px; margin-bottom: 4px; }
+
+  .wind-compass {
+    width: 60px; height: 60px;
+    border: 1px solid var(--pc-borde);
+    border-radius: 50%;
+    position: relative;
+    margin: 4px auto;
+    background: radial-gradient(circle, #222 60%, #1a1a1a);
+  }
+  .wind-compass .cardinal {
+    position: absolute;
+    font-family: var(--font-mono);
+    font-size: 8px;
+    color: var(--pc-texto-sec);
+  }
+  .wind-compass .cardinal.n { top: 1px; left: 50%; transform: translateX(-50%); }
+  .wind-compass .cardinal.s { bottom: 1px; left: 50%; transform: translateX(-50%); }
+  .wind-compass .cardinal.e { right: 2px; top: 50%; transform: translateY(-50%); }
+  .wind-compass .cardinal.w { left: 2px; top: 50%; transform: translateY(-50%); }
+  #wind-arrow {
+    position: absolute;
+    width: 2px; height: 22px;
+    background: var(--pc-naranja);
+    left: 50%; top: 50%;
+    transform-origin: bottom center;
+    transform: translateX(-50%) translateY(-100%) rotate(0deg);
+    transition: transform 0.3s;
+  }
+  #wind-arrow::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-bottom: 7px solid var(--pc-naranja);
+  }
+
+  /* ── CANVAS CENTRAL ───────────────────────── */
+  #canvas-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  #canvas-toolbar {
+    background: var(--pc-gris-med);
+    border-bottom: 1px solid var(--pc-borde);
+    padding: 4px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+  .tool-btn {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    padding: 3px 8px;
+    border: 1px solid var(--pc-borde);
+    color: var(--pc-texto-sec);
+    cursor: pointer;
+    background: transparent;
+    transition: all 0.15s;
+    letter-spacing: 0.5px;
+  }
+  .tool-btn:hover, .tool-btn.active {
+    background: var(--pc-rojo);
+    border-color: var(--pc-rojo);
+    color: #fff;
+  }
+  .tool-btn.tool-firebreak.active {
+    background: var(--pc-azul-claro);
+    border-color: var(--pc-azul-claro);
+  }
+  .tool-btn.tool-water.active {
+    background: #2980B9;
+    border-color: #2980B9;
+  }
+  .tool-btn.tool-retardant.active {
+    background: #8E44AD;
+    border-color: #8E44AD;
+  }
+  .separator { width: 1px; height: 20px; background: var(--pc-borde); }
+  #coords-display {
+    font-family: var(--font-mono); font-size: 9px;
+    color: var(--pc-texto-sec); margin-left: auto;
+  }
+
+  #canvas-container {
+    flex: 1;
+    overflow: auto;
+    position: relative;
+    cursor: crosshair;
+  }
+  #simCanvas {
+    display: block;
+    image-rendering: pixelated;
+  }
+
+  /* ── PANEL DERECHO ───────────────────────── */
+  #panel-right {
+    width: 210px;
+    background: var(--pc-gris-oscuro);
+    border-left: 1px solid var(--pc-borde);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+
+  .metric-card {
+    background: var(--pc-gris-med);
+    border: 1px solid var(--pc-borde);
+    padding: 6px 8px;
+    margin-bottom: 4px;
+  }
+  .metric-label {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    color: var(--pc-texto-sec);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .metric-value {
+    font-family: var(--font-cond);
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+  .metric-value.danger { color: var(--pc-rojo-claro); }
+  .metric-value.warn   { color: var(--pc-naranja); }
+  .metric-value.info   { color: var(--pc-azul-claro); }
+  .metric-value.ok     { color: var(--pc-verde-claro); }
+  .metric-unit {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--pc-texto-sec);
+  }
+
+  /* Mini gráfico de avance */
+  #progress-chart { width: 100%; height: 50px; }
+
+  /* Leyenda mapa */
+  .legend-row {
+    display: flex; align-items: center; gap: 6px;
+    margin-bottom: 3px;
+  }
+  .legend-swatch {
+    width: 12px; height: 12px; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0;
+  }
+  .legend-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--pc-texto-sec);
+  }
+
+  /* Log de eventos */
+  #event-log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px 8px;
+    font-family: var(--font-mono);
+    font-size: 8px;
+    color: var(--pc-texto-sec);
+    min-height: 80px;
+    max-height: 140px;
+  }
+  .log-entry { padding: 1px 0; border-bottom: 1px solid #222; }
+  .log-time { color: var(--pc-amarillo); }
+  .log-danger { color: var(--pc-rojo-claro); }
+  .log-info { color: var(--pc-azul-claro); }
+  .log-ok { color: var(--pc-verde-claro); }
+
+  /* ── BARRA INFERIOR ──────────────────────── */
+  #status-bar {
+    background: var(--pc-gris-med);
+    border-top: 1px solid var(--pc-borde);
+    padding: 3px 12px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+  .status-item {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--pc-texto-sec);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .status-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+  }
+  .dot-ok { background: var(--pc-verde-claro); animation: pulse-ok 2s infinite; }
+  .dot-warn { background: var(--pc-naranja); animation: pulse-warn 1s infinite; }
+  .dot-danger { background: var(--pc-rojo-claro); animation: pulse-danger 0.5s infinite; }
+
+  @keyframes pulse-ok { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  @keyframes pulse-warn { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  @keyframes pulse-danger { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: var(--pc-gris-oscuro); }
+  ::-webkit-scrollbar-thumb { background: var(--pc-gris); border-radius: 2px; }
+
+  /* Tooltip */
+  #tooltip {
+    position: fixed;
+    background: rgba(10,10,10,0.95);
+    border: 1px solid var(--pc-rojo);
+    padding: 5px 8px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--pc-texto);
+    pointer-events: none;
+    z-index: 1000;
+    display: none;
+    line-height: 1.6;
+  }
+
+  /* Overlay modal */
+  #modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 500;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  #modal-overlay.show { display: flex; }
+  .modal-box {
+    background: var(--pc-gris-oscuro);
+    border: 1px solid var(--pc-rojo);
+    padding: 20px;
+    max-width: 360px;
+    width: 90%;
+  }
+  .modal-title {
+    font-family: var(--font-cond);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--pc-rojo-claro);
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+  }
+  .modal-text { font-size: 12px; color: var(--pc-texto-sec); line-height: 1.6; margin-bottom: 14px; }
+
+  /* Speed indicator */
+  .speed-display {
+    display: flex; gap: 3px; align-items: center;
+  }
+  .speed-dot {
+    width: 8px; height: 8px; border-radius: 1px;
+    background: var(--pc-borde); transition: background 0.2s;
+  }
+  .speed-dot.active { background: var(--pc-naranja); }
+
+  #resources-list { padding: 4px 0; }
+  .resource-item {
+    display: flex; align-items: center; gap: 6px;
+    padding: 3px 0; border-bottom: 1px solid #222;
+  }
+  .resource-icon {
+    width: 16px; height: 16px; border-radius: 2px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; flex-shrink: 0;
+  }
+  .res-fire { background: #922B21; }
+  .res-water { background: #1A5276; }
+  .res-air { background: #1E8449; }
+  .res-brigade { background: #6E2F7C; }
+
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ─────────────────────────────── -->
+<div id="header">
+  <div class="logo">
+    <div class="logo-icon">🔥</div>
+    <div>
+      <div class="app-title">FIRESIM-PRO</div>
+      <div class="app-subtitle">SIMULADOR DE DISPERSIÓN · PROTECCIÓN CIVIL · v3.2.1</div>
+    </div>
+  </div>
+  <div class="header-badges">
+    <span class="badge badge-red">CNPC</span>
+    <span class="badge badge-red">CONAFOR</span>
+    <span class="badge badge-blue">CENAPRED</span>
+    <span class="badge badge-green">SISTEMAS ACTIVOS</span>
+  </div>
+  <div id="sim-status">● MODO: <span id="mode-label">ESPERA</span></div>
+</div>
+
+<!-- ── MAIN ───────────────────────────────── -->
+<div id="main">
+
+  <!-- ── PANEL IZQUIERDO ─────────────────── -->
+  <div id="panel-left">
+
+    <!-- Vegetación -->
+    <div class="panel-section">
+      <div class="section-title">Tipo de Vegetación</div>
+      <select id="veg-type">
+        <option value="pastizal">Pastizal — Alta prop.</option>
+        <option value="matorral">Matorral — Prop. media</option>
+        <option value="bosque" selected>Bosque denso</option>
+        <option value="selva">Selva — Baja prop. inicial</option>
+        <option value="seco">Vegetación seca — EXTREMA</option>
+      </select>
+    </div>
+
+    <!-- Condiciones climáticas -->
+    <div class="panel-section">
+      <div class="section-title">Parámetros Atmosféricos</div>
+
+      <div class="param-row">
+        <span class="param-label">Temperatura (°C)</span>
+        <span class="param-value" id="temp-val">28</span>
+      </div>
+      <input type="range" id="temperature" min="0" max="50" value="28" oninput="updateParam('temp-val',this.value,'°C')">
+
+      <div class="param-row">
+        <span class="param-label">Humedad rel. (%)</span>
+        <span class="param-value" id="hum-val">35</span>
+      </div>
+      <input type="range" id="humidity" min="0" max="100" value="35" oninput="updateParam('hum-val',this.value,'%')">
+
+      <div class="param-row">
+        <span class="param-label">Vel. viento (km/h)</span>
+        <span class="param-value" id="wind-val">20</span>
+      </div>
+      <input type="range" id="wind-speed" min="0" max="120" value="20" oninput="updateWindSpeed(this.value)">
+
+      <div class="param-row">
+        <span class="param-label">Dir. viento (°)</span>
+        <span class="param-value" id="wdir-val">45°NE</span>
+      </div>
+      <input type="range" id="wind-dir" min="0" max="360" value="45" oninput="updateWindDir(this.value)">
+
+      <div class="wind-compass" title="Dirección del viento">
+        <span class="cardinal n">N</span>
+        <span class="cardinal s">S</span>
+        <span class="cardinal e">E</span>
+        <span class="cardinal w">O</span>
+        <div id="wind-arrow"></div>
+      </div>
+
+      <div class="param-row">
+        <span class="param-label">Precipitación (mm)</span>
+        <span class="param-value" id="precip-val">0</span>
+      </div>
+      <input type="range" id="precipitation" min="0" max="50" value="0" oninput="updateParam('precip-val',this.value,'mm')">
+
+      <div class="param-row">
+        <span class="param-label">Pendiente (%)</span>
+        <span class="param-value" id="slope-val">15</span>
+      </div>
+      <input type="range" id="slope" min="0" max="90" value="15" oninput="updateParam('slope-val',this.value,'%')">
+    </div>
+
+    <!-- Controles de simulación -->
+    <div class="panel-section">
+      <div class="section-title">Control de Simulación</div>
+      <button class="btn btn-primary" id="btn-ignite" onclick="toggleIgnite()">⊕ INICIAR IGNICIÓN</button>
+      <button class="btn btn-success" id="btn-run" onclick="toggleRun()">▶ EJECUTAR SIM.</button>
+      <button class="btn btn-warn" onclick="stepSim()">↷ PASO A PASO</button>
+      <button class="btn btn-info" onclick="resetSim()">↺ REINICIAR GRID</button>
+
+      <div style="margin: 6px 0 4px;">
+        <div class="param-label" style="margin-bottom:4px;">Velocidad sim.</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;">
+          <button class="btn btn-sm btn-info" onclick="setSpeed(1)">×1</button>
+          <button class="btn btn-sm btn-info" onclick="setSpeed(3)">×3</button>
+          <button class="btn btn-sm btn-warn" onclick="setSpeed(8)">×8</button>
+          <button class="btn btn-sm btn-primary" onclick="setSpeed(20)">×20</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Escenarios predefinidos -->
+    <div class="panel-section">
+      <div class="section-title">Escenarios Predefinidos</div>
+      <button class="btn btn-sm btn-primary" onclick="loadScenario('bosque_seco')" style="width:100%;margin-bottom:3px;">🌲 Bosque Seco</button>
+      <button class="btn btn-sm btn-warn"    onclick="loadScenario('montana')"    style="width:100%;margin-bottom:3px;">⛰️ Montaña</button>
+      <button class="btn btn-sm btn-success" onclick="loadScenario('selva')"      style="width:100%;margin-bottom:3px;">🌿 Selva Tropical</button>
+      <button class="btn btn-sm btn-info"    onclick="loadScenario('urbano')"     style="width:100%;margin-bottom:3px;">🏙️ Interfaz Urbana</button>
+    </div>
+
+    <!-- Recursos de combate -->
+    <div class="panel-section">
+      <div class="section-title">Despliegue de Recursos</div>
+      <div id="resources-list">
+        <div class="resource-item">
+          <div class="resource-icon res-fire">🚒</div>
+          <span class="param-label">Estaciones bomberos: <span id="res-fire-count" style="color:var(--pc-amarillo)">0</span></span>
+        </div>
+        <div class="resource-item">
+          <div class="resource-icon res-water">💧</div>
+          <span class="param-label">Hidrantes activos: <span id="res-water-count" style="color:var(--pc-azul-claro)">0</span></span>
+        </div>
+        <div class="resource-item">
+          <div class="resource-icon res-air">✈️</div>
+          <span class="param-label">Medios aéreos: <span id="res-air-count" style="color:var(--pc-verde-claro)">0</span></span>
+        </div>
+        <div class="resource-item">
+          <div class="resource-icon res-brigade">👥</div>
+          <span class="param-label">Brigadas terres.: <span id="res-brigade-count" style="color:#8E44AD)">0</span></span>
+        </div>
+      </div>
+      <button class="btn btn-info" onclick="exportData()" style="margin-top:4px;">⬇ EXPORTAR CSV</button>
+    </div>
+
+  </div>
+
+  <!-- ── CANVAS AREA ─────────────────────── -->
+  <div id="canvas-area">
+    <div id="canvas-toolbar">
+      <span style="font-family:var(--font-cond);font-size:11px;font-weight:600;color:var(--pc-texto-sec);letter-spacing:1px;">HERRAMIENTA:</span>
+      <button class="tool-btn active" id="tool-ignite"    onclick="setTool('ignite')">🔥 IGNICIÓN</button>
+      <button class="tool-btn tool-firebreak" id="tool-firebreak" onclick="setTool('firebreak')">🔵 CORTAFUEGO</button>
+      <button class="tool-btn tool-water"     id="tool-water"     onclick="setTool('water')">💧 AGUA</button>
+      <button class="tool-btn tool-retardant" id="tool-retardant" onclick="setTool('retardant')">🟣 RETARDANTE</button>
+      <button class="tool-btn" id="tool-station"  onclick="setTool('station')">🚒 ESTACIÓN</button>
+      <button class="tool-btn" id="tool-airbbase"  onclick="setTool('airbase')">✈️ BASE AÉREA</button>
+      <div class="separator"></div>
+      <button class="tool-btn" onclick="clearFirebreak()">✕ LIMPIAR</button>
+      <div id="coords-display">X: — | Y: — | ESTADO: —</div>
+    </div>
+    <div id="canvas-container">
+      <canvas id="simCanvas"></canvas>
+    </div>
+  </div>
+
+  <!-- ── PANEL DERECHO ───────────────────── -->
+  <div id="panel-right">
+
+    <div class="panel-section">
+      <div class="section-title">Métricas en Tiempo Real</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+        <div class="metric-card">
+          <div class="metric-label">Área afectada</div>
+          <div class="metric-value danger" id="metric-area">0</div>
+          <div class="metric-unit">hectáreas</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Vel. propagación</div>
+          <div class="metric-value warn" id="metric-speed">0.0</div>
+          <div class="metric-unit">m/min</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Celdas ardiendo</div>
+          <div class="metric-value danger" id="metric-burning">0</div>
+          <div class="metric-unit">activas</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Efic. combate</div>
+          <div class="metric-value ok" id="metric-efficiency">—</div>
+          <div class="metric-unit">%</div>
+        </div>
+      </div>
+      <div class="metric-card" style="margin-top:4px;">
+        <div class="metric-label">Tiempo de simulación</div>
+        <div class="metric-value info" id="metric-time">00:00</div>
+        <div class="metric-unit">HH:MM simulado</div>
+      </div>
+      <div class="metric-card" style="margin-top:4px;">
+        <div class="metric-label">Iteración (step)</div>
+        <div class="metric-value info" id="metric-step">0</div>
+        <div class="metric-unit">ticks</div>
+      </div>
+    </div>
+
+    <!-- Gráfico de progreso -->
+    <div class="panel-section">
+      <div class="section-title">Progresión de Incendio</div>
+      <canvas id="progress-chart"></canvas>
+    </div>
+
+    <!-- Leyenda -->
+    <div class="panel-section">
+      <div class="section-title">Leyenda del Mapa</div>
+      <div class="legend-row"><div class="legend-swatch" style="background:#1a4a1a"></div><span class="legend-label">Vegetación sin quemar</span></div>
+      <div class="legend-row"><div class="legend-swatch" style="background:#FF4500"></div><span class="legend-label">Frente de fuego activo</span></div>
+      <div class="legend-row"><div class="legend-swatch" style="background:#FF8C00"></div><span class="legend-label">Ignición reciente</span></div>
+      <div class="legend-row"><div class="legend-swatch" style="background:#1A1A1A"></div><span class="legend-label">Zona calcinada (burned)</span></div>
+      <div class="legend-row"><div class="legend-swatch" style="background:#1A4A7A"></div><span class="legend-label">Cortafuego / zona húmeda</span></div>
+      <div class="legend-row"><div class="legend-swatch" style="background:#8B4513"></div><span class="legend-label">Suelo / sin combustible</span></div>
+      <div class="legend-row"><div class="legend-swatch" style="background:#6A0DAD"></div><span class="legend-label">Retardante aplicado</span></div>
+      <div class="legend-row"><div class="legend-swatch" style="background:#FFD700;border:1px solid #333"></div><span class="legend-label">Estación bomberos</span></div>
+      <div class="legend-row"><div class="legend-swatch" style="background:#00CED1;border:1px solid #333"></div><span class="legend-label">Base aérea activa</span></div>
+    </div>
+
+    <!-- Índice de riesgo -->
+    <div class="panel-section">
+      <div class="section-title">Índice de Riesgo FWI</div>
+      <div id="fwi-bar" style="width:100%;height:12px;background:linear-gradient(to right,#1E8449,#F39C12,#C0392B);border-radius:2px;position:relative;margin:4px 0;">
+        <div id="fwi-marker" style="position:absolute;top:-2px;width:3px;height:16px;background:#fff;left:20%;transition:left 0.5s;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;">
+        <span style="font-family:var(--font-mono);font-size:8px;color:var(--pc-verde-claro)">BAJO</span>
+        <span style="font-family:var(--font-mono);font-size:8px;color:var(--pc-amarillo)">MODERADO</span>
+        <span style="font-family:var(--font-mono);font-size:8px;color:var(--pc-rojo-claro)">EXTREMO</span>
+      </div>
+      <div style="margin-top:4px;font-family:var(--font-mono);font-size:10px;color:var(--pc-amarillo)">
+        FWI = <span id="fwi-value">28.4</span>
+      </div>
+    </div>
+
+    <!-- Log de eventos -->
+    <div class="panel-section" style="flex:1;display:flex;flex-direction:column;">
+      <div class="section-title">Registro de Eventos</div>
+      <div id="event-log"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── STATUS BAR ─────────────────────────── -->
+<div id="status-bar">
+  <div class="status-item">
+    <div class="status-dot dot-ok" id="sys-dot"></div>
+    SISTEMA OPERATIVO
+  </div>
+  <div class="status-item">⟳ SIM: <span id="status-iter">0</span> iter/s</div>
+  <div class="status-item">🌡 <span id="status-temp">28°C</span></div>
+  <div class="status-item">💨 <span id="status-wind">20 km/h · 45°NE</span></div>
+  <div class="status-item">💧 HR: <span id="status-hum">35%</span></div>
+  <div class="status-item" style="margin-left:auto;">
+    <span id="status-alert" style="color:var(--pc-naranja)">FIRESIM-PRO © PROTECCIÓN CIVIL | SISTEMA DE APOYO A DECISIONES</span>
+  </div>
+</div>
+
+<!-- ── TOOLTIP ─────────────────────────────── -->
+<div id="tooltip"></div>
+
+<!-- ── MODAL INTRO ────────────────────────── -->
+<div id="modal-overlay" class="show">
+  <div class="modal-box">
+    <div class="modal-title">🔥 FIRESIM-PRO</div>
+    <div style="font-family:var(--font-mono);font-size:9px;color:var(--pc-rojo);letter-spacing:1px;margin-bottom:8px;">SIMULADOR DE DISPERSIÓN DE INCENDIOS FORESTALES</div>
+    <div class="modal-text">
+      Sistema de modelado basado en <strong>autómata celular probabilístico</strong> con difusión térmica simplificada (modelo Rothermel adaptado).<br><br>
+      <strong>Instrucciones:</strong><br>
+      1. Configure parámetros ambientales en el panel izquierdo<br>
+      2. Seleccione herramienta IGNICIÓN y haga clic en el mapa<br>
+      3. Presione EJECUTAR SIM. para iniciar la propagación<br>
+      4. Use CORTAFUEGO, AGUA o RETARDANTE para intervenir<br>
+      5. Despliegue recursos estratégicos en el mapa<br><br>
+      Use escenarios predefinidos para inicio rápido.
+    </div>
+    <button class="btn btn-primary" onclick="closeModal()" style="width:auto;padding:6px 20px;">INICIAR SISTEMA ▶</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// FIRESIM-PRO — Motor de Simulación
+// Modelo: Autómata Celular Probabilístico + Rothermel
+// ═══════════════════════════════════════════════════
+
+const COLS = 80, ROWS = 65;
+const CELL_PX = 9;
+
+// Estados de celda
+const STATE = {
+  EMPTY: 0,     // sin combustible (suelo, roca)
+  UNBURNED: 1,  // vegetación intacta
+  IGNITING: 2,  // iniciando ignición (<5 ticks)
+  BURNING: 3,   // ardiendo activo
+  BURNED: 4,    // calcinado
+  FIREBREAK: 5, // cortafuego artificial
+  WET: 6,       // húmedo / agua aplicada
+  RETARDANT: 7, // retardante aplicado
+  STATION: 8,   // estación de bomberos
+  AIRBASE: 9    // base aérea
+};
+
+// Paleta de colores RGBA (r,g,b,a)
+const PALETTE = {
+  [STATE.EMPTY]:     [100, 70, 40, 255],
+  [STATE.UNBURNED]:  [25, 75, 25, 255],
+  [STATE.IGNITING]:  [220, 130, 0, 255],
+  [STATE.BURNING]:   [255, 60, 0, 255],
+  [STATE.BURNED]:    [22, 18, 12, 255],
+  [STATE.FIREBREAK]: [26, 80, 130, 255],
+  [STATE.WET]:       [30, 100, 200, 255],
+  [STATE.RETARDANT]: [110, 20, 160, 255],
+  [STATE.STATION]:   [255, 215, 0, 255],
+  [STATE.AIRBASE]:   [0, 210, 215, 255],
+};
+
+// Propiedades de vegetación
+const VEG_PROPS = {
+  pastizal:  { burnRate: 0.55, intensity: 0.3, color: [50, 100, 30, 255] },
+  matorral:  { burnRate: 0.38, intensity: 0.5, color: [35, 85, 25, 255] },
+  bosque:    { burnRate: 0.28, intensity: 0.9, color: [20, 65, 20, 255] },
+  selva:     { burnRate: 0.15, intensity: 0.7, color: [15, 90, 30, 255] },
+  seco:      { burnRate: 0.72, intensity: 1.0, color: [110, 90, 40, 255] },
+};
+
+let canvas, ctx, imgData, pixels;
+let grid, fuelLevel, burnTimer, ignitionAge;
+let simRunning = false, simInterval = null;
+let step = 0, simSpeed = 3;
+let currentTool = 'ignite';
+let isDrawing = false;
+let resources = { fire: 0, water: 0, air: 0, brigade: 0 };
+let areaHistory = [], stepHistory = [];
+let prevBurning = 0;
+
+// Parámetros ambientales
+let params = {
+  vegType: 'bosque',
+  temperature: 28,
+  humidity: 35,
+  windSpeed: 20,
+  windDir: 45,
+  precipitation: 0,
+  slope: 15
+};
+
+// ── Init ───────────────────────────────────────
+function init() {
+  canvas = document.getElementById('simCanvas');
+  canvas.width  = COLS * CELL_PX;
+  canvas.height = ROWS * CELL_PX;
+  ctx = canvas.getContext('2d');
+
+  grid       = new Uint8Array(COLS * ROWS);
+  fuelLevel  = new Float32Array(COLS * ROWS);
+  burnTimer  = new Uint16Array(COLS * ROWS);
+  ignitionAge= new Uint8Array(COLS * ROWS);
+
+  initGridVegetation();
+  renderFull();
+  setupCanvasEvents();
+  updateFWI();
+  logEvent('SISTEMA', 'Motor FIRESIM-PRO inicializado correctamente', 'info');
+  logEvent('MODELO', 'Autómata celular probabilístico activo (Rothermel)', 'info');
+  drawProgressChart();
+}
+
+function initGridVegetation() {
+  const veg = VEG_PROPS[params.vegType];
+  for (let i = 0; i < COLS * ROWS; i++) {
+    const x = i % COLS, y = Math.floor(i / COLS);
+    // Terreno base: vegetación con variación
+    const noise = (Math.sin(x * 0.23 + y * 0.17) + Math.cos(x * 0.11 - y * 0.29)) * 0.3;
+    // Ríos / obstáculos naturales generados proceduralmente
+    if (isRiver(x, y)) {
+      grid[i] = STATE.EMPTY;
+      fuelLevel[i] = 0;
+    } else if (isRock(x, y)) {
+      grid[i] = STATE.EMPTY;
+      fuelLevel[i] = 0;
+    } else {
+      grid[i] = STATE.UNBURNED;
+      fuelLevel[i] = Math.max(0.2, Math.min(1.0, 0.7 + noise));
+    }
+  }
+}
+
+function isRiver(x, y) {
+  // Río sinusoide diagonal
+  const rx = Math.round(COLS * 0.6 + Math.sin(y * 0.12) * 8);
+  return Math.abs(x - rx) <= 1;
+}
+
+function isRock(x, y) {
+  return (Math.sin(x * 0.7 + y * 0.5) * Math.cos(x * 0.3 - y * 0.8)) > 0.88;
+}
+
+// ── Render ─────────────────────────────────────
+function renderFull() {
+  imgData = ctx.createImageData(canvas.width, canvas.height);
+  pixels = imgData.data;
+
+  const veg = VEG_PROPS[params.vegType];
+
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const idx = r * COLS + c;
+      const state = grid[idx];
+
+      let color;
+      if (state === STATE.UNBURNED) {
+        // Variación de color por nivel de combustible
+        const f = fuelLevel[idx];
+        color = [
+          Math.round(veg.color[0] * f + 15 * (1-f)),
+          Math.round(veg.color[1] * f + 60 * (1-f)),
+          Math.round(veg.color[2] * f + 10 * (1-f)),
+          255
+        ];
+      } else if (state === STATE.BURNING) {
+        // Efecto de parpadeo de llama
+        const flicker = Math.random() * 40;
+        color = [Math.min(255,255), Math.max(0,50+Math.round(flicker*1.2)), 0, 255];
+      } else if (state === STATE.IGNITING) {
+        const age = ignitionAge[idx];
+        color = [220 + Math.round(age*3), 80 + age*10, 0, 255];
+      } else {
+        color = PALETTE[state] || [128,128,128,255];
+      }
+
+      // Renderizar cada celda como bloque de CELL_PX×CELL_PX
+      for (let py = 0; py < CELL_PX; py++) {
+        for (let px = 0; px < CELL_PX; px++) {
+          const pidx = ((r * CELL_PX + py) * (COLS * CELL_PX) + (c * CELL_PX + px)) * 4;
+          pixels[pidx]   = color[0];
+          pixels[pidx+1] = color[1];
+          pixels[pidx+2] = color[2];
+          pixels[pidx+3] = color[3];
+        }
+      }
+    }
+  }
+  ctx.putImageData(imgData, 0, 0);
+
+  // Dibujar iconos de recursos encima
+  drawResourceIcons();
+}
+
+function drawResourceIcons() {
+  ctx.save();
+  for (let i = 0; i < COLS * ROWS; i++) {
+    if (grid[i] === STATE.STATION || grid[i] === STATE.AIRBASE) {
+      const c = i % COLS, r = Math.floor(i / COLS);
+      const px = c * CELL_PX + CELL_PX/2, py = r * CELL_PX + CELL_PX/2;
+      ctx.font = `${CELL_PX-1}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(grid[i] === STATE.STATION ? '🚒' : '✈️', px, py);
+    }
+  }
+  ctx.restore();
+}
+
+// ── Motor de propagación ───────────────────────
+function stepSimulation() {
+  const veg  = VEG_PROPS[params.vegType];
+  const temp = params.temperature;
+  const hum  = params.humidity;
+  const ws   = params.windSpeed;
+  const wd   = params.windDir * (Math.PI / 180);
+  const sl   = params.slope;
+  const prec = params.precipitation;
+
+  const next = new Uint8Array(grid);
+  const newFuel = new Float32Array(fuelLevel);
+  let newBurning = 0;
+
+  // Factor de humedad: reduce propagación
+  const humFactor = Math.max(0.05, 1 - (hum / 100) * 1.2 - (prec / 50) * 0.8);
+  // Factor de temperatura: incrementa propagación
+  const tempFactor = 0.5 + (temp / 50) * 1.1;
+  // Factor de pendiente
+  const slopeFactor = 1 + (sl / 90) * 1.5;
+
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const idx = r * COLS + c;
+      const state = grid[idx];
+
+      if (state === STATE.BURNING) {
+        newBurning++;
+        // Consumir combustible
+        const consumeRate = veg.burnRate * 0.05;
+        newFuel[idx] = Math.max(0, fuelLevel[idx] - consumeRate);
+
+        // Si se agota el combustible, pasa a quemado
+        if (newFuel[idx] <= 0 || burnTimer[idx] > 30 + Math.round(fuelLevel[idx] * 20)) {
+          next[idx] = STATE.BURNED;
+          burnTimer[idx] = 0;
+        } else {
+          burnTimer[idx]++;
+        }
+
+        // Propagar a vecinos (8 direcciones con peso)
+        const neighbors = [
+          [-1,-1,0.7], [0,-1,1.0], [1,-1,0.7],
+          [-1, 0,1.0],             [1, 0,1.0],
+          [-1, 1,0.7], [0, 1,1.0], [1, 1,0.7]
+        ];
+
+        for (const [dc, dr, diagW] of neighbors) {
+          const nc = c + dc, nr = r + dr;
+          if (nc < 0 || nc >= COLS || nr < 0 || nr >= ROWS) continue;
+          const nidx = nr * COLS + nc;
+          if (grid[nidx] !== STATE.UNBURNED) continue;
+
+          // Ángulo hacia vecino
+          const angle = Math.atan2(dr, dc);
+          // Factor de viento: alineación con dirección del viento
+          const windAlign = Math.cos(angle - wd);
+          const windFactor = 1 + (ws / 60) * Math.max(0, windAlign) * 1.8;
+
+          // Factor de pendiente: fuego sube más rápido
+          const slopeDir = dr < 0 ? slopeFactor : (dr > 0 ? (1 / Math.max(0.5, slopeFactor)) : 1);
+
+          // Probabilidad base de ignición
+          const baseProbability = veg.burnRate * 0.18;
+          const finalProb = baseProbability * humFactor * tempFactor * windFactor * slopeDir * diagW * fuelLevel[nidx];
+
+          if (Math.random() < finalProb) {
+            next[nidx] = STATE.IGNITING;
+            ignitionAge[nidx] = 0;
+          }
+        }
+
+        // Ignición espontánea por chispas (probabilidad muy baja)
+        if (Math.random() < 0.0005 * (ws / 30) * humFactor) {
+          const sparkDist = Math.round(2 + Math.random() * 5);
+          const sparkAngle = wd + (Math.random() - 0.5) * 0.8;
+          const sc = c + Math.round(Math.cos(sparkAngle) * sparkDist);
+          const sr = r + Math.round(Math.sin(sparkAngle) * sparkDist);
+          if (sc >= 0 && sc < COLS && sr >= 0 && sr < ROWS) {
+            const sidx = sr * COLS + sc;
+            if (grid[sidx] === STATE.UNBURNED && Math.random() < 0.4) {
+              next[sidx] = STATE.IGNITING;
+              ignitionAge[sidx] = 0;
+            }
+          }
+        }
+
+      } else if (state === STATE.IGNITING) {
+        ignitionAge[idx]++;
+        if (ignitionAge[idx] >= 3) {
+          next[idx] = STATE.BURNING;
+          burnTimer[idx] = 0;
+        }
+      }
+    }
+  }
+
+  // Actualizar grids
+  for (let i = 0; i < COLS * ROWS; i++) {
+    grid[i] = next[i];
+    fuelLevel[i] = newFuel[i];
+  }
+
+  step++;
+  updateMetrics(newBurning);
+}
+
+// ── Métricas ────────────────────────────────────
+function updateMetrics(burningCells) {
+  const totalCells = COLS * ROWS;
+  let burnedCells = 0;
+  for (let i = 0; i < totalCells; i++) {
+    if (grid[i] === STATE.BURNED) burnedCells++;
+  }
+
+  const hectares = (burnedCells * CELL_PX * CELL_PX * 0.0001).toFixed(1);
+  const propSpeed = ((burningCells - prevBurning) * 0.5).toFixed(1);
+  const efficiency = resources.fire + resources.water + resources.air > 0
+    ? Math.max(0, Math.round(100 - (burningCells / Math.max(1, burnedCells)) * 15))
+    : '—';
+
+  document.getElementById('metric-area').textContent    = hectares;
+  document.getElementById('metric-speed').textContent   = Math.max(0, propSpeed);
+  document.getElementById('metric-burning').textContent = burningCells;
+  document.getElementById('metric-efficiency').textContent = efficiency;
+  document.getElementById('metric-step').textContent    = step;
+
+  // Tiempo simulado (1 step = ~2 min)
+  const simMin = step * 2;
+  const hh = String(Math.floor(simMin / 60)).padStart(2,'0');
+  const mm = String(simMin % 60).padStart(2,'0');
+  document.getElementById('metric-time').textContent = `${hh}:${mm}`;
+
+  // Status bar
+  document.getElementById('status-iter').textContent = simSpeed;
+
+  // Guardar histórico para chart
+  if (step % 5 === 0) {
+    areaHistory.push(parseFloat(hectares));
+    stepHistory.push(step);
+    if (areaHistory.length > 50) { areaHistory.shift(); stepHistory.shift(); }
+    drawProgressChart();
+  }
+
+  // Alertas automáticas
+  if (burningCells > 50 && prevBurning < 50) {
+    logEvent('ALERTA', `Propagación masiva detectada: ${burningCells} celdas activas`, 'danger');
+  }
+  if (parseFloat(hectares) > 5 && parseFloat(hectares) % 5 < 0.15) {
+    logEvent('REPORTE', `Área afectada supera ${Math.round(parseFloat(hectares))} ha`, 'danger');
+  }
+  prevBurning = burningCells;
+
+  // Clase de color dinámica
+  const areaEl = document.getElementById('metric-area');
+  areaEl.className = 'metric-value ' + (parseFloat(hectares) > 10 ? 'danger' : parseFloat(hectares) > 3 ? 'warn' : 'ok');
+
+  // Estado del sistema
+  const dot = document.getElementById('sys-dot');
+  if (burningCells > 100) {
+    dot.className = 'status-dot dot-danger';
+    document.getElementById('status-alert').textContent = '⚠ INCENDIO CRÍTICO — ACTIVAR PROTOCOLO MÁXIMA EMERGENCIA';
+    document.getElementById('status-alert').style.color = 'var(--pc-rojo-claro)';
+  } else if (burningCells > 20) {
+    dot.className = 'status-dot dot-warn';
+    document.getElementById('status-alert').textContent = '⚠ INCENDIO ACTIVO — RECURSOS DESPLEGADOS';
+    document.getElementById('status-alert').style.color = 'var(--pc-naranja)';
+  } else if (burningCells === 0 && step > 0) {
+    dot.className = 'status-dot dot-ok';
+    document.getElementById('status-alert').textContent = '✓ INCENDIO EXTINGUIDO — ZONA EN RECUPERACIÓN';
+    document.getElementById('status-alert').style.color = 'var(--pc-verde-claro)';
+    if (simRunning) { toggleRun(); logEvent('SIM', 'Incendio extinguido. Simulación pausada automáticamente.', 'ok'); }
+  }
+}
+
+// ── Gráfico de progreso ─────────────────────────
+function drawProgressChart() {
+  const c2 = document.getElementById('progress-chart');
+  const ctx2 = c2.getContext('2d');
+  c2.width = c2.offsetWidth || 180;
+  ctx2.clearRect(0, 0, c2.width, c2.height);
+
+  if (areaHistory.length < 2) {
+    ctx2.fillStyle = '#333';
+    ctx2.fillRect(0,0,c2.width,c2.height);
+    ctx2.fillStyle = '#555';
+    ctx2.font = '9px monospace';
+    ctx2.textAlign = 'center';
+    ctx2.fillText('— sin datos —', c2.width/2, c2.height/2);
+    return;
+  }
+
+  ctx2.fillStyle = '#1a1a1a';
+  ctx2.fillRect(0, 0, c2.width, c2.height);
+
+  const maxVal = Math.max(...areaHistory, 1);
+  const w = c2.width, h = c2.height;
+  const n = areaHistory.length;
+
+  // Línea del área
+  ctx2.beginPath();
+  ctx2.strokeStyle = '#C0392B';
+  ctx2.lineWidth = 1.5;
+  areaHistory.forEach((v, i) => {
+    const x = (i / (n-1)) * (w-2) + 1;
+    const y = h - 2 - (v / maxVal) * (h-6);
+    i === 0 ? ctx2.moveTo(x, y) : ctx2.lineTo(x, y);
+  });
+  ctx2.stroke();
+
+  // Relleno
+  ctx2.beginPath();
+  ctx2.fillStyle = 'rgba(192,57,43,0.2)';
+  areaHistory.forEach((v, i) => {
+    const x = (i / (n-1)) * (w-2) + 1;
+    const y = h - 2 - (v / maxVal) * (h-6);
+    i === 0 ? ctx2.moveTo(x, h-2) : null;
+    ctx2.lineTo(x, y);
+  });
+  ctx2.lineTo((w-2), h-2);
+  ctx2.closePath();
+  ctx2.fill();
+
+  // Etiqueta
+  ctx2.fillStyle = '#888';
+  ctx2.font = '8px monospace';
+  ctx2.textAlign = 'right';
+  ctx2.fillText(`${maxVal.toFixed(1)} ha`, w-2, 10);
+}
+
+// ── FWI (Fire Weather Index) ────────────────────
+function updateFWI() {
+  const T = params.temperature;
+  const H = params.humidity;
+  const W = params.windSpeed;
+  const P = params.precipitation;
+
+  // Índice simplificado de riesgo climático
+  const fwi = Math.max(0, Math.min(100,
+    (T / 50) * 35 + (1 - H/100) * 35 + (W / 120) * 20 - (P / 50) * 15
+  ));
+
+  document.getElementById('fwi-value').textContent = fwi.toFixed(1);
+  document.getElementById('fwi-marker').style.left = fwi + '%';
+}
+
+// ── Controles ──────────────────────────────────
+function toggleRun() {
+  simRunning = !simRunning;
+  const btn = document.getElementById('btn-run');
+  if (simRunning) {
+    btn.textContent = '⏸ PAUSAR SIM.';
+    btn.className = 'btn btn-warn';
+    document.getElementById('mode-label').textContent = 'SIMULANDO';
+    startSimLoop();
+    logEvent('SIM', `Simulación iniciada · Escenario: ${params.vegType}`, 'info');
+  } else {
+    btn.textContent = '▶ EJECUTAR SIM.';
+    btn.className = 'btn btn-success';
+    document.getElementById('mode-label').textContent = 'PAUSADO';
+    if (simInterval) { clearInterval(simInterval); simInterval = null; }
+    logEvent('SIM', 'Simulación pausada manualmente', 'info');
+  }
+}
+
+function startSimLoop() {
+  if (simInterval) clearInterval(simInterval);
+  const delay = Math.round(1000 / simSpeed);
+  simInterval = setInterval(() => {
+    for (let s = 0; s < Math.ceil(simSpeed / 10); s++) {
+      stepSimulation();
+    }
+    renderFull();
+  }, delay);
+}
+
+function setSpeed(s) {
+  simSpeed = s;
+  if (simRunning) startSimLoop();
+}
+
+function stepSim() {
+  if (simRunning) return;
+  stepSimulation();
+  renderFull();
+}
+
+let igniteMode = false;
+function toggleIgnite() {
+  igniteMode = !igniteMode;
+  const btn = document.getElementById('btn-ignite');
+  if (igniteMode) {
+    btn.textContent = '⊗ MODO IGNICIÓN ACTIVO';
+    btn.className = 'btn btn-primary active';
+    setTool('ignite');
+    document.getElementById('mode-label').textContent = 'IGNICIÓN';
+    logEvent('TOOL', 'Modo ignición activado — haga clic en el mapa', 'danger');
+  } else {
+    btn.textContent = '⊕ INICIAR IGNICIÓN';
+    btn.className = 'btn btn-primary';
+    document.getElementById('mode-label').textContent = 'ESPERA';
+  }
+}
+
+function resetSim() {
+  if (simRunning) toggleRun();
+  step = 0;
+  prevBurning = 0;
+  areaHistory = [];
+  stepHistory = [];
+  resources = { fire: 0, water: 0, air: 0, brigade: 0 };
+  updateResourceCounts();
+  initGridVegetation();
+  renderFull();
+  updateMetrics(0);
+  drawProgressChart();
+  document.getElementById('mode-label').textContent = 'ESPERA';
+  document.getElementById('sys-dot').className = 'status-dot dot-ok';
+  document.getElementById('status-alert').textContent = 'FIRESIM-PRO © PROTECCIÓN CIVIL | SISTEMA DE APOYO A DECISIONES';
+  document.getElementById('status-alert').style.color = 'var(--pc-naranja)';
+  logEvent('SISTEMA', 'Grid reiniciado. Todos los parámetros restablecidos.', 'info');
+}
+
+// ── Herramientas ────────────────────────────────
+function setTool(tool) {
+  currentTool = tool;
+  document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+  const el = document.getElementById('tool-' + tool);
+  if (el) el.classList.add('active');
+}
+
+function clearFirebreak() {
+  for (let i = 0; i < COLS * ROWS; i++) {
+    if (grid[i] === STATE.FIREBREAK || grid[i] === STATE.WET || grid[i] === STATE.RETARDANT) {
+      grid[i] = STATE.UNBURNED;
+      fuelLevel[i] = 0.6;
+    }
+  }
+  renderFull();
+  logEvent('TOOL', 'Cortafuegos y retardantes eliminados del mapa', 'info');
+}
+
+// ── Canvas events ──────────────────────────────
+function setupCanvasEvents() {
+  canvas.addEventListener('mousedown', e => { isDrawing = true; applyTool(e); });
+  canvas.addEventListener('mousemove', e => {
+    updateCoordsDisplay(e);
+    if (isDrawing) applyTool(e);
+  });
+  canvas.addEventListener('mouseup', () => isDrawing = false);
+  canvas.addEventListener('mouseleave', () => { isDrawing = false; });
+  canvas.addEventListener('contextmenu', e => e.preventDefault());
+}
+
+function getCellFromEvent(e) {
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left, y = e.clientY - rect.top;
+  const col = Math.floor(x / CELL_PX), row = Math.floor(y / CELL_PX);
+  return { col, row, idx: row * COLS + col };
+}
+
+function applyTool(e) {
+  const { col, row, idx } = getCellFromEvent(e);
+  if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return;
+
+  const brushSize = currentTool === 'firebreak' || currentTool === 'water' || currentTool === 'retardant' ? 2 : 1;
+
+  for (let dr = -brushSize; dr <= brushSize; dr++) {
+    for (let dc = -brushSize; dc <= brushSize; dc++) {
+      const nc = col + dc, nr = row + dr;
+      if (nc < 0 || nc >= COLS || nr < 0 || nr >= ROWS) continue;
+      const nidx = nr * COLS + nc;
+      applyToolToCell(nidx, nc, nr);
+    }
+  }
+  renderFull();
+}
+
+function applyToolToCell(idx, col, row) {
+  switch (currentTool) {
+    case 'ignite':
+      if (grid[idx] === STATE.UNBURNED) {
+        grid[idx] = STATE.BURNING;
+        burnTimer[idx] = 0;
+        logEvent('IGNICIÓN', `Foco iniciado en (${col},${row}) — fuelLevel=${fuelLevel[idx].toFixed(2)}`, 'danger');
+      }
+      break;
+    case 'firebreak':
+      if (grid[idx] !== STATE.BURNED && grid[idx] !== STATE.BURNING) {
+        grid[idx] = STATE.FIREBREAK;
+        fuelLevel[idx] = 0;
+      }
+      break;
+    case 'water':
+      if (grid[idx] === STATE.BURNING) {
+        grid[idx] = STATE.BURNED;
+      } else if (grid[idx] === STATE.UNBURNED || grid[idx] === STATE.IGNITING) {
+        grid[idx] = STATE.WET;
+        fuelLevel[idx] = 0;
+      }
+      break;
+    case 'retardant':
+      if (grid[idx] === STATE.UNBURNED) {
+        grid[idx] = STATE.RETARDANT;
+        fuelLevel[idx] = 0;
+      }
+      break;
+    case 'station':
+      grid[idx] = STATE.STATION;
+      resources.fire++;
+      updateResourceCounts();
+      logEvent('RECURSO', `Estación bomberos desplegada en (${col},${row})`, 'ok');
+      break;
+    case 'airbase':
+      grid[idx] = STATE.AIRBASE;
+      resources.air++;
+      updateResourceCounts();
+      logEvent('RECURSO', `Base aérea activada en (${col},${row})`, 'ok');
+      break;
+  }
+}
+
+function updateCoordsDisplay(e) {
+  const { col, row, idx } = getCellFromEvent(e);
+  if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return;
+  const stateNames = ['SUELO','VEG','IGNIT','ARDIENDO','QUEMADO','CORTAFUEGO','HÚMEDO','RETARDANTE','ESTACIÓN','BASE_AÉREA'];
+  document.getElementById('coords-display').textContent =
+    `X: ${col} | Y: ${row} | ESTADO: ${stateNames[grid[idx]] || '?'} | FUEL: ${fuelLevel[idx].toFixed(2)}`;
+}
+
+function updateResourceCounts() {
+  document.getElementById('res-fire-count').textContent    = resources.fire;
+  document.getElementById('res-water-count').textContent   = resources.water;
+  document.getElementById('res-air-count').textContent     = resources.air;
+  document.getElementById('res-brigade-count').textContent = resources.brigade;
+}
+
+// ── Parámetros ─────────────────────────────────
+function updateParam(id, value, unit) {
+  document.getElementById(id).textContent = value + (unit || '');
+  const key = { 'temp-val':'temperature','hum-val':'humidity','precip-val':'precipitation','slope-val':'slope' };
+  for (const [vid, pkey] of Object.entries(key)) {
+    if (vid === id) { params[pkey] = parseFloat(value); break; }
+  }
+  document.getElementById('status-temp').textContent = params.temperature + '°C';
+  document.getElementById('status-hum').textContent  = params.humidity + '%';
+  updateFWI();
+}
+
+function updateWindSpeed(val) {
+  params.windSpeed = parseFloat(val);
+  document.getElementById('wind-val').textContent = val;
+  updateWindStatus();
+  updateFWI();
+}
+
+function updateWindDir(val) {
+  params.windDir = parseFloat(val);
+  const dirs = ['N','NE','E','SE','S','SO','O','NO'];
+  const dirName = dirs[Math.round(val / 45) % 8];
+  document.getElementById('wdir-val').textContent = `${val}°${dirName}`;
+  document.getElementById('wind-arrow').style.transform = `translateX(-50%) translateY(-100%) rotate(${val}deg)`;
+  updateWindStatus();
+}
+
+function updateWindStatus() {
+  const dirs = ['N','NE','E','SE','S','SO','O','NO'];
+  const dirName = dirs[Math.round(params.windDir / 45) % 8];
+  document.getElementById('status-wind').textContent = `${params.windSpeed} km/h · ${params.windDir}°${dirName}`;
+}
+
+document.getElementById('veg-type').addEventListener('change', function() {
+  params.vegType = this.value;
+  logEvent('CONFIG', `Tipo de vegetación cambiado a: ${this.value}`, 'info');
+});
+
+// ── Escenarios ──────────────────────────────────
+function loadScenario(name) {
+  resetSim();
+  const scenarios = {
+    bosque_seco: { vegType:'seco', temperature:38, humidity:12, windSpeed:55, windDir:225, precipitation:0, slope:25 },
+    montana:     { vegType:'bosque', temperature:22, humidity:30, windSpeed:40, windDir:180, precipitation:0, slope:60 },
+    selva:       { vegType:'selva', temperature:32, humidity:75, windSpeed:15, windDir:90, precipitation:5, slope:10 },
+    urbano:      { vegType:'matorral', temperature:35, humidity:20, windSpeed:30, windDir:270, precipitation:0, slope:5 },
+  };
+  const sc = scenarios[name];
+  if (!sc) return;
+
+  Object.assign(params, sc);
+
+  // Actualizar sliders y valores
+  document.getElementById('temperature').value  = sc.temperature;  updateParam('temp-val', sc.temperature, '°C');
+  document.getElementById('humidity').value     = sc.humidity;     updateParam('hum-val', sc.humidity, '%');
+  document.getElementById('wind-speed').value   = sc.windSpeed;    updateWindSpeed(sc.windSpeed);
+  document.getElementById('wind-dir').value     = sc.windDir;      updateWindDir(sc.windDir);
+  document.getElementById('precipitation').value= sc.precipitation;updateParam('precip-val', sc.precipitation, 'mm');
+  document.getElementById('slope').value        = sc.slope;        updateParam('slope-val', sc.slope, '%');
+  document.getElementById('veg-type').value     = sc.vegType;
+
+  initGridVegetation();
+  renderFull();
+  logEvent('ESCENARIO', `Escenario "${name}" cargado · FWI recalculado`, 'info');
+  updateFWI();
+}
+
+// ── Exportar datos ─────────────────────────────
+function exportData() {
+  let csv = 'Step,AreaHa,BurningCells,FWI\n';
+  areaHistory.forEach((ha, i) => {
+    csv += `${stepHistory[i]},${ha.toFixed(2)},—,${document.getElementById('fwi-value').textContent}\n`;
+  });
+  csv += `\nParámetros:\nVegetación,${params.vegType}\nTemperatura,${params.temperature}°C\n`;
+  csv += `Humedad,${params.humidity}%\nVelocidad viento,${params.windSpeed} km/h\n`;
+  csv += `Dirección viento,${params.windDir}°\nPendiente,${params.slope}%\n`;
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `firesim_export_${Date.now()}.csv`;
+  a.click();
+  logEvent('EXPORT', 'Datos de simulación exportados en formato CSV', 'ok');
+}
+
+// ── Log de eventos ─────────────────────────────
+function logEvent(type, msg, level) {
+  const log = document.getElementById('event-log');
+  const now = new Date();
+  const ts = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+  const div = document.createElement('div');
+  div.className = `log-entry log-${level}`;
+  div.innerHTML = `<span class="log-time">[${ts}]</span> <strong>${type}:</strong> ${msg}`;
+  log.insertBefore(div, log.firstChild);
+  if (log.children.length > 40) log.removeChild(log.lastChild);
+}
+
+// ── Modal ──────────────────────────────────────
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('show');
+}
+
+// ── Arranque ───────────────────────────────────
+window.addEventListener('load', () => {
+  init();
+});
+window.addEventListener('resize', () => {
+  drawProgressChart();
+});
+</script>
+</body>
+</html>

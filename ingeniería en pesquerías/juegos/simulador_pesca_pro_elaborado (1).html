@@ -1,0 +1,1506 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Pesca Sustentable Pro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            width: 100%;
+            height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a2e2e 0%, #1a5f5f 50%, #0d4a48 100%);
+            color: #333;
+            overflow-x: hidden;
+        }
+        
+        .page-wrapper {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header-nav {
+            background: linear-gradient(90deg, rgba(26, 127, 122, 0.95), rgba(13, 84, 82, 0.95));
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #22c55e;
+        }
+        
+        .header-title {
+            color: white;
+            font-size: 1.8rem;
+            font-weight: 700;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        
+        .nav-indicators {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+        
+        .nav-item {
+            color: rgba(255,255,255,0.9);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .nav-value {
+            color: #22c55e;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+            flex: 1;
+        }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .panel {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            border: 2px solid #e5e7eb;
+            transition: all 0.3s;
+        }
+        
+        .panel:hover {
+            box-shadow: 0 25px 70px rgba(0,0,0,0.35);
+            border-color: #1a7f7a;
+        }
+        
+        .panel-header {
+            background: linear-gradient(135deg, #1a7f7a, #0d5452);
+            color: white;
+            padding: 1.5rem;
+            font-size: 1.3rem;
+            font-weight: 700;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .panel-content {
+            padding: 2rem;
+        }
+        
+        .water-scene {
+            background: linear-gradient(180deg, #1e7a7a 0%, #0d4a48 100%);
+            border: 3px solid #053d3c;
+            border-radius: 16px;
+            padding: 2rem;
+            min-height: 500px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        .water-scene::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: repeating-linear-gradient(
+                0deg,
+                rgba(255,255,255,0.03) 0px,
+                rgba(255,255,255,0.03) 2px,
+                transparent 2px,
+                transparent 4px
+            );
+            pointer-events: none;
+            animation: wave 3s linear infinite;
+        }
+        
+        @keyframes wave {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(4px); }
+        }
+        
+        .fishing-scene {
+            position: relative;
+            height: 450px;
+            z-index: 1;
+        }
+        
+        .boat {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 80px;
+            background: linear-gradient(135deg, #8B6F47, #A0826D);
+            border-radius: 40px 40px 5px 5px;
+            border: 3px solid #6B5237;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.5rem;
+            z-index: 20;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            animation: rock 3s ease-in-out infinite;
+        }
+        
+        @keyframes rock {
+            0%, 100% { transform: translateX(-50%) rotateZ(0deg); }
+            50% { transform: translateX(-50%) rotateZ(2deg); }
+        }
+        
+        .fishing-line {
+            position: absolute;
+            left: 50%;
+            top: 100px;
+            width: 2px;
+            height: 360px;
+            background: linear-gradient(180deg, #FFD700, #FFA500);
+            transform: translateX(-50%);
+            z-index: 15;
+            box-shadow: 0 0 10px rgba(255,215,0,0.6);
+        }
+        
+        .fish-area {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            left: 0;
+            top: 0;
+        }
+        
+        .fish {
+            position: absolute;
+            font-size: 2.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            animation: swim 4s infinite;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+        
+        .fish:hover {
+            filter: brightness(1.3) drop-shadow(0 4px 8px rgba(0,0,0,0.4));
+            transform: scale(1.2);
+        }
+        
+        @keyframes swim {
+            0%, 100% { transform: translateX(0) translateY(0) scaleX(1); }
+            50% { transform: translateX(25px) translateY(15px) scaleX(-1); }
+        }
+        
+        .fish-info {
+            position: absolute;
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 25;
+            border: 1px solid rgba(255,215,0,0.5);
+        }
+        
+        .fish-difficulty {
+            font-size: 0.7rem;
+            opacity: 0.8;
+        }
+        
+        .bobber {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: radial-gradient(circle at 30% 30%, #FF5533, #CC0000);
+            border-radius: 50%;
+            left: 50%;
+            top: 450px;
+            transform: translateX(-50%);
+            z-index: 18;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            animation: bob 2s infinite;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+        
+        @keyframes bob {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-15px); }
+        }
+        
+        .difficulty-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .difficulty-btn {
+            padding: 1.5rem;
+            border: 2px solid #dee2e6;
+            background: white;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .difficulty-btn:hover {
+            border-color: #1a7f7a;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(26, 127, 122, 0.2);
+        }
+        
+        .difficulty-btn .diff-title {
+            font-size: 1.1rem;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        
+        .difficulty-btn .diff-desc {
+            font-size: 0.8rem;
+            color: #666;
+            line-height: 1.4;
+        }
+        
+        .difficulty-btn .diff-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stats-dashboard {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border: 2px solid #dee2e6;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .stat-card:hover {
+            border-color: #1a7f7a;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .stat-label {
+            font-size: 0.85rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1a7f7a;
+        }
+        
+        .stat-secondary {
+            font-size: 0.9rem;
+            color: #999;
+            margin-top: 0.5rem;
+        }
+        
+        .message-box {
+            background: linear-gradient(135deg, #f0f9f9, #e0f5f5);
+            border: 2px solid #1a7f7a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #1a7f7a;
+            margin-bottom: 2rem;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .message-box.success {
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            border-color: #22c55e;
+            color: #16a34a;
+        }
+        
+        .message-box.warning {
+            background: linear-gradient(135deg, #fffbeb, #fef3c7);
+            border-color: #f59e0b;
+            color: #d97706;
+        }
+        
+        .message-box.danger {
+            background: linear-gradient(135deg, #fef2f2, #fee2e2);
+            border-color: #ef4444;
+            color: #dc2626;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+        
+        button {
+            padding: 1rem 2rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-primary {
+            flex: 1;
+            min-width: 140px;
+            background: linear-gradient(135deg, #1a7f7a, #0d5452);
+            color: white;
+            border: 2px solid #053d3c;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            background: linear-gradient(135deg, #0d5452, #053d3c);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(26, 127, 122, 0.3);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+            border: 2px solid #15803d;
+        }
+        
+        .btn-success:hover:not(:disabled) {
+            background: linear-gradient(135deg, #16a34a, #15803d);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(34, 197, 94, 0.3);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            border: 2px solid #991b1b;
+        }
+        
+        .btn-danger:hover:not(:disabled) {
+            background: linear-gradient(135deg, #dc2626, #991b1b);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 0;
+            background: #f5f5f5;
+            border-bottom: 2px solid #ddd;
+            margin-bottom: 2rem;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: #666;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .tab-btn:hover {
+            background: #eee;
+        }
+        
+        .tab-btn.active {
+            color: #1a7f7a;
+            border-bottom: 4px solid #1a7f7a;
+            background: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .catch-history {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            display: none;
+        }
+        
+        .catch-history.show {
+            display: block;
+        }
+        
+        .catch-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+        
+        .catch-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: white;
+            margin-bottom: 0.5rem;
+            border-radius: 8px;
+            border-left: 4px solid #1a7f7a;
+        }
+        
+        .catch-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .catch-fish-info {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex: 1;
+        }
+        
+        .catch-emoji {
+            font-size: 1.5rem;
+        }
+        
+        .catch-name {
+            font-weight: 600;
+            color: #1a7f7a;
+        }
+        
+        .catch-details {
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        .catch-weight {
+            font-weight: 700;
+            color: #333;
+            min-width: 80px;
+            text-align: right;
+        }
+        
+        .fish-guide {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .fish-card {
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s;
+        }
+        
+        .fish-card:hover {
+            border-color: #1a7f7a;
+            box-shadow: 0 10px 25px rgba(26, 127, 122, 0.2);
+            transform: translateY(-5px);
+        }
+        
+        .fish-header {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 1rem;
+        }
+        
+        .fish-emoji {
+            font-size: 2.5rem;
+        }
+        
+        .fish-name {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #333;
+        }
+        
+        .fish-details {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+        }
+        
+        .fish-detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        
+        .fish-status {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-safe {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-caution {
+            background: #fed7aa;
+            color: #92400e;
+        }
+        
+        .status-endangered {
+            background: #fecaca;
+            color: #7f1d1d;
+        }
+        
+        .conservation-panel {
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            border: 2px solid #22c55e;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .conservation-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #16a34a;
+            margin-bottom: 1.5rem;
+        }
+        
+        .eco-bar {
+            margin-bottom: 2rem;
+        }
+        
+        .eco-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .eco-track {
+            width: 100%;
+            height: 35px;
+            background: #e5e7eb;
+            border-radius: 18px;
+            overflow: hidden;
+            border: 2px solid #d1d5db;
+            position: relative;
+        }
+        
+        .eco-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #1a7f7a, #22c55e);
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 0.95rem;
+            position: relative;
+        }
+        
+        .eco-fill::after {
+            content: '';
+            position: absolute;
+            right: -10px;
+            width: 0;
+            height: 0;
+            border-left: 10px solid currentColor;
+            border-top: 17.5px solid transparent;
+            border-bottom: 17.5px solid transparent;
+        }
+        
+        .tips {
+            background: white;
+            border-left: 4px solid #22c55e;
+            padding: 1.5rem;
+            border-radius: 8px;
+            line-height: 1.8;
+            color: #333;
+        }
+        
+        .tips-title {
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #16a34a;
+            font-size: 1.05rem;
+        }
+        
+        .tips ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .tips li {
+            margin-bottom: 0.75rem;
+            padding-left: 1.5rem;
+            position: relative;
+            font-size: 0.95rem;
+        }
+        
+        .tips li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #22c55e;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+        
+        .eco-impact {
+            background: white;
+            border: 2px solid #bee3f8;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            line-height: 1.8;
+            color: #333;
+        }
+        
+        .eco-impact-title {
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #1a7f7a;
+            font-size: 1.1rem;
+        }
+        
+        .eco-impact p {
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+        
+        .species-quota {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .quota-card {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+        
+        .quota-species {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        
+        .quota-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1a7f7a;
+        }
+        
+        .quota-max {
+            font-size: 0.8rem;
+            color: #666;
+        }
+        
+        .leaderboard {
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .leaderboard-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+        
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .leaderboard-item:last-child {
+            border-bottom: none;
+        }
+        
+        .leaderboard-rank {
+            font-weight: 700;
+            color: #1a7f7a;
+            font-size: 1.2rem;
+            min-width: 40px;
+        }
+        
+        .leaderboard-info {
+            flex: 1;
+            margin-left: 1rem;
+        }
+        
+        .leaderboard-name {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .leaderboard-score {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .leaderboard-points {
+            font-weight: 700;
+            color: #1a7f7a;
+            font-size: 1.1rem;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .modal.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s ease;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+        
+        .modal-text {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header-nav {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .nav-indicators {
+                flex-direction: column;
+                gap: 1rem;
+                width: 100%;
+            }
+            
+            .difficulty-selector {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+            
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <div class="header-nav">
+            <div class="header-title">🌊 PESCA SUSTENTABLE PRO 🌊</div>
+            <div class="nav-indicators">
+                <div class="nav-item">Nivel: <span class="nav-value" id="navDifficulty">Selecciona</span></div>
+                <div class="nav-item">Tiempo: <span class="nav-value" id="navTime">00:00</span></div>
+                <div class="nav-item">Eco: <span class="nav-value" id="navEco">100%</span></div>
+            </div>
+        </div>
+
+        <div class="container">
+            <!-- SECCIÓN DE JUEGO -->
+            <div class="main-grid">
+                <div class="panel">
+                    <div class="panel-header">🎮 Zona de Pesca</div>
+                    <div class="panel-content">
+                        <div id="messageBox" class="message-box">
+                            Selecciona tu nivel de dificultad para comenzar
+                        </div>
+
+                        <div class="difficulty-selector">
+                            <div class="difficulty-btn" onclick="startGame('easy')">
+                                <div class="diff-icon">🐠</div>
+                                <div class="diff-title">Fácil</div>
+                                <div class="diff-desc">Peces abundantes<br>Sin penalizaciones</div>
+                            </div>
+                            <div class="difficulty-btn" onclick="startGame('normal')">
+                                <div class="diff-icon">🐟</div>
+                                <div class="diff-title">Normal</div>
+                                <div class="diff-desc">Balance ecológico<br>Moderada dificultad</div>
+                            </div>
+                            <div class="difficulty-btn" onclick="startGame('hard')">
+                                <div class="diff-icon">🎣</div>
+                                <div class="diff-title">Experto</div>
+                                <div class="diff-desc">Pesca sustentable<br>Alta dificultad</div>
+                            </div>
+                        </div>
+
+                        <div class="water-scene">
+                            <div class="fishing-scene">
+                                <div class="boat">⛵</div>
+                                <div class="fishing-line"></div>
+                                <div class="bobber" id="bobber"></div>
+                                <div class="fish-area" id="fishArea"></div>
+                            </div>
+                        </div>
+
+                        <div class="controls">
+                            <button class="btn-primary" id="catchBtn" onclick="tryToCatch()" style="display:none; font-size: 1.2rem;">⚡ ATRAPAR</button>
+                            <button class="btn-success" id="resetBtn" onclick="resetGame()" style="display:none;">🔄 Nuevo Juego</button>
+                            <button class="btn-danger" id="pauseBtn" onclick="togglePause()" style="display:none;">⏸ Pausar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">📊 Estadísticas</div>
+                    <div class="panel-content">
+                        <div class="stats-dashboard">
+                            <div class="stat-card">
+                                <div class="stat-icon">🎣</div>
+                                <div class="stat-label">Capturados</div>
+                                <div class="stat-value" id="caught">0</div>
+                                <div class="stat-secondary">peces</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">⚖️</div>
+                                <div class="stat-label">Peso Total</div>
+                                <div class="stat-value" id="weight">0kg</div>
+                                <div class="stat-secondary">capturado</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">⭐</div>
+                                <div class="stat-label">Puntuación</div>
+                                <div class="stat-value" id="score">0</div>
+                                <div class="stat-secondary">puntos</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">🌍</div>
+                                <div class="stat-label">Salud Eco</div>
+                                <div class="stat-value" id="ecoHealth">100%</div>
+                                <div class="stat-secondary" id="ecoStatus">Excelente</div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 2rem;">
+                            <h3 style="margin-bottom: 1rem; color: #333; font-size: 1.1rem;">Cuotas Restantes</h3>
+                            <div class="species-quota" id="quotasDisplay"></div>
+                        </div>
+
+                        <div class="catch-history" id="catchHistory">
+                            <div class="catch-title">Últimas Capturas</div>
+                            <div id="catchItems"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN DE PESTAÑAS -->
+            <div class="panel">
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab(0)">🐟 Guía de Peces</button>
+                    <button class="tab-btn" onclick="switchTab(1)">🌍 Conservación</button>
+                    <button class="tab-btn" onclick="switchTab(2)">📈 Estadísticas</button>
+                </div>
+
+                <!-- TAB 1: GUÍA DE PECES -->
+                <div id="tab-0" class="tab-content active panel-content">
+                    <p style="color: #666; margin-bottom: 2rem; font-size: 0.95rem;">
+                        Aprende sobre cada especie marina, su estado de conservación y limitaciones de captura
+                    </p>
+                    <div class="fish-guide" id="fishGuide"></div>
+                </div>
+
+                <!-- TAB 2: CONSERVACIÓN -->
+                <div id="tab-1" class="tab-content panel-content">
+                    <div class="conservation-panel">
+                        <div class="conservation-title">📊 Estado del Ecosistema Global</div>
+                        <div class="eco-bar">
+                            <div class="eco-label">
+                                <span>Salud Marina</span>
+                                <span id="ecoPercent">100%</span>
+                            </div>
+                            <div class="eco-track">
+                                <div class="eco-fill" id="globalEcoBar" style="width: 100%;">
+                                    <span id="ecoFillText">SALUDABLE</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tips">
+                            <div class="tips-title">✓ Recomendaciones Clave</div>
+                            <ul>
+                                <li>Respeta los límites de captura (máx 5 peces por especie)</li>
+                                <li>Devuelve peces pequeños (menores al peso legal)</li>
+                                <li>Alterna entre especies diferentes en capturas</li>
+                                <li>Evita especies en peligro crítico</li>
+                                <li>Mantén el ecosistema por encima del 50% de salud</li>
+                                <li>Gana bonificación por pesca responsable</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="eco-impact">
+                        <div class="eco-impact-title">Impacto Ambiental Actual</div>
+                        <div id="ecoImpact" style="line-height: 1.8;">
+                            <p>✓ Ecosistema saludable y equilibrado</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: ESTADÍSTICAS -->
+                <div id="tab-2" class="tab-content panel-content">
+                    <div class="leaderboard">
+                        <div class="leaderboard-title">🏆 Récords Locales</div>
+                        <div id="leaderboard"></div>
+                    </div>
+
+                    <div style="background: #f8f9fa; border: 2px solid #dee2e6; border-radius: 12px; padding: 1.5rem;">
+                        <h3 style="margin-bottom: 1rem; color: #333;">Logros Alcanzados</h3>
+                        <div id="achievements" style="line-height: 1.8; color: #666;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="endGameModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title" id="modalTitle">¡Fin del Juego!</div>
+            <div class="modal-text" id="modalText"></div>
+            <button class="btn-success" onclick="closeModal()" style="width: 100%;">Volver al Menú</button>
+        </div>
+    </div>
+
+    <script>
+        const fishSpecies = [
+            { id: 'trout', name: 'Trucha Arcoíris', emoji: '🐟', weight: 0.8, rarity: 'común', status: 'safe', minWeight: 0.5, difficulty: 1 },
+            { id: 'bass', name: 'Lubina Rayada', emoji: '🐠', weight: 1.5, rarity: 'común', status: 'safe', minWeight: 0.6, difficulty: 2 },
+            { id: 'salmon', name: 'Salmón del Atlántico', emoji: '🐟', weight: 2.5, rarity: 'raro', status: 'caution', minWeight: 1.2, difficulty: 3 },
+            { id: 'tuna', name: 'Atún Rojo', emoji: '🐟', weight: 3.8, rarity: 'raro', status: 'caution', minWeight: 2.0, difficulty: 4 },
+            { id: 'marlin', name: 'Marlin Azul', emoji: '🐟', weight: 5.5, rarity: 'muy raro', status: 'endangered', minWeight: 3.0, difficulty: 5 },
+            { id: 'catfish', name: 'Bagre Gigante', emoji: '🐠', weight: 1.2, rarity: 'común', status: 'safe', minWeight: 0.7, difficulty: 2 },
+            { id: 'carp', name: 'Carpa Dorada', emoji: '🐟', weight: 1.8, rarity: 'común', status: 'safe', minWeight: 0.8, difficulty: 1 },
+            { id: 'shark', name: 'Tiburón Azul', emoji: '🐟', weight: 4.5, rarity: 'muy raro', status: 'endangered', minWeight: 2.5, difficulty: 5 },
+            { id: 'grouper', name: 'Mero Gigante', emoji: '🐠', weight: 2.2, rarity: 'raro', status: 'caution', minWeight: 1.0, difficulty: 3 },
+            { id: 'squid', name: 'Calamar Gigante', emoji: '🐙', weight: 1.6, rarity: 'raro', status: 'safe', minWeight: 0.9, difficulty: 4 }
+        ];
+
+        let gameState = {
+            difficulty: null,
+            caughtFish: [],
+            totalWeight: 0,
+            currentFish: null,
+            ecoHealth: 100,
+            score: 0,
+            isPlaying: false,
+            isPaused: false,
+            speciesQuota: {},
+            startTime: null,
+            elapsedTime: 0,
+            sessionRecords: []
+        };
+
+        function switchTab(tabIndex) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.querySelectorAll('.tab-content')[tabIndex].classList.add('active');
+            document.querySelectorAll('.tab-btn')[tabIndex].classList.add('active');
+        }
+
+        function startGame(difficulty) {
+            gameState.difficulty = difficulty;
+            gameState.isPlaying = true;
+            gameState.isPaused = false;
+            gameState.caughtFish = [];
+            gameState.totalWeight = 0;
+            gameState.ecoHealth = 100;
+            gameState.score = 0;
+            gameState.startTime = Date.now();
+            gameState.elapsedTime = 0;
+            gameState.speciesQuota = {};
+            
+            fishSpecies.forEach(f => gameState.speciesQuota[f.id] = 5);
+
+            document.querySelectorAll('.difficulty-btn').forEach(btn => btn.style.display = 'none');
+            document.getElementById('catchBtn').style.display = 'block';
+            document.getElementById('resetBtn').style.display = 'block';
+            document.getElementById('pauseBtn').style.display = 'block';
+            
+            document.getElementById('navDifficulty').textContent = difficulty.toUpperCase();
+            updateMessage('Prepárate... Un pez está llegando', 'message-box');
+            updateQuotasDisplay();
+            
+            startTimer();
+            setTimeout(spawnFish, 1500);
+        }
+
+        function startTimer() {
+            setInterval(() => {
+                if (gameState.isPlaying && !gameState.isPaused) {
+                    gameState.elapsedTime = Math.floor((Date.now() - gameState.startTime) / 1000);
+                    const minutes = Math.floor(gameState.elapsedTime / 60);
+                    const seconds = gameState.elapsedTime % 60;
+                    document.getElementById('navTime').textContent = 
+                        String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+                }
+            }, 100);
+        }
+
+        function spawnFish() {
+            if (!gameState.isPlaying || gameState.isPaused) return;
+            
+            const randomFish = fishSpecies[Math.floor(Math.random() * fishSpecies.length)];
+            const weight = randomFish.weight + (Math.random() - 0.5) * 0.6;
+            gameState.currentFish = { ...randomFish, actualWeight: Math.max(weight, randomFish.minWeight) };
+
+            const fish = document.createElement('div');
+            fish.className = 'fish';
+            fish.textContent = randomFish.emoji;
+            fish.style.left = Math.random() * 85 + 10 + '%';
+            fish.style.top = Math.random() * 200 + 80 + 'px';
+            fish.style.animationDuration = (2 + Math.random() * 1.5) + 's';
+            fish.id = 'activeFish';
+            
+            const info = document.createElement('div');
+            info.className = 'fish-info';
+            info.innerHTML = `${randomFish.name}<br><span class="fish-difficulty">⭐ ${randomFish.difficulty}/5</span>`;
+            info.style.left = fish.style.left;
+            info.style.top = (parseInt(fish.style.top) - 50) + 'px';
+            info.id = 'fishInfo';
+            
+            document.getElementById('fishArea').appendChild(fish);
+            document.getElementById('fishArea').appendChild(info);
+            
+            updateMessage(`¡${randomFish.name} detectado! Dificultad: ${'⭐'.repeat(randomFish.difficulty)} | Presiona ATRAPAR`, 'message-box');
+
+            setTimeout(() => {
+                if (gameState.isPlaying && !gameState.isPaused && document.getElementById('activeFish')) {
+                    fishEscaped();
+                }
+            }, 6000);
+        }
+
+        function tryToCatch() {
+            if (!gameState.isPlaying || !gameState.currentFish || gameState.isPaused) return;
+
+            const fish = gameState.currentFish;
+            const isMini = fish.actualWeight < fish.minWeight * 1.2;
+            const quota = gameState.speciesQuota[fish.id];
+
+            document.getElementById('activeFish')?.remove();
+            document.getElementById('fishInfo')?.remove();
+
+            if (isMini) {
+                updateMessage(`✓ Pez pequeño devuelto responsablemente (+10 puntos)`, 'message-box success');
+                gameState.score += 10;
+            } else if (quota <= 0) {
+                updateMessage(`✗ ¡Cuota excedida! Dañaste el ecosistema (-20 puntos, -15% salud)`, 'message-box danger');
+                gameState.ecoHealth -= 15;
+                gameState.score -= 20;
+            } else {
+                gameState.caughtFish.push(fish);
+                gameState.totalWeight += fish.actualWeight;
+                gameState.speciesQuota[fish.id]--;
+                
+                let healthPenalty = 0;
+                let basePoints = 20;
+                
+                if (fish.status === 'caution') {
+                    healthPenalty = 5;
+                    basePoints = 15;
+                }
+                if (fish.status === 'endangered') {
+                    healthPenalty = 15;
+                    basePoints = 5;
+                }
+                
+                gameState.ecoHealth -= healthPenalty;
+                gameState.score += basePoints;
+                
+                const message = fish.status === 'safe' 
+                    ? `✓ Captura responsable: ${fish.name} (${fish.actualWeight.toFixed(1)}kg) +${basePoints}pts`
+                    : `⚠ Especie amenazada capturada: ${fish.name} +${basePoints}pts`;
+                
+                updateMessage(message, fish.status === 'safe' ? 'message-box success' : 'message-box warning');
+            }
+
+            updateStats();
+            gameState.currentFish = null;
+
+            setTimeout(() => {
+                if (gameState.ecoHealth <= 0) {
+                    endGame(false);
+                } else if (gameState.isPlaying && !gameState.isPaused) {
+                    spawnFish();
+                }
+            }, 1500);
+        }
+
+        function fishEscaped() {
+            document.getElementById('activeFish')?.remove();
+            document.getElementById('fishInfo')?.remove();
+            gameState.currentFish = null;
+            updateMessage('¡El pez se escapó! Intenta de nuevo...', 'message-box warning');
+            
+            setTimeout(() => {
+                if (gameState.isPlaying && !gameState.isPaused) spawnFish();
+            }, 1500);
+        }
+
+        function togglePause() {
+            gameState.isPaused = !gameState.isPaused;
+            document.getElementById('pauseBtn').textContent = gameState.isPaused ? '▶ Reanudar' : '⏸ Pausar';
+            updateMessage(gameState.isPaused ? 'PAUSA - Presiona Reanudar' : 'Juego reanudado', 'message-box warning');
+        }
+
+        function updateMessage(text, className = 'message-box') {
+            const box = document.getElementById('messageBox');
+            box.textContent = text;
+            box.className = className;
+        }
+
+        function updateStats() {
+            document.getElementById('caught').textContent = gameState.caughtFish.length;
+            document.getElementById('weight').textContent = gameState.totalWeight.toFixed(1) + 'kg';
+            document.getElementById('ecoHealth').textContent = Math.max(0, Math.round(gameState.ecoHealth)) + '%';
+            document.getElementById('score').textContent = Math.max(0, gameState.score);
+            document.getElementById('navEco').textContent = Math.max(0, Math.round(gameState.ecoHealth)) + '%';
+
+            let ecoStatus = 'Excelente';
+            if (gameState.ecoHealth <= 70) ecoStatus = 'Bueno';
+            if (gameState.ecoHealth <= 50) ecoStatus = 'Advertencia';
+            if (gameState.ecoHealth <= 30) ecoStatus = 'Crítico';
+            document.getElementById('ecoStatus').textContent = ecoStatus;
+
+            updateQuotasDisplay();
+
+            const catchList = document.getElementById('catchHistory');
+            if (gameState.caughtFish.length > 0) {
+                catchList.classList.add('show');
+                const catchItems = gameState.caughtFish.slice(-8).reverse().map(f => 
+                    `<div class="catch-item">
+                        <div class="catch-fish-info">
+                            <span class="catch-emoji">${f.emoji}</span>
+                            <div>
+                                <div class="catch-name">${f.name}</div>
+                                <div class="catch-details">${f.status === 'safe' ? '✓ Segura' : '⚠ Amenazada'}</div>
+                            </div>
+                        </div>
+                        <div class="catch-weight">${f.actualWeight.toFixed(1)}kg</div>
+                    </div>`
+                ).join('');
+                document.getElementById('catchItems').innerHTML = catchItems;
+            }
+
+            updateEcoImpact();
+        }
+
+        function updateQuotasDisplay() {
+            const quotas = fishSpecies.map(f => `
+                <div class="quota-card">
+                    <div class="quota-species">${f.emoji} ${f.name.split(' ')[0]}</div>
+                    <div class="quota-value">${gameState.speciesQuota[f.id]}</div>
+                    <div class="quota-max">de 5</div>
+                </div>
+            `).join('');
+            document.getElementById('quotasDisplay').innerHTML = quotas;
+        }
+
+        function updateEcoImpact() {
+            const healthPercent = Math.max(0, gameState.ecoHealth);
+            document.getElementById('globalEcoBar').style.width = healthPercent + '%';
+            document.getElementById('ecoPercent').textContent = Math.round(healthPercent) + '%';
+
+            let fillText = '';
+            if (healthPercent > 70) fillText = 'SALUDABLE';
+            else if (healthPercent > 40) fillText = 'AMENAZADO';
+            else fillText = 'CRÍTICO';
+            document.getElementById('ecoFillText').textContent = fillText;
+
+            const impact = [];
+            if (gameState.ecoHealth > 70) impact.push('✓ Ecosistema saludable y equilibrado');
+            if (gameState.ecoHealth <= 70) impact.push('⚠️ Algunas especies en declive');
+            if (gameState.ecoHealth <= 50) impact.push('⚠️ Múltiples especies amenazadas');
+            if (gameState.ecoHealth <= 30) impact.push('🚨 Ecosistema en estado crítico');
+            if (gameState.ecoHealth <= 0) impact.push('✗ Colapso ecológico - Extinción masiva');
+            
+            fishSpecies.forEach(f => {
+                if (gameState.speciesQuota[f.id] <= 1 && gameState.speciesQuota[f.id] > 0) {
+                    impact.push(`⚠️ ${f.name}: Cuota crítica (${gameState.speciesQuota[f.id]} restante)`);
+                }
+            });
+
+            document.getElementById('ecoImpact').innerHTML = impact.map(i => `<p>${i}</p>`).join('');
+        }
+
+        function renderFishGuide() {
+            const guide = fishSpecies.map(f => {
+                const statusClass = `status-${f.status === 'safe' ? 'safe' : f.status === 'caution' ? 'caution' : 'endangered'}`;
+                const statusText = f.status === 'safe' ? 'Segura' : f.status === 'caution' ? 'Precaución' : 'En Peligro Crítico';
+                return `
+                    <div class="fish-card">
+                        <div class="fish-header">
+                            <div class="fish-emoji">${f.emoji}</div>
+                            <div class="fish-name">${f.name}</div>
+                        </div>
+                        <div class="fish-details">
+                            <div class="fish-detail-row">
+                                <strong>Peso Prom.:</strong>
+                                <span>${f.weight}kg</span>
+                            </div>
+                            <div class="fish-detail-row">
+                                <strong>Peso Legal:</strong>
+                                <span>${f.minWeight}kg</span>
+                            </div>
+                            <div class="fish-detail-row">
+                                <strong>Rareza:</strong>
+                                <span>${f.rarity}</span>
+                            </div>
+                            <div class="fish-detail-row">
+                                <strong>Dificultad:</strong>
+                                <span>${'⭐'.repeat(f.difficulty)}</span>
+                            </div>
+                            <div class="fish-detail-row">
+                                <strong>Cuota:</strong>
+                                <span>Máx 5</span>
+                            </div>
+                        </div>
+                        <span class="fish-status ${statusClass}">${statusText}</span>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('fishGuide').innerHTML = guide;
+        }
+
+        function renderLeaderboard() {
+            let leaderboard = gameState.sessionRecords.sort((a, b) => b.score - a.score).slice(0, 5);
+            
+            if (leaderboard.length === 0) {
+                document.getElementById('leaderboard').innerHTML = '<p style="color: #666; text-align: center; padding: 2rem;">Aún no hay registros. ¡Juega y establece tu primer récord!</p>';
+                return;
+            }
+
+            const items = leaderboard.map((record, index) => `
+                <div class="leaderboard-item">
+                    <div class="leaderboard-rank">#${index + 1}</div>
+                    <div class="leaderboard-info">
+                        <div class="leaderboard-name">${record.difficulty.toUpperCase()} - ${record.time}s</div>
+                        <div class="leaderboard-score">${record.caught} peces | ${record.weight}kg | ${record.eco}% salud</div>
+                    </div>
+                    <div class="leaderboard-points">${record.score} pts</div>
+                </div>
+            `).join('');
+            
+            document.getElementById('leaderboard').innerHTML = items;
+        }
+
+        function renderAchievements() {
+            const achievements = [];
+            if (gameState.caughtFish.length >= 5) achievements.push('🏅 Pescador Novel - Captura 5 peces');
+            if (gameState.caughtFish.length >= 15) achievements.push('🥈 Pescador Experto - Captura 15 peces');
+            if (gameState.caughtFish.length >= 30) achievements.push('🥇 Pescador Maestro - Captura 30 peces');
+            if (gameState.ecoHealth >= 80) achievements.push('🌿 Conservacionista - Mantén 80% salud eco');
+            if (gameState.score >= 500) achievements.push('⭐ Puntuador - Acumula 500 puntos');
+            if (gameState.totalWeight >= 20) achievements.push('💪 Cazador Pesado - Captura 20kg');
+            if (!achievements.length) achievements.push('🎮 Completa logros jugando');
+
+            document.getElementById('achievements').innerHTML = achievements.map(a => `<p>✓ ${a}</p>`).join('');
+        }
+
+        function endGame(win) {
+            gameState.isPlaying = false;
+            
+            const record = {
+                score: gameState.score,
+                difficulty: gameState.difficulty,
+                caught: gameState.caughtFish.length,
+                weight: gameState.totalWeight.toFixed(1),
+                eco: Math.round(gameState.ecoHealth),
+                time: gameState.elapsedTime
+            };
+            gameState.sessionRecords.push(record);
+            
+            document.getElementById('catchBtn').style.display = 'none';
+            document.getElementById('pauseBtn').style.display = 'none';
+
+            let title, text;
+            if (gameState.ecoHealth <= 0) {
+                title = '💔 Ecosistema Colapsado';
+                text = `Tu pesca insostenible destruyó el ecosistema.<br><br>Puntuación: ${gameState.score}<br>Peces: ${gameState.caughtFish.length}<br>Tiempo: ${gameState.elapsedTime}s<br><br>Recuerda: la sostenibilidad es clave para el futuro marino.`;
+            } else {
+                title = '🎉 ¡Juego Completado!';
+                text = `Excelente desempeño en nivel ${gameState.difficulty.toUpperCase()}.<br><br>Puntuación Final: ${gameState.score}<br>Peces Capturados: ${gameState.caughtFish.length}<br>Peso Total: ${gameState.totalWeight.toFixed(1)}kg<br>Salud Eco: ${Math.round(gameState.ecoHealth)}%<br>Tiempo: ${gameState.elapsedTime}s`;
+            }
+
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalText').innerHTML = text;
+            document.getElementById('endGameModal').classList.add('show');
+
+            renderLeaderboard();
+            renderAchievements();
+        }
+
+        function closeModal() {
+            document.getElementById('endGameModal').classList.remove('show');
+            resetGame();
+        }
+
+        function resetGame() {
+            gameState = {
+                difficulty: null,
+                caughtFish: [],
+                totalWeight: 0,
+                currentFish: null,
+                ecoHealth: 100,
+                score: 0,
+                isPlaying: false,
+                isPaused: false,
+                speciesQuota: {},
+                startTime: null,
+                elapsedTime: 0,
+                sessionRecords: gameState.sessionRecords
+            };
+
+            document.getElementById('fishArea').innerHTML = '';
+            document.getElementById('messageBox').textContent = 'Selecciona tu nivel de dificultad para comenzar';
+            document.getElementById('messageBox').className = 'message-box';
+            document.querySelectorAll('.difficulty-btn').forEach(btn => btn.style.display = 'block');
+            document.getElementById('catchBtn').style.display = 'none';
+            document.getElementById('resetBtn').style.display = 'none';
+            document.getElementById('pauseBtn').style.display = 'none';
+            document.getElementById('catchHistory').classList.remove('show');
+            document.getElementById('caught').textContent = '0';
+            document.getElementById('weight').textContent = '0kg';
+            document.getElementById('ecoHealth').textContent = '100%';
+            document.getElementById('ecoStatus').textContent = 'Excelente';
+            document.getElementById('score').textContent = '0';
+            document.getElementById('navDifficulty').textContent = 'Selecciona';
+            document.getElementById('navTime').textContent = '00:00';
+            document.getElementById('navEco').textContent = '100%';
+            updateEcoImpact();
+            renderLeaderboard();
+        }
+
+        // Inicializar
+        renderFishGuide();
+        updateEcoImpact();
+        renderLeaderboard();
+        renderAchievements();
+    </script>
+</body>
+</html>

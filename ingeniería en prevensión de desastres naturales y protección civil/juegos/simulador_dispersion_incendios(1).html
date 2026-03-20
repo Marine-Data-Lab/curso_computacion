@@ -1,0 +1,557 @@
+
+<style>
+  :root {
+    --fire-bg: #0d1117;
+    --fire-panel: #161b22;
+    --fire-border: #30363d;
+    --fire-accent: #f97316;
+    --fire-red: #ef4444;
+    --fire-amber: #f59e0b;
+    --fire-green: #22c55e;
+    --fire-blue: #3b82f6;
+    --fire-text: #e6edf3;
+    --fire-muted: #8b949e;
+    --fire-water: #0ea5e9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--fire-bg); color: var(--fire-text); font-family: 'Courier New', monospace; }
+  .sim-root { background: var(--fire-bg); padding: 16px; min-height: 600px; }
+  .sim-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 0 16px; border-bottom: 1px solid var(--fire-border); margin-bottom: 16px; }
+  .sim-title { font-size: 13px; font-weight: 500; color: var(--fire-muted); letter-spacing: 3px; text-transform: uppercase; }
+  .sim-status { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--fire-green); }
+  .dot-live { width: 6px; height: 6px; border-radius: 50%; background: var(--fire-green); animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+  .sim-grid { display: grid; grid-template-columns: 1fr 280px; gap: 16px; }
+  .canvas-wrap { position: relative; background: #0a0f14; border: 1px solid var(--fire-border); border-radius: 8px; overflow: hidden; }
+  #simCanvas { display: block; cursor: crosshair; }
+  .canvas-overlay { position: absolute; top: 8px; left: 8px; font-size: 10px; color: var(--fire-muted); letter-spacing: 1px; pointer-events: none; }
+  .canvas-overlay span { display: block; }
+  .tool-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .tool-btn { flex: 1; padding: 6px 8px; background: var(--fire-panel); border: 1px solid var(--fire-border); border-radius: 4px; color: var(--fire-muted); font-size: 11px; cursor: pointer; letter-spacing: 1px; text-transform: uppercase; transition: all .15s; font-family: inherit; }
+  .tool-btn:hover { border-color: var(--fire-accent); color: var(--fire-text); }
+  .tool-btn.active { background: var(--fire-accent); border-color: var(--fire-accent); color: #000; font-weight: 500; }
+  .tool-btn.water.active { background: var(--fire-water); border-color: var(--fire-water); }
+  .panel { background: var(--fire-panel); border: 1px solid var(--fire-border); border-radius: 8px; padding: 14px; }
+  .panel-label { font-size: 10px; color: var(--fire-muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; border-bottom: 1px solid var(--fire-border); padding-bottom: 6px; }
+  .param-row { margin-bottom: 10px; }
+  .param-label { font-size: 11px; color: var(--fire-muted); display: flex; justify-content: space-between; margin-bottom: 4px; }
+  .param-val { color: var(--fire-accent); font-weight: 500; }
+  input[type=range] { width: 100%; height: 3px; accent-color: var(--fire-accent); cursor: pointer; }
+  select { width: 100%; background: var(--fire-bg); border: 1px solid var(--fire-border); color: var(--fire-text); padding: 5px 8px; font-size: 11px; border-radius: 4px; font-family: inherit; cursor: pointer; }
+  select:focus { outline: none; border-color: var(--fire-accent); }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .stat-card { background: var(--fire-bg); border: 1px solid var(--fire-border); border-radius: 4px; padding: 8px; }
+  .stat-num { font-size: 18px; font-weight: 500; color: var(--fire-accent); }
+  .stat-lbl { font-size: 10px; color: var(--fire-muted); letter-spacing: 1px; }
+  .legend-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 11px; color: var(--fire-muted); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  .action-btn { width: 100%; padding: 8px; margin-top: 8px; background: var(--fire-accent); border: none; border-radius: 4px; color: #000; font-size: 11px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; font-family: inherit; transition: opacity .15s; }
+  .action-btn:hover { opacity: .85; }
+  .action-btn.reset { background: transparent; border: 1px solid var(--fire-border); color: var(--fire-muted); margin-top: 6px; }
+  .action-btn.reset:hover { border-color: var(--fire-red); color: var(--fire-red); }
+  .incident-list { max-height: 140px; overflow-y: auto; margin-top: 8px; }
+  .incident-item { font-size: 10px; color: var(--fire-muted); padding: 4px 0; border-bottom: 1px solid #1d2329; display: flex; justify-content: space-between; }
+  .incident-item .badge { font-size: 9px; padding: 1px 5px; border-radius: 2px; }
+  .badge-sev { background: #3d1a1a; color: var(--fire-red); }
+  .badge-mod { background: #3d2a0a; color: var(--fire-amber); }
+  .badge-min { background: #0a2a1a; color: var(--fire-green); }
+  .sim-bottom { margin-top: 8px; display: flex; gap: 8px; }
+  .sim-bottom .panel { flex: 1; }
+  .prog-bar { height: 4px; background: var(--fire-border); border-radius: 2px; margin-top: 4px; overflow: hidden; }
+  .prog-fill { height: 100%; border-radius: 2px; transition: width .3s; }
+  .coord-display { font-size: 10px; color: var(--fire-muted); margin-top: 6px; font-family: 'Courier New', monospace; }
+  ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--fire-border); border-radius: 2px; }
+</style>
+
+<div class="sim-root">
+  <div class="sim-header">
+    <div class="sim-title">SIFA · Simulador de Dispersión de Incendios Forestales</div>
+    <div class="sim-status"><div class="dot-live"></div>SISTEMA ACTIVO · MX-2024</div>
+  </div>
+
+  <div class="tool-row">
+    <button class="tool-btn active" id="toolFire" onclick="setTool('fire')">+ Ignición</button>
+    <button class="tool-btn water" id="toolWater" onclick="setTool('water')">+ Punto Combate</button>
+    <button class="tool-btn" id="toolWind" onclick="setTool('wind')">Dirección Viento</button>
+  </div>
+
+  <div class="sim-grid">
+    <div>
+      <div class="canvas-wrap">
+        <canvas id="simCanvas" width="520" height="420"></canvas>
+        <div class="canvas-overlay">
+          <span>LAT/LON: MX</span>
+          <span id="coordDisplay">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div class="panel">
+        <div class="panel-label">Parámetros Ambientales</div>
+
+        <div class="param-row">
+          <div class="param-label">Velocidad del viento<span class="param-val" id="windVal">25 km/h</span></div>
+          <input type="range" min="0" max="100" value="25" id="windSpeed" oninput="updateParam('windSpeed')">
+        </div>
+        <div class="param-row">
+          <div class="param-label">Humedad relativa<span class="param-val" id="humVal">35%</span></div>
+          <input type="range" min="5" max="100" value="35" id="humidity" oninput="updateParam('humidity')">
+        </div>
+        <div class="param-row">
+          <div class="param-label">Temperatura<span class="param-val" id="tempVal">28°C</span></div>
+          <input type="range" min="5" max="55" value="28" id="temperature" oninput="updateParam('temperature')">
+        </div>
+        <div class="param-row">
+          <div class="param-label">Pendiente del terreno<span class="param-val" id="slopeVal">15°</span></div>
+          <input type="range" min="0" max="60" value="15" id="slope" oninput="updateParam('slope')">
+        </div>
+        <div class="param-row">
+          <div class="param-label" style="margin-bottom:6px">Tipo de vegetación</div>
+          <select id="vegType" onchange="updateVeg()">
+            <option value="pino">Bosque de Pino</option>
+            <option value="encino">Bosque de Encino-Pino</option>
+            <option value="selva">Selva Baja Caducifolia</option>
+            <option value="matorral">Matorral Crasicaule</option>
+            <option value="pastizal">Pastizal Natural</option>
+            <option value="popal">Popal/Tular</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-label">Estado del Simulador</div>
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-num" id="statHa">0</div>
+            <div class="stat-lbl">HA AFECTADAS</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num" id="statRate" style="color:var(--fire-red)">0</div>
+            <div class="stat-lbl">HA/H EXPANSIÓN</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num" id="statFires" style="color:var(--fire-amber)">0</div>
+            <div class="stat-lbl">FOCOS ACTIVOS</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num" id="statControl" style="color:var(--fire-water)">0</div>
+            <div class="stat-lbl">PTS COMBATE</div>
+          </div>
+        </div>
+        <div style="margin-top:10px">
+          <div class="param-label">Índice de peligro
+            <span class="param-val" id="dangerLbl">MODERADO</span>
+          </div>
+          <div class="prog-bar"><div class="prog-fill" id="dangerBar" style="width:40%;background:var(--fire-amber)"></div></div>
+        </div>
+        <div class="coord-display" id="mouseCoord">Clic para colocar ignición o punto de combate</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-label">Leyenda</div>
+        <div class="legend-row"><div class="legend-dot" style="background:#ef4444"></div>Fuego activo</div>
+        <div class="legend-row"><div class="legend-dot" style="background:#f97316"></div>Frente de llamas</div>
+        <div class="legend-row"><div class="legend-dot" style="background:#78350f"></div>Área quemada</div>
+        <div class="legend-row"><div class="legend-dot" style="background:#0ea5e9"></div>Punto de combate</div>
+        <div class="legend-row"><div class="legend-dot" style="background:#22c55e"></div>Zona controlada</div>
+        <div class="legend-row"><div class="legend-dot" style="background:rgba(59,130,246,.5)"></div>Radio de cobertura</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex; gap:8px; margin-top:8px;">
+    <button class="action-btn" onclick="toggleSim()"><span id="simBtnTxt">▶ INICIAR SIMULACIÓN</span></button>
+    <button class="action-btn" onclick="stepSim()" style="flex:0 0 auto; padding:8px 14px; background:var(--fire-panel); border:1px solid var(--fire-border); color:var(--fire-muted);">PASO</button>
+    <button class="action-btn reset" onclick="resetSim()" style="flex:0 0 auto; padding:8px 14px; margin:0;">LIMPIAR</button>
+  </div>
+
+  <div style="margin-top:10px;">
+    <div class="panel">
+      <div class="panel-label">Incidentes del registro — semanas 1–11 · datos CONAFOR</div>
+      <div class="incident-list" id="incidentList"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const CELL = 8;
+const COLS = Math.floor(W/CELL), ROWS = Math.floor(H/CELL);
+
+let grid = [], burnedGrid = [], controlGrid = [];
+let fires = [], controlPoints = [], windAngle = Math.PI/4;
+let simRunning = false, simInterval = null;
+let currentTool = 'fire';
+let isDragging = false;
+
+const VEG = {
+  pino:{spread:0.72,fuel:0.85,color:'#1a3a1a',label:'Bosque de Pino'},
+  encino:{spread:0.65,fuel:0.75,color:'#1e3d1e',label:'Bosque Encino-Pino'},
+  selva:{spread:0.80,fuel:0.70,color:'#2a3a10',label:'Selva Baja Caducifolia'},
+  matorral:{spread:0.55,fuel:0.60,color:'#2a2a1a',label:'Matorral Crasicaule'},
+  pastizal:{spread:0.90,fuel:0.50,color:'#2a3010',label:'Pastizal Natural'},
+  popal:{spread:0.40,fuel:0.45,color:'#0a2a20',label:'Popal/Tular'}
+};
+
+const INCIDENTS = [
+  {state:'Jalisco',mun:'Chiquilistlán',area:600,cause:'Desconocidas',veg:'Selva Baja Caducifolia',sev:'mod'},
+  {state:'Guerrero',mun:'Juan R. Escudero',area:283,cause:'Intencional',veg:'Bosque de Pino-Encino',sev:'mod'},
+  {state:'Guerrero',mun:'Chilpancingo',area:251,cause:'Fogatas',veg:'Bosque de Pino',sev:'mod'},
+  {state:'Coahuila',mun:'Múzquiz',area:997,cause:'Desconocidas',veg:'Pastizal Natural',sev:'min'},
+  {state:'Nuevo León',mun:'Santiago',area:681,cause:'Desconocidas',veg:'Matorral Submontano',sev:'min'},
+  {state:'Jalisco',mun:'Mascota',area:110,cause:'Desconocidas',veg:'Bosque de Pino',sev:'min'},
+  {state:'Aguascalientes',mun:'Asientos',area:849,cause:'Intencional',veg:'Matorral Crasicaule',sev:'sev'},
+  {state:'Oaxaca',mun:'San Miguel del Puerto',area:875,cause:'Otras actividades',veg:'Selva Mediana Caducifolia',sev:'mod'},
+  {state:'Chiapas',mun:'Tonalá',area:1075,cause:'Actividades pecuarias',veg:'Selva Mediana Subcaducifolia',sev:'mod'},
+  {state:'Durango',mun:'Otáez',area:324,cause:'Act. agrícolas',veg:'Bosque de Pino',sev:'min'},
+  {state:'Puebla',mun:'Vicente Guerrero',area:260,cause:'Act. agrícolas',veg:'Bosque Pino-Encino',sev:'mod'},
+  {state:'Zacatecas',mun:'Genaro Codina',area:1220,cause:'Act. agrícolas',veg:'Pastizal Natural',sev:'min'},
+];
+
+function initGrid() {
+  grid = [];
+  burnedGrid = [];
+  controlGrid = [];
+  for(let r=0;r<ROWS;r++){
+    grid[r]=[];burnedGrid[r]=[];controlGrid[r]=[];
+    for(let c=0;c<COLS;c++){
+      grid[r][c]={fuel:0.7+Math.random()*0.3,burning:false,burned:false,heat:0};
+      burnedGrid[r][c]=false;
+      controlGrid[r][c]=false;
+    }
+  }
+}
+
+function getParams(){
+  const ws = +document.getElementById('windSpeed').value;
+  const hum = +document.getElementById('humidity').value;
+  const temp = +document.getElementById('temperature').value;
+  const slope = +document.getElementById('slope').value;
+  const veg = document.getElementById('vegType').value;
+  const V = VEG[veg];
+  const spreadRate = V.spread * (1 + ws/80) * (1 - hum/140) * (1 + (temp-20)/60) * (1 + slope/90);
+  return {ws,hum,temp,slope,veg,V,spreadRate:Math.min(spreadRate,1.4)};
+}
+
+function getDangerIndex(p){
+  const d = (p.ws/100*0.3) + ((100-p.hum)/100*0.35) + ((p.temp-5)/50*0.2) + (p.slope/60*0.15);
+  return Math.min(d*100,100);
+}
+
+function drawTerrain(){
+  const veg = document.getElementById('vegType').value;
+  const V = VEG[veg];
+  ctx.fillStyle = V.color;
+  ctx.fillRect(0,0,W,H);
+  for(let i=0;i<300;i++){
+    const x=Math.random()*W, y=Math.random()*H;
+    const sz=Math.random()*3+1;
+    ctx.globalAlpha=0.06+Math.random()*0.08;
+    ctx.fillStyle='#000';
+    ctx.fillRect(x,y,sz,sz);
+  }
+  ctx.globalAlpha=1;
+}
+
+function drawGrid(){
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      const cell=grid[r][c];
+      const x=c*CELL, y=r*CELL;
+      if(cell.burned){
+        ctx.fillStyle='#3d1a0a';
+        ctx.fillRect(x,y,CELL,CELL);
+        ctx.globalAlpha=0.3;
+        ctx.fillStyle='#1a0a00';
+        ctx.fillRect(x,y,CELL,CELL);
+        ctx.globalAlpha=1;
+      } else if(cell.burning){
+        const h = Math.min(cell.heat,1);
+        const r2=Math.floor(200+h*55), g2=Math.floor(h*80), b2=0;
+        ctx.fillStyle=`rgb(${r2},${g2},${b2})`;
+        ctx.fillRect(x,y,CELL,CELL);
+        if(Math.random()<0.3){
+          ctx.globalAlpha=0.6+Math.random()*0.4;
+          ctx.fillStyle=`rgba(255,${Math.floor(180+Math.random()*75)},0,0.8)`;
+          ctx.fillRect(x+Math.random()*CELL,y+Math.random()*CELL,Math.random()*4+1,Math.random()*4+1);
+          ctx.globalAlpha=1;
+        }
+      } else if(controlGrid[r][c]){
+        ctx.fillStyle='rgba(34,197,94,0.25)';
+        ctx.fillRect(x,y,CELL,CELL);
+      }
+    }
+  }
+}
+
+function drawControlPoints(){
+  controlPoints.forEach(cp=>{
+    const x=cp.c*CELL+CELL/2, y=cp.r*CELL+CELL/2;
+    ctx.globalAlpha=0.2;
+    ctx.fillStyle='#0ea5e9';
+    ctx.beginPath();
+    ctx.arc(x,y,cp.radius*CELL,0,Math.PI*2);
+    ctx.fill();
+    ctx.globalAlpha=0.5;
+    ctx.strokeStyle='#0ea5e9';
+    ctx.lineWidth=1;
+    ctx.stroke();
+    ctx.globalAlpha=1;
+    ctx.fillStyle='#0ea5e9';
+    ctx.beginPath();
+    ctx.arc(x,y,5,0,Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle='#fff';
+    ctx.font='bold 9px Courier New';
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.fillText('W',x,y);
+    ctx.fillStyle='rgba(14,165,233,0.7)';
+    ctx.font='8px Courier New';
+    ctx.fillText('R:'+cp.capacity,x,y+14);
+  });
+}
+
+function drawWindArrow(){
+  const cx=40,cy=40,len=22;
+  ctx.save();
+  ctx.translate(cx,cy);
+  ctx.rotate(windAngle);
+  ctx.strokeStyle='rgba(255,255,255,0.5)';
+  ctx.lineWidth=1.5;
+  ctx.beginPath();
+  ctx.moveTo(0,-len);
+  ctx.lineTo(0,len);
+  ctx.moveTo(0,-len);
+  ctx.lineTo(-6,-len+10);
+  ctx.moveTo(0,-len);
+  ctx.lineTo(6,-len+10);
+  ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle='rgba(255,255,255,0.4)';
+  ctx.font='9px Courier New';
+  ctx.textAlign='left';
+  ctx.fillText('N',cx+28,cy-18);
+  ctx.fillText(document.getElementById('windSpeed').value+'km/h',cx-18,cy+36);
+}
+
+function render(){
+  drawTerrain();
+  drawGrid();
+  drawControlPoints();
+  drawWindArrow();
+}
+
+function spreadFire(){
+  const p = getParams();
+  const newFires = [];
+  const dirs = [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]];
+  fires.forEach(f=>{
+    const cell = grid[f.r] && grid[f.r][f.c];
+    if(!cell) return;
+    cell.heat = Math.min(cell.heat+0.15,1);
+    if(cell.heat>0.8){
+      dirs.forEach(([dr,dc])=>{
+        const nr=f.r+dr, nc=f.c+dc;
+        if(nr<0||nr>=ROWS||nc<0||nc>=COLS) return;
+        if(grid[nr][nc].burned||grid[nr][nc].burning) return;
+        if(controlGrid[nr][nc]) return;
+        const wx=Math.cos(windAngle), wy=Math.sin(windAngle);
+        const windBoost=1+(wx*dc+wy*dr)*p.ws/60;
+        const spreadProb = p.spreadRate * grid[nr][nc].fuel * windBoost * 0.18;
+        if(Math.random()<spreadProb){
+          grid[nr][nc].burning=true;
+          grid[nr][nc].heat=0.3;
+          newFires.push({r:nr,c:nc});
+        }
+      });
+      if(cell.heat>=1){
+        cell.burning=false;
+        cell.burned=true;
+        const idx=fires.indexOf(f);
+        if(idx>-1) fires.splice(idx,1);
+      }
+    }
+  });
+  fires.push(...newFires);
+}
+
+function applyControlPoints(){
+  controlPoints.forEach(cp=>{
+    for(let r=cp.r-cp.radius;r<=cp.r+cp.radius;r++){
+      for(let c=cp.c-cp.radius;c<=cp.c+cp.radius;c++){
+        if(r<0||r>=ROWS||c<0||c>=COLS) continue;
+        const dist=Math.sqrt((r-cp.r)**2+(c-cp.c)**2);
+        if(dist<=cp.radius){
+          controlGrid[r][c]=true;
+          if(grid[r][c].burning && Math.random()<cp.efficiency*0.3){
+            grid[r][c].burning=false;
+            grid[r][c].heat=0;
+            fires.splice(fires.findIndex(f=>f.r===r&&f.c===c),1);
+          }
+        }
+      }
+    }
+  });
+}
+
+function updateStats(){
+  const p = getParams();
+  let burned=0, burning=0;
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+    if(grid[r][c].burned) burned++;
+    if(grid[r][c].burning) burning++;
+  }
+  const haFactor = 0.25;
+  document.getElementById('statHa').textContent=Math.round(burned*haFactor);
+  document.getElementById('statRate').textContent=Math.round(burning*haFactor*2);
+  document.getElementById('statFires').textContent=fires.length;
+  document.getElementById('statControl').textContent=controlPoints.length;
+  const di = getDangerIndex(p);
+  const bar = document.getElementById('dangerBar');
+  const lbl = document.getElementById('dangerLbl');
+  bar.style.width=di+'%';
+  if(di<35){bar.style.background='#22c55e';lbl.textContent='BAJO';}
+  else if(di<65){bar.style.background='#f59e0b';lbl.textContent='MODERADO';}
+  else if(di<85){bar.style.background='#f97316';lbl.textContent='ALTO';}
+  else{bar.style.background='#ef4444';lbl.textContent='EXTREMO';}
+}
+
+function stepSim(){
+  spreadFire();
+  applyControlPoints();
+  render();
+  updateStats();
+}
+
+function toggleSim(){
+  simRunning=!simRunning;
+  document.getElementById('simBtnTxt').textContent=simRunning?'⏸ PAUSAR':'▶ INICIAR SIMULACIÓN';
+  if(simRunning){
+    simInterval=setInterval(()=>{stepSim();},180);
+  } else {
+    clearInterval(simInterval);
+  }
+}
+
+function resetSim(){
+  clearInterval(simInterval);
+  simRunning=false;
+  document.getElementById('simBtnTxt').textContent='▶ INICIAR SIMULACIÓN';
+  fires=[];controlPoints=[];
+  initGrid();
+  render();
+  updateStats();
+}
+
+function setTool(t){
+  currentTool=t;
+  document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active'));
+  const m={fire:'toolFire',water:'toolWater',wind:'toolWind'};
+  document.getElementById(m[t]).classList.add('active');
+  canvas.style.cursor=t==='wind'?'grab':'crosshair';
+}
+
+function updateParam(id){
+  const v = +document.getElementById(id).value;
+  const labels={windSpeed:v+' km/h',humidity:v+'%',temperature:v+'°C',slope:v+'°'};
+  const ids={windSpeed:'windVal',humidity:'humVal',temperature:'tempVal',slope:'slopeVal'};
+  document.getElementById(ids[id]).textContent=labels[id];
+  render();
+  updateStats();
+}
+
+function updateVeg(){ render(); }
+
+canvas.addEventListener('mousedown',(e)=>{
+  isDragging=true;
+  handleCanvasClick(e);
+});
+canvas.addEventListener('mousemove',(e)=>{
+  const rect=canvas.getBoundingClientRect();
+  const x=e.clientX-rect.left, y=e.clientY-rect.top;
+  const c=Math.floor(x/CELL), r=Math.floor(y/CELL);
+  document.getElementById('mouseCoord').textContent=`Col:${c} Fil:${r} | ${currentTool==='fire'?'Clic = ignición':currentTool==='water'?'Clic = punto combate':'Arrastrar = dirección viento'}`;
+  if(isDragging && currentTool==='wind'){
+    const cx=canvas.getBoundingClientRect().left+40;
+    const cy=canvas.getBoundingClientRect().top+40;
+    windAngle=Math.atan2(e.clientY-cy-(canvas.getBoundingClientRect().top), e.clientX-cx);
+    render();
+  }
+});
+canvas.addEventListener('mouseup',()=>{ isDragging=false; });
+canvas.addEventListener('mouseleave',()=>{ isDragging=false; });
+
+function handleCanvasClick(e){
+  const rect=canvas.getBoundingClientRect();
+  const x=e.clientX-rect.left, y=e.clientY-rect.top;
+  const c=Math.floor(x/CELL), r=Math.floor(y/CELL);
+  if(r<0||r>=ROWS||c<0||c>=COLS) return;
+  if(currentTool==='fire'){
+    grid[r][c].burning=true;
+    grid[r][c].heat=0.8;
+    fires.push({r,c});
+    for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){
+      const nr=r+dr,nc=c+dc;
+      if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS&&!grid[nr][nc].burned){
+        grid[nr][nc].burning=true;
+        grid[nr][nc].heat=0.4;
+        fires.push({r:nr,c:nc});
+      }
+    }
+  } else if(currentTool==='water'){
+    const capacity = Math.round(3 + (100 - +document.getElementById('humidity').value)/14);
+    const efficiency = Math.max(0.3, (+document.getElementById('humidity').value)/80);
+    controlPoints.push({r,c,radius:capacity,capacity,efficiency});
+    applyControlPoints();
+  }
+  render();
+  updateStats();
+}
+
+function loadIncidents(){
+  const list = document.getElementById('incidentList');
+  INCIDENTS.forEach(i=>{
+    const div=document.createElement('div');
+    div.className='incident-item';
+    const sev={sev:'badge-sev',mod:'badge-mod',min:'badge-min'};
+    const sevLbl={sev:'SEVERO',mod:'MODERADO',min:'MÍNIMO'};
+    div.innerHTML=`<span>${i.mun}, ${i.state} · ${i.area} ha</span><span class="badge ${sev[i.sev]}">${sevLbl[i.sev]}</span>`;
+    div.title=`Causa: ${i.cause} | Veg: ${i.veg}`;
+    div.style.cursor='pointer';
+    div.addEventListener('click',()=>{
+      document.getElementById('vegType').value=
+        i.veg.includes('Pino')&&i.veg.includes('Encino')?'encino':
+        i.veg.includes('Pino')?'pino':
+        i.veg.includes('Selva')?'selva':
+        i.veg.includes('Matorral')?'matorral':
+        i.veg.includes('Pastizal')?'pastizal':'popal';
+      const r=Math.floor(ROWS/2)+Math.floor((Math.random()-0.5)*10);
+      const c=Math.floor(COLS/2)+Math.floor((Math.random()-0.5)*10);
+      if(grid[r]&&grid[r][c]){
+        grid[r][c].burning=true;
+        grid[r][c].heat=0.9;
+        fires.push({r,c});
+        for(let dr=-2;dr<=2;dr++) for(let dc=-2;dc<=2;dc++){
+          const nr=r+dr,nc=c+dc;
+          if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS){
+            grid[nr][nc].burning=true;
+            grid[nr][nc].heat=0.4+Math.random()*0.4;
+            fires.push({r:nr,c:nc});
+          }
+        }
+      }
+      render();updateStats();
+    });
+    list.appendChild(div);
+  });
+}
+
+initGrid();
+render();
+updateStats();
+loadIncidents();
+</script>
