@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Curso de Programación y Computación - UABCS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 50px;
+            animation: fadeIn 0.8s ease-in;
+        }
+
+        .logo {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 20px;
+            background: white;
+            border-radius: 50%;
+            padding: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .programs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+
+        .program-section {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            animation: slideUp 0.8s ease-out;
+        }
+
+        .program-section:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .program-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            border-bottom: 3px solid;
+            padding-bottom: 15px;
+        }
+
+        .program-header.fisheries {
+            border-color: #3498db;
+        }
+
+        .program-header.prevention {
+            border-color: #e74c3c;
+        }
+
+        .program-icon {
+            font-size: 2.5em;
+            margin-right: 15px;
+        }
+
+        .program-header h2 {
+            margin: 0;
+            font-size: 1.8em;
+        }
+
+        .program-header p {
+            color: #666;
+            margin-top: 5px;
+            font-size: 0.9em;
+        }
+
+        .games-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .game-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .game-item:hover {
+            background: #e8f4f8;
+            border-left-color: #3498db;
+            transform: translateX(5px);
+        }
+
+        .program-section.prevention .game-item:hover {
+            background: #fadbd8;
+            border-left-color: #e74c3c;
+        }
+
+        .game-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: #3498db;
+            color: white;
+            border-radius: 50%;
+            margin-right: 12px;
+            font-weight: bold;
+            flex-shrink: 0;
+            font-size: 0.9em;
+        }
+
+        .program-section.prevention .game-number {
+            background: #e74c3c;
+        }
+
+        .game-title {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .game-arrow {
+            color: #999;
+            transition: color 0.3s ease;
+        }
+
+        .game-item:hover .game-arrow {
+            color: #3498db;
+        }
+
+        .program-section.prevention .game-item:hover .game-arrow {
+            color: #e74c3c;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #3498db;
+        }
+
+        .program-section.prevention .stat-number {
+            color: #e74c3c;
+        }
+
+        .stat-label {
+            color: #999;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            padding: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            margin-top: 50px;
+        }
+
+        .footer-text {
+            margin-bottom: 10px;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .footer-links a {
+            color: white;
+            text-decoration: none;
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            opacity: 1;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+
+            .programs {
+                grid-template-columns: 1fr;
+            }
+
+            .program-header h2 {
+                font-size: 1.4em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <img src="logo_uabcs.png" alt="UABCS Logo">
+            </div>
+            <h1>Curso de Programación y Computación</h1>
+            <p class="subtitle">Universidad Autónoma de Baja California Sur (UABCS)</p>
+        </header>
+
+        <div class="programs">
+            <!-- Ingeniería en Pesquerías -->
+            <section class="program-section">
+                <div class="program-header fisheries">
+                    <span class="program-icon">🌊</span>
+                    <div>
+                        <h2>Ingeniería en Pesquerías</h2>
+                        <p>Simuladores de gestión sostenible de recursos pesqueros</p>
+                    </div>
+                </div>
+
+                <div class="games-list">
+                    <a href="ingeniería%20en%20pesquerías/juegos/gestiona_tu_empresa.html" class="game-item">
+                        <span class="game-number">1</span>
+                        <span class="game-title">Gestiona tu Empresa</span>
+                        <span class="game-arrow">→</span>
+                    </a>
+                    <a href="ingeniería%20en%20pesquerías/juegos/mar_sustentable%20(1).html" class="game-item">
+                        <span class="game-number">2</span>
+                        <span class="game-title">Mar Sustentable</span>
+                        <span class="game-arrow">→</span>
+                    </a>
+                    <a href="ingeniería%20en%20pesquerías/juegos/pesca_detective.html" class="game-item">
+                        <span class="game-number">3</span>
+                        <span class="game-title">Pesca Detective</span>
+                        <span class="game-arrow">→</span>
+                    </a>
+                    <a href="ingeniería%20en%20pesquerías/juegos/pesca_sustentable.html" class="game-item">
+                        <span class="game-number">4</span>
+                        <span class="game-title">Pesca Sustentable</span>
+                        <span class="game-arrow">→</span>
+                    </a>
+                    <a href="ingeniería%20en%20pesquerías/juegos/pesqueria_uabcs.html" class="game-item">
+                        <span class="game-number">5</span>
+                        <span class="game-title">Pesquería UABCS</span>
+                        <span class="game-arrow">→</span>
+                    </a>
+                    <a href="ingeniería%20en%20pesquerías/juegos/simulador_pesca.html" class="game-item">
+                        <span class="game-number">6</span>
+                        <span class="game-title">Simulador de Pesca</span>
+                        <span class="game-arrow">→</span>
+                    </a>
+                    <a href="ingeniería%20en%20pesquerías/juegos/simulador_pesca_biodiverso_premium%20hugo%20juego.html" class="game-item">
+                        <span class="game-number">7</span>
+                        <span class="game-title">Simulador Biodiverso Premium</span>
+                        <span class="game-arrow">→</span>
+                    </a>
+                    <a href="ingeniería%20en%20pesquerías/juegos/simulador_pesca_pro_elaborado%20(1).html" class="game-item">
+                        <span class="game-number">8</span>
+                        <span class="game-title">Simulador Pesca Pro Elaborado</span>
+                        <span class="game-arrow">→</span>
+                    </a>
+                    <a href="ingeniería%20en%20pesquerías/juegos/simulador_pesca_sustentable%20(1).html" class="game-item">
+                        <span class="game-number">9</span>
+                        <span class="game-title">Simulador Pesca Sustentable</span>
+                        <span class="game-arrow">→</span>
+                    </a>
+                </div>
+
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-number">9</div>
+                        <div class="stat-label">Juegos</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Tema: Pesca Sostenible</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Ingeniería en Prevención de Desastres -->
+            <section class="program-section">
+                <div class="program-header prevention">
+                    <span class="program-icon">🔥</span>
+                    <div>
+                        <h2>Prevención de Desastres</h2>
+                        <p>Simuladores de gestión de incendios forestales</p>
+                    </div>
+                </div>
+
+                <div class="games-list">
+                    <a href="ingeniería%20en%20prevensión%20de%20desastres%20naturales%20y%20protección%20civil/juegos/bosque_incendio.html" class="game-item">
+                        <span class="game-number">1</span>
+                        <span class="game-title">Bosque Incendio</span>
+                        <span class="game-arrow">→</span>
+                    </a>
+                    <a href="ingeniería%20en%20prevensión%20de%20desastres%20naturales%20y%20protección%20civil/juegos/juego_incendios_mexico.html" class="game-item">
+                        <span class="game-number">2</span>
+                        <span class="game-title">Juego de Incendios en México</span>
+                        <span class="game-arrow">→</span>
+                    </a>
+                    <a href="ingeniería%20en%20prevensión%20de%20desastres%20naturales%20y%20protección%20civil/juegos/simulador_dispersion_incendio_uabcs.html" class="game-item">
+                        <span class="game-number">3</span>
+                        <span class="game-title">Simulador Dispersión UABCS</span>
+                        <span class="game-arrow">→</span>
+                    </a>
+                    <a href="ingeniería%20en%20prevensión%20de%20desastres%20naturales%20y%20protección%20civil/juegos/simulador_dispersion_incendios(1).html" class="game-item">
+                        <span class="game-number">4</span>
+                        <span class="game-title">Simulador de Dispersión (v2)</span>
+                        <span class="game-arrow">→</span>
+                    </a>
+                    <a href="ingeniería%20en%20prevensión%20de%20desastres%20naturales%20y%20protección%20civil/juegos/simulador_dispersion_incendios.html" class="game-item">
+                        <span class="game-number">5</span>
+                        <span class="game-title">Simulador de Dispersión</span>
+                        <span class="game-arrow">→</span>
+                    </a>
+                    <a href="ingeniería%20en%20prevensión%20de%20desastres%20naturales%20y%20protección%20civil/juegos/simulador_incendios_bcs_4.html" class="game-item">
+                        <span class="game-number">6</span>
+                        <span class="game-title">Simulador Incendios BCS v4</span>
+                        <span class="game-arrow">→</span>
+                    </a>
+                    <a href="ingeniería%20en%20prevensión%20de%20desastres%20naturales%20y%20protección%20civil/juegos/simulador_incendios_brigadistas.html" class="game-item">
+                        <span class="game-number">7</span>
+                        <span class="game-title">Simulador Incendios Brigadistas</span>
+                        <span class="game-arrow">→</span>
+                    </a>
+                    <a href="ingeniería%20en%20prevensión%20de%20desastres%20naturales%20y%20protección%20civil/juegos/simulador_incendios_forestales.html" class="game-item">
+                        <span class="game-number">8</span>
+                        <span class="game-title">Simulador Incendios Forestales</span>
+                        <span class="game-arrow">→</span>
+                    </a>
+                </div>
+
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-number">8</div>
+                        <div class="stat-label">Juegos</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Tema: Incendios Forestales</div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <footer>
+            <div class="footer-text">
+                <strong>Curso de Programación y Computación</strong> - UABCS 2026
+            </div>
+            <div class="footer-text">
+                Proyectos educativos desarrollados por estudiantes de Ingeniería
+            </div>
+            <div class="footer-links">
+                <a href="README.md">📖 Documentación</a>
+                <a href="https://github.com/Marine-Data-Lab/curso_computacion">🔗 GitHub</a>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>
