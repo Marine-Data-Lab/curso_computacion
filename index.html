@@ -13,7 +13,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #002147 0%, #00497E 100%);
             min-height: 100vh;
             padding: 40px 20px;
         }
@@ -37,7 +37,7 @@
             background: white;
             border-radius: 50%;
             padding: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), 0 0 0 4px #FFD100;
         }
 
         .logo img {
@@ -50,6 +50,16 @@
             font-size: 3em;
             margin-bottom: 10px;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        h1::after {
+            content: '';
+            display: block;
+            width: 80px;
+            height: 4px;
+            background: #FFD100;
+            margin: 12px auto 0;
+            border-radius: 2px;
         }
 
         .subtitle {
@@ -114,11 +124,11 @@
         }
 
         .program-header.fisheries {
-            border-color: #3498db;
+            border-color: #009FD4;
         }
 
         .program-header.prevention {
-            border-color: #e74c3c;
+            border-color: #CC1E1E;
         }
 
         .program-icon {
@@ -132,7 +142,7 @@
         }
 
         .program-header p {
-            color: #666;
+            color: #4A5568;
             margin-top: 5px;
             font-size: 0.9em;
         }
@@ -157,6 +167,7 @@
         }
 
         .game-item:hover {
+<<<<<<< HEAD
             background: #e8f4f8;
             border-left-color: #3498db;
             transform: translateX(3px);
@@ -168,6 +179,16 @@
             align-items: center;
             gap: 10px;
             margin-bottom: 8px;
+=======
+            background: #E3F4FB;
+            border-left-color: #009FD4;
+            transform: translateX(5px);
+        }
+
+        .program-section.prevention .game-item:hover {
+            background: #FDECEC;
+            border-left-color: #CC1E1E;
+>>>>>>> 3c52ad9876954b968cbb2ad2bc3dfad1d01181ce
         }
 
         .game-number {
@@ -176,7 +197,7 @@
             justify-content: center;
             width: 32px;
             height: 32px;
-            background: #3498db;
+            background: #009FD4;
             color: white;
             border-radius: 50%;
             font-weight: bold;
@@ -185,7 +206,7 @@
         }
 
         .program-section.prevention .game-number {
-            background: #e74c3c;
+            background: #CC1E1E;
         }
 
         .game-title {
@@ -215,11 +236,11 @@
         }
 
         .game-item:hover .game-arrow {
-            color: #3498db;
+            color: #009FD4;
         }
 
         .program-section.prevention .game-item:hover .game-arrow {
-            color: #e74c3c;
+            color: #CC1E1E;
         }
 
         .game-description {
@@ -250,15 +271,15 @@
         .stat-number {
             font-size: 2em;
             font-weight: bold;
-            color: #3498db;
+            color: #009FD4;
         }
 
         .program-section.prevention .stat-number {
-            color: #e74c3c;
+            color: #CC1E1E;
         }
 
         .stat-label {
-            color: #999;
+            color: #4A5568;
             font-size: 0.9em;
             margin-top: 5px;
         }
@@ -267,7 +288,7 @@
             text-align: center;
             color: white;
             padding: 30px;
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            border-top: 2px solid #FFD100;
             margin-top: 50px;
         }
 
