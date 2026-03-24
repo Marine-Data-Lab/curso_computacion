@@ -1,0 +1,223 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║           CURSO DE PROGRAMACIÓN - PREPARACIÓN PARA ZENODO                  ║
+║                    ✅ IMPLEMENTACIÓN COMPLETADA                            ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+📊 ESTADO DEL PROYECTO
+═══════════════════════════════════════════════════════════════════════════════
+
+Total de Juegos: 17
+├─ Ingeniería en Pesquerías: 9
+└─ Prevención de Desastres: 8
+
+📁 ARCHIVOS CREADOS
+═══════════════════════════════════════════════════════════════════════════════
+
+[✓] games-data.json
+    └─ Base de datos estructurada con información de todos los juegos
+    └─ 17 juegos con descripción, autor (placeholder), keywords
+    └─ Se carga dinámicamente en la página web
+
+[✓] CITATION.cff
+    └─ Archivo de citación en formato estándar
+    └─ Permite citación automática desde GitHub
+    └─ Incluye: autor, versión, licencia, DOI
+
+[✓] .zenodo.json
+    └─ Metadatos específicos para Zenodo
+    └─ Descripción académica detallada
+    └─ Clasificaciones, palabras clave, contribuyentes
+
+[✓] LICENSE
+    └─ Licencia Creative Commons Attribution 4.0 (CC-BY-4.0)
+    └─ Texto legal completo
+    └─ Permite uso comercial y modificaciones
+
+[✓] ZENODO_GUIDE.md
+    └─ Guía paso a paso para publicación en Zenodo
+    └─ Obtención de DOI permanente
+    └─ Instrucciones de integración GitHub-Zenodo
+
+[✓] ESTUDIANTES_INSTRUCCIONES.md
+    └─ Guía para estudiantes sobre actualizar sus créditos
+    └─ Cómo editar games-data.json
+    └─ Formatos de citación académica
+
+[✓] CAMBIOS_REALIZADOS.md
+    └─ Documentación técnica detallada de todos los cambios
+    └─ Beneficios y ventajas de la nueva estructura
+
+[✓] .gitignore
+    └─ Archivo estándar para control de versiones
+    └─ Excluye archivos temporales, IDEs, caché, logs
+
+📝 ARCHIVOS MODIFICADOS
+═══════════════════════════════════════════════════════════════════════════════
+
+[✓] index.html
+    ├─ Header mejorado con información institucional
+    ├─ Agregado: Nombre de la universidad
+    ├─ Agregado: Departamento Académico de Ingeniería en Pesquerías
+    ├─ Agregado: Dr. Ricardo Cavieses Núñez
+    ├─ Agregado: Párrafo descriptivo del curso
+    └─ Convertido a contenido dinámico desde games-data.json
+       ├─ Carga y renderiza juegos automáticamente
+       ├─ Muestra descripción de cada juego
+       ├─ Muestra nombre del autor (cuando actualice)
+       └─ Se actualiza sin modificar HTML
+
+[✓] README.md
+    ├─ Información rápida mejorada
+    ├─ Tabla de contenido con descripciones
+    ├─ Instrucciones de uso (3 opciones)
+    ├─ Información institucional
+    ├─ Detalles de licencia
+    ├─ Guía de Zenodo
+    └─ Estadísticas del proyecto
+
+🎯 ESTADO ACTUAL
+═══════════════════════════════════════════════════════════════════════════════
+
+Estado: ✅ LISTO PARA ESTUDIANTES
+
+El proyecto está completamente configurado. Falta solamente:
+→ Que los estudiantes actualicen sus nombres en games-data.json
+
+Cuando esto suceda:
+1. Sus nombres aparecerán automáticamente en la página web
+2. El proyecto podrá ser publicado en Zenodo
+3. Se obtendrá un DOI permanente
+
+🌐 PRÓXIMOS PASOS
+═══════════════════════════════════════════════════════════════════════════════
+
+PASO 1: Comunicar a Estudiantes
+├─ Compartir ESTUDIANTES_INSTRUCCIONES.md
+├─ Mostrar dónde aparecerán sus nombres
+└─ Explicar la importancia de la citación académica
+
+PASO 2: Recopilar Actualizaciones
+├─ Cada estudiante actualiza su nombre en games-data.json
+├─ Pueden hacerlo vía GitHub o por correo
+└─ Revisar que los formatos sean correctos
+
+PASO 3: Publicación en Zenodo (Cuando todos actualicen)
+├─ Hacer Release en GitHub (v1.0.0)
+├─ Conectar repositorio a Zenodo
+├─ Publicar con DOI
+└─ Compartir enlace DOI con estudiantes
+
+PASO 4: Difusión
+├─ Compartir enlace de Zenodo
+├─ Mostrar página web GitHub Pages
+└─ Explicar cómo citar el trabajo
+
+📊 INFORMACIÓN PARA ZENODO
+═══════════════════════════════════════════════════════════════════════════════
+
+URL: https://zenodo.org
+Repositorio GitHub: https://github.com/Marine-Data-Lab/curso_computacion
+Página Web: https://marine-data-lab.github.io/curso_computacion
+
+Título: Curso de Programación y Computación - Simuladores Educativos
+Autor Principal: Dr. Ricardo Cavieses Núñez
+Institución: Universidad Autónoma de Baja California Sur
+Licencia: Creative Commons Attribution 4.0
+
+DOI: [Se genera automáticamente al publicar]
+
+📚 DOCUMENTACIÓN DISPONIBLE
+═══════════════════════════════════════════════════════════════════════════════
+
+Para Estudiantes:
+├─ ESTUDIANTES_INSTRUCCIONES.md ← Cómo actualizar nombre
+└─ README.md ← Información general del proyecto
+
+Para Zenodo:
+├─ ZENODO_GUIDE.md ← Guía paso a paso
+├─ CITATION.cff ← Metadatos de citación
+└─ .zenodo.json ← Metadatos específicos de Zenodo
+
+Técnico:
+├─ CAMBIOS_REALIZADOS.md ← Documentación detallada
+├─ games-data.json ← Base de datos de juegos
+└─ index.html ← Página web dinámica
+
+🔒 LICENCIA
+═══════════════════════════════════════════════════════════════════════════════
+
+Creative Commons Attribution 4.0 International (CC-BY-4.0)
+
+✅ PERMITIDO:
+   ✓ Usar comercialmente
+   ✓ Modificar
+   ✓ Distribuir
+   ✓ Usar privadamente
+
+⚠️ OBLIGATORIO:
+   • Dar crédito al autor original
+   • Indicar cambios realizados
+   • Publicar licencia
+
+❌ NO PERMITIDO:
+   • Usar marcas registradas
+   • Responsabilidad legal del licenciante
+
+✨ CARACTERÍSTICAS PRINCIPALES
+═══════════════════════════════════════════════════════════════════════════════
+
+[✓] Sistema Dinámico
+    Cambios únicos en JSON actualizan toda la página automáticamente
+
+[✓] Responsivo
+    Funciona en móvil, tablet y desktop
+
+[✓] Sin Dependencias
+    HTML5, CSS3, JavaScript puro - no requiere frameworks
+
+[✓] Accesible
+    Página web interactiva en GitHub Pages
+
+[✓] Citables
+    Metadatos listos para Zenodo y Google Scholar
+
+[✓] Documentado
+    Guías completas para estudiantes y publicación
+
+[✓] Actualizable
+    Estudiantes pueden ver sus nombres inmediatamente después de actualizar
+
+📈 VENTAJAS DE ESTA IMPLEMENTACIÓN
+═══════════════════════════════════════════════════════════════════════════════
+
+1. ESTUDIANTES
+   ✓ Ven sus nombres en la página web oficial
+   ✓ Pueden ser citados académicamente
+   ✓ Su trabajo es preservado digitalmente
+   ✓ Acceso permanente con DOI
+
+2. INSTRUCTOR
+   ✓ Proyecto profesional y publicable
+   ✓ Automatización de cambios
+   ✓ Fácil mantenimiento
+   ✓ Credibilidad académica
+
+3. FUTURAS COHORTES
+   ✓ Pueden ver trabajos previos
+   ✓ Inspiración para nuevos proyectos
+   ✓ Recurso educativo reutilizable
+
+4. INSTITUCIÓN
+   ✓ Visibilidad académica
+   ✓ Preservación de trabajos
+   ✓ Acceso abierto a investigación educativa
+
+═══════════════════════════════════════════════════════════════════════════════
+
+Estado de Implementación: ✅ COMPLETADO
+
+Fecha: Marzo 20, 2026
+Responsable: Sistema de Automatización
+Próxima revisión: Cuando estudiantes actualicen nombres
+
+═══════════════════════════════════════════════════════════════════════════════

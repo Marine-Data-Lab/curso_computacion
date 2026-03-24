@@ -57,6 +57,35 @@
             opacity: 0.9;
         }
 
+        .institution-info {
+            font-size: 1.1em;
+            margin-top: 15px;
+            line-height: 1.6;
+        }
+
+        .department {
+            font-weight: 600;
+            font-size: 1.15em;
+        }
+
+        .instructor {
+            font-style: italic;
+            opacity: 0.95;
+            margin-top: 8px;
+        }
+
+        .description {
+            max-width: 800px;
+            margin: 30px auto 0;
+            font-size: 1em;
+            line-height: 1.6;
+            opacity: 0.95;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+        }
+
         .programs {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
@@ -116,25 +145,29 @@
 
         .game-item {
             display: flex;
-            align-items: center;
-            padding: 12px 15px;
+            flex-direction: column;
+            padding: 15px;
             background: #f8f9fa;
             border-radius: 6px;
             text-decoration: none;
             color: #333;
             transition: all 0.3s ease;
             border-left: 4px solid transparent;
+            cursor: pointer;
         }
 
         .game-item:hover {
             background: #e8f4f8;
             border-left-color: #3498db;
-            transform: translateX(5px);
+            transform: translateX(3px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
-        .program-section.prevention .game-item:hover {
-            background: #fadbd8;
-            border-left-color: #e74c3c;
+        .game-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
         }
 
         .game-number {
@@ -146,7 +179,6 @@
             background: #3498db;
             color: white;
             border-radius: 50%;
-            margin-right: 12px;
             font-weight: bold;
             flex-shrink: 0;
             font-size: 0.9em;
@@ -158,12 +190,28 @@
 
         .game-title {
             flex: 1;
-            font-weight: 500;
+            font-weight: 600;
+            font-size: 1.05em;
+        }
+
+        .game-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .game-author {
+            font-size: 0.85em;
+            color: #666;
+            font-style: italic;
         }
 
         .game-arrow {
             color: #999;
             transition: color 0.3s ease;
+            align-self: flex-start;
         }
 
         .game-item:hover .game-arrow {
@@ -173,6 +221,19 @@
         .program-section.prevention .game-item:hover .game-arrow {
             color: #e74c3c;
         }
+
+        .game-description {
+            font-size: 0.9em;
+            color: #555;
+            line-height: 1.4;
+            margin-top: 8px;
+        }
+
+        .program-section.prevention .game-item:hover {
+            background: #fadbd8;
+            border-left-color: #e74c3c;
+        }
+
 
         .stats {
             display: flex;
@@ -275,143 +336,19 @@
             <div class="logo">
                 <img src="logo_uabcs.png" alt="UABCS Logo">
             </div>
+            <div class="institution-info">
+                <p>Universidad Autónoma de Baja California Sur</p>
+                <p class="department">Departamento Académico de Ingeniería en Pesquerías</p>
+                <p class="instructor">Dr. Ricardo Cavieses Núñez</p>
+            </div>
             <h1>Curso de Programación y Computación</h1>
-            <p class="subtitle">Universidad Autónoma de Baja California Sur (UABCS)</p>
+            <div class="description">
+                Este curso presenta sistemas de simulación educativos con interfaz de videojuego. Los estudiantes diseñaron aplicaciones interactivas que modelan fenómenos reales: sostenibilidad pesquera, gestión empresarial y control de incendios forestales, combinando aprendizaje computacional con resolución de problemas prácticos.
+            </div>
         </header>
 
-        <div class="programs">
-            <!-- Ingeniería en Pesquerías -->
-            <section class="program-section">
-                <div class="program-header fisheries">
-                    <span class="program-icon">🌊</span>
-                    <div>
-                        <h2>Ingeniería en Pesquerías</h2>
-                        <p>Simuladores de gestión sostenible de recursos pesqueros</p>
-                    </div>
-                </div>
-
-                <div class="games-list">
-                    <a href="ingeniería%20en%20pesquerías/juegos/gestiona_tu_empresa.html" class="game-item">
-                        <span class="game-number">1</span>
-                        <span class="game-title">Gestiona tu Empresa</span>
-                        <span class="game-arrow">→</span>
-                    </a>
-                    <a href="ingeniería%20en%20pesquerías/juegos/mar_sustentable%20(1).html" class="game-item">
-                        <span class="game-number">2</span>
-                        <span class="game-title">Mar Sustentable</span>
-                        <span class="game-arrow">→</span>
-                    </a>
-                    <a href="ingeniería%20en%20pesquerías/juegos/pesca_detective.html" class="game-item">
-                        <span class="game-number">3</span>
-                        <span class="game-title">Pesca Detective</span>
-                        <span class="game-arrow">→</span>
-                    </a>
-                    <a href="ingeniería%20en%20pesquerías/juegos/pesca_sustentable.html" class="game-item">
-                        <span class="game-number">4</span>
-                        <span class="game-title">Pesca Sustentable</span>
-                        <span class="game-arrow">→</span>
-                    </a>
-                    <a href="ingeniería%20en%20pesquerías/juegos/pesqueria_uabcs.html" class="game-item">
-                        <span class="game-number">5</span>
-                        <span class="game-title">Pesquería UABCS</span>
-                        <span class="game-arrow">→</span>
-                    </a>
-                    <a href="ingeniería%20en%20pesquerías/juegos/simulador_pesca.html" class="game-item">
-                        <span class="game-number">6</span>
-                        <span class="game-title">Simulador de Pesca</span>
-                        <span class="game-arrow">→</span>
-                    </a>
-                    <a href="ingeniería%20en%20pesquerías/juegos/simulador_pesca_biodiverso_premium%20hugo%20juego.html" class="game-item">
-                        <span class="game-number">7</span>
-                        <span class="game-title">Simulador Biodiverso Premium</span>
-                        <span class="game-arrow">→</span>
-                    </a>
-                    <a href="ingeniería%20en%20pesquerías/juegos/simulador_pesca_pro_elaborado%20(1).html" class="game-item">
-                        <span class="game-number">8</span>
-                        <span class="game-title">Simulador Pesca Pro Elaborado</span>
-                        <span class="game-arrow">→</span>
-                    </a>
-                    <a href="ingeniería%20en%20pesquerías/juegos/simulador_pesca_sustentable%20(1).html" class="game-item">
-                        <span class="game-number">9</span>
-                        <span class="game-title">Simulador Pesca Sustentable</span>
-                        <span class="game-arrow">→</span>
-                    </a>
-                </div>
-
-                <div class="stats">
-                    <div class="stat">
-                        <div class="stat-number">9</div>
-                        <div class="stat-label">Juegos</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-label">Tema: Pesca Sostenible</div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Ingeniería en Prevención de Desastres -->
-            <section class="program-section">
-                <div class="program-header prevention">
-                    <span class="program-icon">🔥</span>
-                    <div>
-                        <h2>Prevención de Desastres</h2>
-                        <p>Simuladores de gestión de incendios forestales</p>
-                    </div>
-                </div>
-
-                <div class="games-list">
-                    <a href="ingeniería%20en%20prevensión%20de%20desastres%20naturales%20y%20protección%20civil/juegos/bosque_incendio.html" class="game-item">
-                        <span class="game-number">1</span>
-                        <span class="game-title">Bosque Incendio</span>
-                        <span class="game-arrow">→</span>
-                    </a>
-                    <a href="ingeniería%20en%20prevensión%20de%20desastres%20naturales%20y%20protección%20civil/juegos/juego_incendios_mexico.html" class="game-item">
-                        <span class="game-number">2</span>
-                        <span class="game-title">Juego de Incendios en México</span>
-                        <span class="game-arrow">→</span>
-                    </a>
-                    <a href="ingeniería%20en%20prevensión%20de%20desastres%20naturales%20y%20protección%20civil/juegos/simulador_dispersion_incendio_uabcs.html" class="game-item">
-                        <span class="game-number">3</span>
-                        <span class="game-title">Simulador Dispersión UABCS</span>
-                        <span class="game-arrow">→</span>
-                    </a>
-                    <a href="ingeniería%20en%20prevensión%20de%20desastres%20naturales%20y%20protección%20civil/juegos/simulador_dispersion_incendios(1).html" class="game-item">
-                        <span class="game-number">4</span>
-                        <span class="game-title">Simulador de Dispersión (v2)</span>
-                        <span class="game-arrow">→</span>
-                    </a>
-                    <a href="ingeniería%20en%20prevensión%20de%20desastres%20naturales%20y%20protección%20civil/juegos/simulador_dispersion_incendios.html" class="game-item">
-                        <span class="game-number">5</span>
-                        <span class="game-title">Simulador de Dispersión</span>
-                        <span class="game-arrow">→</span>
-                    </a>
-                    <a href="ingeniería%20en%20prevensión%20de%20desastres%20naturales%20y%20protección%20civil/juegos/simulador_incendios_bcs_4.html" class="game-item">
-                        <span class="game-number">6</span>
-                        <span class="game-title">Simulador Incendios BCS v4</span>
-                        <span class="game-arrow">→</span>
-                    </a>
-                    <a href="ingeniería%20en%20prevensión%20de%20desastres%20naturales%20y%20protección%20civil/juegos/simulador_incendios_brigadistas.html" class="game-item">
-                        <span class="game-number">7</span>
-                        <span class="game-title">Simulador Incendios Brigadistas</span>
-                        <span class="game-arrow">→</span>
-                    </a>
-                    <a href="ingeniería%20en%20prevensión%20de%20desastres%20naturales%20y%20protección%20civil/juegos/simulador_incendios_forestales.html" class="game-item">
-                        <span class="game-number">8</span>
-                        <span class="game-title">Simulador Incendios Forestales</span>
-                        <span class="game-arrow">→</span>
-                    </a>
-                </div>
-
-                <div class="stats">
-                    <div class="stat">
-                        <div class="stat-number">8</div>
-                        <div class="stat-label">Juegos</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-label">Tema: Incendios Forestales</div>
-                    </div>
-                </div>
-            </section>
+        <div class="programs" id="programs-container">
+            <!-- Se llenarán dinámicamente con JavaScript -->
         </div>
 
         <footer>
@@ -427,5 +364,121 @@
             </div>
         </footer>
     </div>
+
+    <script>
+        // Cargar datos de juegos desde JSON
+        async function loadGamesData() {
+            try {
+                const response = await fetch('games-data.json');
+                const data = await response.json();
+                renderPrograms(data.games);
+            } catch (error) {
+                console.error('Error cargando datos de juegos:', error);
+                // Mostrar contenido estático si falla el JSON
+                renderStaticContent();
+            }
+        }
+
+        function renderPrograms(games) {
+            const container = document.getElementById('programs-container');
+            container.innerHTML = '';
+
+            // Agrupar juegos por programa
+            const programs = {};
+            games.forEach(game => {
+                if (!programs[game.program]) {
+                    programs[game.program] = [];
+                }
+                programs[game.program].push(game);
+            });
+
+            // Crear secciones
+            const pesqueriaGames = games.filter(g => g.program === 'Ingeniería en Pesquerías');
+            const desastresGames = games.filter(g => g.program === 'Ingeniería en Prevención de Desastres');
+
+            if (pesqueriaGames.length > 0) {
+                container.appendChild(createProgramSection(
+                    'Ingeniería en Pesquerías',
+                    '🌊',
+                    'fisheries',
+                    'Simuladores de gestión sostenible de recursos pesqueros',
+                    pesqueriaGames
+                ));
+            }
+
+            if (desastresGames.length > 0) {
+                container.appendChild(createProgramSection(
+                    'Ingeniería en Prevención de Desastres',
+                    '🔥',
+                    'prevention',
+                    'Simuladores de gestión de incendios forestales',
+                    desastresGames
+                ));
+            }
+        }
+
+        function createProgramSection(title, icon, cssClass, subtitle, games) {
+            const section = document.createElement('section');
+            section.className = 'program-section';
+
+            const header = document.createElement('div');
+            header.className = `program-header ${cssClass}`;
+            header.innerHTML = `
+                <span class="program-icon">${icon}</span>
+                <div>
+                    <h2>${title}</h2>
+                    <p>${subtitle}</p>
+                </div>
+            `;
+
+            const gamesList = document.createElement('div');
+            gamesList.className = 'games-list';
+
+            games.forEach((game, index) => {
+                const gameItem = document.createElement('a');
+                gameItem.href = game.htmlFile;
+                gameItem.className = 'game-item';
+                gameItem.target = '_blank';
+                gameItem.innerHTML = `
+                    <div class="game-header">
+                        <span class="game-number">${index + 1}</span>
+                        <span class="game-title">${game.title}</span>
+                        <span class="game-arrow">→</span>
+                    </div>
+                    <div class="game-meta">
+                        <span class="game-author">👤 ${game.author}</span>
+                    </div>
+                    <div class="game-description">${game.description}</div>
+                `;
+                gamesList.appendChild(gameItem);
+            });
+
+            const stats = document.createElement('div');
+            stats.className = 'stats';
+            stats.innerHTML = `
+                <div class="stat">
+                    <div class="stat-number">${games.length}</div>
+                    <div class="stat-label">Juegos</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Tema: ${games[0].keywords.join(', ')}</div>
+                </div>
+            `;
+
+            section.appendChild(header);
+            section.appendChild(gamesList);
+            section.appendChild(stats);
+
+            return section;
+        }
+
+        function renderStaticContent() {
+            // Fallback si el JSON no carga
+            console.log('Usando contenido estático');
+        }
+
+        // Cargar datos cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', loadGamesData);
+    </script>
 </body>
 </html>

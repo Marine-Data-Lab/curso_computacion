@@ -1,0 +1,56 @@
+{
+  "title": "Curso de Programación y Computación - Simuladores Educativos Interactivos",
+  "creators": [
+    {
+      "name": "Cavieses Núñez, Ricardo",
+      "affiliation": "Universidad Autónoma de Baja California Sur",
+      "orcid": ""
+    }
+  ],
+  "description": "Colección de 17 simuladores educativos desarrollados por estudiantes de dos programas académicos de la Universidad Autónoma de Baja California Sur. Los juegos interactivos modelan sistemas reales complejos: sostenibilidad pesquera, gestión de incendios forestales y toma de decisiones empresariales. Cada simulador utiliza HTML5, CSS3 y JavaScript, funcionando completamente en navegadores modernos sin requerir dependencias externas.",
+  "keywords": [
+    "educación",
+    "simulación",
+    "programación",
+    "pesquerías",
+    "incendios forestales",
+    "html5",
+    "javascript",
+    "game-based learning",
+    "sistema educativo"
+  ],
+  "license": "CC-BY-4.0",
+  "upload_type": "software",
+  "publication_date": "2026-03-20",
+  "contributors": [
+    {
+      "name": "Estudiantes de Ingeniería en Pesquerías",
+      "type": "Author"
+    },
+    {
+      "name": "Estudiantes de Ingeniería en Prevención de Desastres",
+      "type": "Author"
+    }
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/Marine-Data-Lab/curso_computacion",
+      "relation": "isSupplementTo",
+      "resource_type": "software"
+    }
+  ],
+  "subjects": [
+    {
+      "term": "Educational Technology",
+      "scheme": "LCSH"
+    },
+    {
+      "term": "Computer Science Education",
+      "scheme": "LCSH"
+    },
+    {
+      "term": "Game-Based Learning",
+      "scheme": "LCSH"
+    }
+  ]
+}

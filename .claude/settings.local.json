@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(unzip -q \"Actividad Videojuego-20260320T163011Z-3-001.zip\")",
+      "Bash(unzip -q \"Datos reales sobre incendios forestales-20260320T162913Z-3-001.zip\")",
+      "Bash(__NEW_LINE_c7c9f0d47690d255__ echo:*)",
+      "Bash(\"C:\\\\Users\\\\ricar\\\\OneDrive\\\\Documentos\\\\Proyectos\\\\Curso_Computacion\\\\RESUMEN_IMPLEMENTACION.txt\":*)"
+    ]
+  }
+}

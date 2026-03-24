@@ -1,60 +1,67 @@
 # Curso de Programación y Computación - UABCS
+## Simuladores Educativos Interactivos
 
-## Descripción
+Este repositorio contiene **17 simuladores educativos interactivos** desarrollados por estudiantes de dos programas académicos de la Universidad Autónoma de Baja California Sur (UABCS).
 
-Este repositorio contiene material educativo y proyectos desarrollados para los cursos de Programación y Computación impartidos en la Universidad Autónoma de Baja California Sur (UABCS) a dos licenciaturas diferentes.
+### 📌 Información Rápida
+- **Instituto**: Universidad Autónoma de Baja California Sur
+- **Departamento**: Académico de Ingeniería en Pesquerías
+- **Instructor**: Dr. Ricardo Cavieses Núñez
+- **Tecnología**: HTML5, CSS3, JavaScript (sin dependencias externas)
+- **Acceso**: Funciona completamente en navegadores web modernos
+- **Licencia**: Creative Commons Attribution 4.0 (CC-BY-4.0)
 
-Los estudiantes han creado **simuladores educativos interactivos** en formato HTML/JavaScript que abordan problemas reales y contemporáneos de sus respectivas disciplinas.
+## 🎮 Contenido
 
-## Estructura del Proyecto
+### 📊 Ingeniería en Pesquerías (9 simuladores)
 
-El repositorio está organizado en dos carpetas principales, una por cada programa académico:
+Simuladores interactivos para comprender la **sostenibilidad de recursos pesqueros** y gestión empresarial marina.
 
-### 📊 Ingeniería en Pesquerías
-**Carpeta:** [`ingeniería en pesquerías/`](./ingeniería%20en%20pesquerías/)
+| # | Juego | Tema |
+|---|-------|------|
+| 1 | Gestiona tu Empresa | Gestión empresarial pesquera |
+| 2 | Mar Sustentable | Sostenibilidad marina |
+| 3 | Pesca Detective | Investigación ambiental |
+| 4 | Pesca Sustentable | Conservación de recursos |
+| 5 | Pesquería UABCS | Casos locales de BCS |
+| 6 | Simulador de Pesca | Dinámica de pesca |
+| 7 | Simulador Biodiverso Premium | Modelos de biodiversidad |
+| 8 | Simulador Pesca Pro | Simulación profesional |
+| 9 | Simulador Pesca Sustentable | Estrategias a largo plazo |
 
-Contiene **9 juegos educativos** que simulan y enseñan sobre:
-- Gestión sostenible de recursos pesqueros
-- Simulación de sistemas de pesca
-- Toma de decisiones empresariales en la industria pesquera
-- Monitoreo de biodiversidad marina
-- Prácticas sustentables en el mar
+### 🔥 Ingeniería en Prevención de Desastres (8 simuladores)
 
-**Juegos disponibles:**
-- Gestiona tu Empresa
-- Mar Sustentable
-- Pesca Detective
-- Pesca Sustentable
-- Pesquería UABCS
-- Simulador de Pesca
-- Simulador de Pesca Biodiverso Premium
-- Y más...
+Simuladores educativos para **gestión de incendios forestales** y protección civil.
 
-### 🔥 Ingeniería en Prevención de Desastres Naturales y Protección Civil
-**Carpeta:** [`ingeniería en prevensión de desastres naturales y protección civil/`](./ingeniería%20en%20prevensión%20de%20desastres%20naturales%20y%20protección%20civil/)
+| # | Juego | Tema |
+|---|-------|------|
+| 1 | Bosque Incendio | Control de propagación |
+| 2 | Juego de Incendios México | Datos estadísticos reales |
+| 3 | Simulador Dispersión UABCS | Modelos locales de BCS |
+| 4 | Simulador de Dispersión (v2) | Física mejorada |
+| 5 | Simulador de Dispersión | Propagación espacio-temporal |
+| 6 | Simulador Incendios BCS v4 | Versión avanzada local |
+| 7 | Simulador Incendios Brigadistas | Rol de brigadistas |
+| 8 | Simulador Incendios Forestales | Modelo integral |
 
-Contiene **8 juegos educativos** que simulan y enseñan sobre:
-- Dispersión y propagación de incendios forestales
-- Gestión de recursos de protección civil
-- Respuesta a emergencias por incendios
-- Datos reales sobre incendios en México
-- Estrategias de prevención y control
+## 🚀 Cómo Usar
 
-**Juegos disponibles:**
-- Bosque Incendio
-- Juego de Incendios en México
-- Simulador de Dispersión de Incendios
-- Simulador de Incendios BCS
-- Simulador de Incendios Brigadistas
-- Y más...
+### Opción 1: Página Web (Recomendado)
+Accede a la página GitHub Pages interactiva: **[https://marine-data-lab.github.io/curso_computacion](https://marine-data-lab.github.io/curso_computacion)**
 
-## Cómo Usar
+La página carga dinámicamente todos los juegos con descripciones desde `games-data.json`.
 
-Cada carpeta contiene una subcarpeta `juegos/` con archivos HTML individuales. Para ejecutar cualquier juego:
+### Opción 2: Archivo Local
+1. Descarga o clona este repositorio
+2. Abre `index.html` en tu navegador web moderno
+3. Haz clic en cualquier juego para comenzar
 
-1. Navega a la carpeta de la ingeniería que te interese
-2. Abre cualquier archivo `.html` en un navegador web moderno
-3. Los juegos funcionan completamente en el navegador (no requieren conexión a internet)
+### Opción 3: Acceso Directo
+Navega a la carpeta específica:
+- **Pesquerías**: `ingeniería en pesquerías/juegos/`
+- **Desastres**: `ingeniería en prevensión de desastres naturales y protección civil/juegos/`
+
+Abre cualquier archivo `.html` en tu navegador.
 
 ## Tecnología
 
@@ -63,25 +70,93 @@ Cada carpeta contiene una subcarpeta `juegos/` con archivos HTML individuales. P
 - **JavaScript** para lógica de juego e interactividad
 - Compatible con navegadores modernos (Chrome, Firefox, Edge, Safari)
 
-## Propósito Educativo
+## 👨‍🎓 Créditos y Autoría
+
+Los estudiantes autores están siendo actualizados en el archivo `games-data.json`. Para ver los créditos completos de cada juego, consulta ese archivo.
+
+### Para Estudiantes: Actualizar tu Nombre
+Si creaste uno de los juegos y tu nombre aún aparece como "NOMBRE DEL ESTUDIANTE", edita el archivo `games-data.json`:
+
+```json
+{
+  "id": 1,
+  "title": "Tu Juego",
+  "author": "Tu Nombre Real",  // ← Cambia aquí
+  ...
+}
+```
+
+Después, haz un pull request o contacta al instructor.
+
+## 🎓 Propósito Educativo
 
 Estos simuladores fueron desarrollados como proyectos académicos con el objetivo de:
-- Enseñar programación de forma práctica y contextualizada
-- Aplicar conceptos computacionales a problemas reales
-- Desarrollar habilidades de pensamiento sistémico
-- Familiarizar a los estudiantes con desafíos específicos de sus disciplinas
+- ✅ Enseñar programación de forma práctica y contextualizada
+- ✅ Aplicar conceptos computacionales a problemas reales
+- ✅ Desarrollar habilidades de pensamiento sistémico
+- ✅ Familiarizar a los estudiantes con desafíos específicos de sus disciplinas
+- ✅ Crear artefactos educativos reutilizables
 
-## Información de la Institución
+## 🏛️ Información Institucional
 
-- **Universidad:** Universidad Autónoma de Baja California Sur (UABCS)
-- **Programas:**
-  - Licenciatura en Ingeniería en Pesquerías
-  - Licenciatura en Ingeniería en Prevención de Desastres Naturales y Protección Civil
+| Aspecto | Detalle |
+|---------|---------|
+| **Universidad** | Universidad Autónoma de Baja California Sur (UABCS) |
+| **Departamento** | Académico de Ingeniería en Pesquerías |
+| **Instructor** | Dr. Ricardo Cavieses Núñez |
+| **Programas** | • Licenciatura en Ingeniería en Pesquerías<br>• Licenciatura en Ingeniería en Prevención de Desastres |
+| **Ubicación** | La Paz, Baja California Sur, México |
 
-## Licencia
+## 📜 Licencia
 
-Este contenido fue desarrollado con fines educativos. Consulta con los autores originales para más detalles sobre el uso y distribución.
+This project is licensed under the **Creative Commons Attribution 4.0 International License** (CC-BY-4.0).
+
+- ✅ **Permitido**: Usar, modificar, distribuir (comercial y no comercial)
+- 📝 **Obligatorio**: Dar crédito al autor original
+- 📖 Ver archivo `LICENSE` para detalles completos
+
+## 🌐 Publicación en Zenodo
+
+Este repositorio está preparado para publicación en Zenodo. Consulta `ZENODO_GUIDE.md` para instrucciones detalladas.
+
+### Citación Recomendada
+```bibtex
+@software{cavieses_2026,
+  title = {Curso de Programación y Computación: Simuladores Educativos},
+  author = {Cavieses Núñez, Ricardo and {Estudiantes de Ingeniería}},
+  year = {2026},
+  url = {https://github.com/Marine-Data-Lab/curso_computacion}
+}
+```
+
+## 📦 Archivos Importantes
+
+- `index.html` - Página principal interactiva
+- `games-data.json` - Datos de juegos y autores
+- `CITATION.cff` - Metadatos de citación
+- `.zenodo.json` - Metadatos para Zenodo
+- `ZENODO_GUIDE.md` - Guía completa para publicar en Zenodo
+- `LICENSE` - Licencia CC-BY-4.0
+
+## 🔧 Tecnología
+
+| Stack | Detalles |
+|-------|----------|
+| **HTML5** | Estructura semántica |
+| **CSS3** | Estilos responsivos |
+| **JavaScript** | Lógica de juegos e interactividad |
+| **Navegadores** | Chrome, Firefox, Edge, Safari (modernos) |
+| **Dependencias** | ❌ Ninguna (sin frameworks externos) |
+
+## 📊 Estadísticas
+
+- **Total de simuladores**: 17
+- **Líneas de código HTML/CSS/JS**: ~15,000+
+- **Estudiantes colaboradores**: ~20+
+- **Año académico**: 2026
 
 ---
 
-*Última actualización: Marzo 2026*
+**Última actualización**: Marzo 20, 2026
+**Repositorio**: [github.com/Marine-Data-Lab/curso_computacion](https://github.com/Marine-Data-Lab/curso_computacion)
+**Página Web**: [marine-data-lab.github.io/curso_computacion](https://marine-data-lab.github.io/curso_computacion)

@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+title: "Curso de Programación y Computación - Simuladores Educativos"
+message: "Please cite this software using these metadata."
+type: software
+authors:
+  - family-names: "Cavieses Núñez"
+    given-names: "Ricardo"
+    affiliation: "Universidad Autónoma de Baja California Sur"
+    role: "instructor"
+repository-code: "https://github.com/Marine-Data-Lab/curso_computacion"
+url: "https://marine-data-lab.github.io/curso_computacion"
+abstract: "Colección de simuladores educativos desarrollados por estudiantes de Ingeniería en Pesquerías e Ingeniería en Prevención de Desastres Naturales para enseñar programación a través de problemas reales. Incluye 17 juegos interactivos con interfaz de videojuego que modelan sostenibilidad pesquera y control de incendios forestales."
+keywords:
+  - "educación"
+  - "simulación"
+  - "programación"
+  - "pesquerías"
+  - "incendios"
+  - "html5"
+  - "javascript"
+license: "CC-BY-4.0"
+version: "1.0.0"
+date-released: 2026-03-20
