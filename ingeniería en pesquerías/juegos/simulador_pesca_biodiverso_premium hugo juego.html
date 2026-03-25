@@ -1,716 +1,516 @@
-<html>
-<head>
+
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-html { font-family: var(--font-sans); }
-body { background: transparent; }
-.container { padding: 1.5rem 1rem; max-width: 900px; margin: 0 auto; }
-.screen { display: none; }
-.screen.active { display: block; }
-.welcome-section {
-  background: linear-gradient(135deg, #1e5a8a 0%, #0f3a5a 100%);
-  color: white;
-  border-radius: var(--border-radius-lg);
-  padding: 3rem 2rem;
-  text-align: center;
-  margin-bottom: 2.5rem;
-}
-.welcome-title { font-size: 32px; font-weight: 500; margin-bottom: 0.8rem; }
-.welcome-desc { font-size: 15px; line-height: 1.7; opacity: 0.95; margin-bottom: 2rem; }
-.start-btn {
-  background: #d4af37;
-  color: #0f3a5a;
-  border: none;
-  padding: 14px 48px;
-  font-size: 16px;
-  font-weight: 500;
-  border-radius: var(--border-radius-md);
-  cursor: pointer;
-  transition: all 0.3s;
-}
-.start-btn:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4); }
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.2rem;
-  margin-bottom: 2rem;
-}
-@media (max-width: 600px) { .features-grid { grid-template-columns: 1fr; } }
-.feature-item {
-  background: var(--color-background-secondary);
-  border: 0.5px solid var(--color-border-tertiary);
-  border-radius: var(--border-radius-md);
-  padding: 1.5rem;
-  text-align: center;
-}
-.feature-icon { font-size: 32px; margin-bottom: 0.8rem; }
-.feature-name { font-size: 14px; font-weight: 500; margin-bottom: 0.3rem; }
-.feature-text { font-size: 12px; color: var(--color-text-secondary); }
-.game-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: var(--color-background-secondary);
-  padding: 1.2rem;
-  border-radius: var(--border-radius-md);
-  border: 0.5px solid var(--color-border-tertiary);
-  margin-bottom: 1.5rem;
-}
-.header-left h2 { font-size: 18px; font-weight: 500; margin-bottom: 0.2rem; }
-.header-left p { font-size: 12px; color: var(--color-text-secondary); }
-.progress-section { flex: 1; margin: 0 2rem; }
-.progress-bar {
-  width: 100%;
-  height: 8px;
-  background: var(--color-background-tertiary);
-  border-radius: 4px;
-  overflow: hidden;
-  margin-bottom: 0.4rem;
-}
-.progress-fill {
-  height: 100%;
-  background: #d4af37;
-  transition: width 0.3s ease;
-}
-.progress-text { font-size: 11px; color: var(--color-text-secondary); }
-.header-right { text-align: right; }
-.header-right p { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 0.2rem; }
-.header-right .value { font-size: 18px; font-weight: 500; color: #d4af37; }
-.ocean-scene {
-  background: linear-gradient(180deg, #87ceeb 0%, #4a90e2 40%, #1e5a8a 70%, #0f3a5a 100%);
-  border-radius: var(--border-radius-lg);
-  padding: 2.5rem 2rem;
-  min-height: 320px;
-  position: relative;
-  overflow: hidden;
-  margin: 2rem 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-.sun { position: absolute; top: 20px; right: 30px; width: 50px; height: 50px; background: #ffd700; border-radius: 50%; opacity: 0.8; }
-.waves {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 60px;
-  background: repeating-linear-gradient(90deg, transparent, transparent 35px, rgba(255,255,255,0.1) 35px, rgba(255,255,255,0.1) 70px);
-  animation: waveMove 3s linear infinite;
-}
-@keyframes waveMove { 0% { background-position: 0 0; } 100% { background-position: 70px 0; } }
-.marine-life {
-  position: absolute;
-  width: 100%;
-  height: 180px;
-  top: 40px;
-  left: 0;
-}
-svg { position: absolute; }
-.boat-container {
-  position: relative;
-  width: 200px;
-  height: 100px;
-  margin: 1.5rem 0;
-  z-index: 10;
-}
-.boat-hull { position: absolute; bottom: 30px; left: 30px; width: 140px; height: 50px; background: #2c1810; border-radius: 50% 50% 10% 10%; }
-.boat-hull::before {
-  content: '';
-  position: absolute;
-  bottom: 45px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 120px;
-  height: 15px;
-  background: #1a0f08;
-  border-radius: 50%;
-}
-.cabin { position: absolute; bottom: 80px; left: 65px; width: 70px; height: 30px; background: #d4a574; border-radius: 8px 8px 2px 2px; border: 2px solid #8b6f47; }
-.window { position: absolute; width: 12px; height: 12px; background: #87ceeb; border-radius: 50%; border: 1px solid #333; }
-.window:nth-child(1) { top: 8px; left: 15px; }
-.window:nth-child(2) { top: 8px; left: 43px; }
-.mast { position: absolute; bottom: 110px; left: 100px; width: 3px; height: 90px; background: black; }
-.flag {
-  position: absolute;
-  bottom: 175px;
-  left: 103px;
-  width: 30px;
-  height: 20px;
-  background: #d4af37;
-  border-radius: 0 5px 5px 0;
-  animation: flagWave 1.5s ease-in-out infinite;
-}
-@keyframes flagWave { 0%, 100% { transform: skewX(-5deg); } 50% { transform: skewX(5deg); } }
-.nets {
-  position: absolute;
-  bottom: 28px;
-  left: 40px;
-  width: 140px;
-  height: 8px;
-  background: repeating-linear-gradient(90deg, transparent, transparent 8px, rgba(0,0,0,0.3) 8px, rgba(0,0,0,0.3) 10px);
-  border-radius: 2px;
-}
-.boat-anchor { position: absolute; bottom: 20px; right: 10px; width: 12px; height: 15px; background: #555; }
-.boat-message {
-  color: white;
-  font-size: 16px;
-  font-weight: 500;
-  text-align: center;
-  min-height: 24px;
-  z-index: 20;
-}
-.biodiversity-info {
-  background: var(--color-background-secondary);
-  border: 0.5px solid var(--color-border-tertiary);
-  border-radius: var(--border-radius-md);
-  padding: 1rem;
-  margin: 1rem 0;
-  font-size: 12px;
-  color: var(--color-text-secondary);
-}
-.species-indicator { display: flex; gap: 1.5rem; flex-wrap: wrap; justify-content: center; }
-.species-badge {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--color-text-primary);
-}
-.species-dot { width: 12px; height: 12px; border-radius: 50%; }
-.action-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin: 1.5rem 0;
-}
-.action-btn {
-  background: var(--color-background-info);
-  color: var(--color-text-info);
-  border: none;
-  padding: 14px 1rem;
-  font-size: 15px;
-  font-weight: 500;
-  border-radius: var(--border-radius-md);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.action-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(24, 95, 165, 0.2); }
-.action-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-.stats-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-  margin: 1.5rem 0;
-}
-@media (max-width: 600px) { .stats-row { grid-template-columns: 1fr; } }
-.stat-card {
-  background: var(--color-background-secondary);
-  border: 0.5px solid var(--color-border-tertiary);
-  border-radius: var(--border-radius-md);
-  padding: 1.2rem;
-  text-align: center;
-}
-.stat-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 0.4rem; }
-.stat-value { font-size: 24px; font-weight: 500; color: var(--color-text-primary); }
-.ecosystem-status {
-  background: var(--color-background-secondary);
-  border: 0.5px solid var(--color-border-tertiary);
-  border-radius: var(--border-radius-lg);
-  padding: 1.5rem;
-  margin: 1.5rem 0;
-}
-.status-title { font-size: 16px; font-weight: 500; margin-bottom: 1rem; color: var(--color-text-primary); }
-.indicator {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 1.2rem;
-}
-.indicator:last-child { margin-bottom: 0; }
-.indicator-name { font-size: 13px; min-width: 140px; color: var(--color-text-secondary); }
-.indicator-track {
-  flex: 1;
-  height: 22px;
-  background: var(--color-background-tertiary);
-  border-radius: 4px;
-  overflow: hidden;
-  border: 0.5px solid var(--color-border-tertiary);
-}
-.indicator-value {
-  height: 100%;
-  background: linear-gradient(90deg, #1d9e75, #0f6e56);
-  transition: width 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 11px;
-  font-weight: 500;
-}
-.indicator-value.warning { background: linear-gradient(90deg, #d4af37, #b8941d); }
-.indicator-value.danger { background: linear-gradient(90deg, #c74e3c, #9a3a2d); }
-.message-alert {
-  background: var(--color-background-info);
-  color: var(--color-text-info);
-  border-left: 4px solid var(--color-text-info);
-  padding: 1rem;
-  border-radius: var(--border-radius-md);
-  margin: 1rem 0;
-  display: none;
-  animation: slideIn 0.3s ease;
-  font-size: 13px;
-}
-.message-alert.show { display: block; }
-@keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-.modal-overlay {
-  display: none;
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  z-index: 1000;
-  align-items: center;
-  justify-content: center;
-}
-.modal-overlay.show { display: flex; }
-.modal-box {
-  background: var(--color-background-primary);
-  border-radius: var(--border-radius-lg);
-  padding: 2rem;
-  max-width: 500px;
-  border: 0.5px solid var(--color-border-tertiary);
-  text-align: center;
-}
-.modal-title { font-size: 26px; font-weight: 500; margin-bottom: 1rem; }
-.modal-text { font-size: 15px; line-height: 1.6; margin-bottom: 1.5rem; color: var(--color-text-secondary); }
-.modal-stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 1rem;
-  margin: 1.5rem 0;
-}
-.modal-stat {
-  background: var(--color-background-secondary);
-  padding: 1rem;
-  border-radius: var(--border-radius-md);
-  border: 0.5px solid var(--color-border-tertiary);
-}
-.modal-stat-label { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 0.3rem; }
-.modal-stat-value { font-size: 22px; font-weight: 500; color: var(--color-text-primary); }
-.modal-actions { display: flex; gap: 1rem; margin-top: 1.5rem; }
-.modal-btn {
-  flex: 1;
-  background: var(--color-background-info);
-  color: var(--color-text-info);
-  border: none;
-  padding: 12px;
-  border-radius: var(--border-radius-md);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.modal-btn:hover { transform: translateY(-1px); }
+@import url('https://fonts.googleapis.com/css2?family=Righteous&family=Nunito:wght@400;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+#gr{font-family:'Nunito',sans-serif;background:#0a1628;min-height:620px;color:#e8f4fd;position:relative;overflow:hidden;border-radius:12px;user-select:none;}
+.sky{position:absolute;top:0;left:0;right:0;height:200px;background:linear-gradient(180deg,#1a0a2e 0%,#c0392b 45%,#e67e22 70%,#f1c40f 100%);}
+.sun{position:absolute;top:55px;left:50%;transform:translateX(-50%);width:65px;height:65px;border-radius:50%;background:radial-gradient(circle,#fff7a1 0%,#f1c40f 50%,#e67e22 100%);}
+.ocean{position:absolute;top:168px;left:0;right:0;bottom:0;background:linear-gradient(180deg,#1a6b8a 0%,#0e4d6b 40%,#083048 100%);}
+.wave{position:absolute;width:200%;height:35px;top:-8px;left:0;opacity:0.35;animation:wv 4s linear infinite;}
+.wave2{animation:wv 7s linear infinite reverse;opacity:0.2;top:4px;}
+@keyframes wv{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
+.cloud{position:absolute;background:rgba(255,255,255,0.13);border-radius:30px;animation:cl 22s linear infinite;}
+@keyframes cl{0%{transform:translateX(-180px);}100%{transform:translateX(110vw);}}
+.fish-bg{position:absolute;font-size:18px;animation:fs 9s linear infinite;opacity:0.6;}
+@keyframes fs{0%{transform:translateX(-60px);}100%{transform:translateX(110vw);}}
+
+/* BOAT */
+.boat-wrap{position:absolute;top:145px;left:50%;transform:translateX(-50%);text-align:center;z-index:10;animation:bob 3s ease-in-out infinite;}
+@keyframes bob{0%,100%{top:145px;}50%{top:152px;}}
+.boat-emoji{font-size:54px;display:block;cursor:pointer;transition:transform 0.15s;filter:drop-shadow(0 4px 10px rgba(0,0,0,0.6));}
+.boat-emoji:active{transform:scale(0.93);}
+.boat-hint{font-size:10px;opacity:0.65;font-weight:600;margin-top:2px;}
+
+/* NET ANIMATION */
+.net-anim{position:absolute;left:50%;transform:translateX(-50%);z-index:15;pointer-events:none;font-size:28px;animation:netDrop 1.4s ease-in forwards;}
+@keyframes netDrop{0%{top:160px;opacity:1;}60%{top:260px;opacity:1;}80%{top:280px;opacity:0.7;}100%{top:220px;opacity:0;}}
+.catch-burst{position:absolute;z-index:25;font-size:30px;animation:burst 0.9s ease forwards;pointer-events:none;}
+@keyframes burst{0%{opacity:1;transform:scale(0.4) translateY(0);}100%{opacity:0;transform:scale(1.8) translateY(-70px);}}
+
+/* HUD */
+.hud{position:absolute;top:0;left:0;right:0;padding:9px 14px;display:flex;justify-content:space-between;align-items:flex-start;z-index:20;pointer-events:none;}
+.hud-l,.hud-r{display:flex;flex-direction:column;gap:4px;pointer-events:all;}
+.pill{background:rgba(0,0,0,0.6);backdrop-filter:blur(3px);border:1px solid rgba(255,255,255,0.14);border-radius:20px;padding:4px 12px;font-size:13px;font-weight:600;white-space:nowrap;}
+.pill span{opacity:0.65;font-weight:400;}
+.xpw{background:rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.14);border-radius:20px;padding:5px 12px;pointer-events:none;}
+.xpl{font-size:11px;opacity:0.65;margin-bottom:3px;text-align:center;}
+.xpbg{height:6px;background:rgba(255,255,255,0.14);border-radius:3px;overflow:hidden;width:104px;}
+.xpfill{height:100%;background:linear-gradient(90deg,#f1c40f,#e67e22);border-radius:3px;transition:width 0.5s;}
+
+/* BOTTOM PANEL */
+.bp{position:absolute;bottom:0;left:0;right:0;background:rgba(5,18,38,0.94);backdrop-filter:blur(8px);border-top:1px solid rgba(255,255,255,0.09);padding:11px 13px 13px;z-index:20;}
+.ptitle{font-family:'Righteous',sans-serif;font-size:11px;letter-spacing:1px;color:#f1c40f;text-transform:uppercase;margin-bottom:9px;}
+
+/* HOLD */
+.hold-box{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:9px;min-height:30px;background:rgba(0,0,0,0.2);border-radius:8px;padding:5px;align-items:center;}
+.hold-chip{background:rgba(255,255,255,0.1);border-radius:6px;padding:3px 8px;font-size:12px;display:flex;align-items:center;gap:3px;}
+.hold-empty{font-size:11px;opacity:0.35;margin:auto;}
+
+/* ECO */
+.eco-row{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
+.eco-lbl{font-size:11px;opacity:0.55;white-space:nowrap;}
+.eco-bg{flex:1;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;}
+.eco-fill{height:100%;border-radius:3px;transition:width 0.5s,background 0.5s;}
+.eco-v{font-size:11px;font-weight:700;min-width:28px;text-align:right;}
+
+/* BUTTONS */
+.act-row{display:flex;gap:7px;}
+.abtn{flex:1;padding:9px 5px;border-radius:10px;border:none;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.15s;}
+.sell-btn{background:linear-gradient(135deg,#27ae60,#1e8449);color:white;}
+.sell-btn:hover{background:linear-gradient(135deg,#2ecc71,#27ae60);transform:translateY(-1px);}
+.cast-btn{background:linear-gradient(135deg,#2980b9,#1a5276);color:white;}
+.cast-btn:hover{background:linear-gradient(135deg,#3498db,#2980b9);transform:translateY(-1px);}
+.cast-btn:disabled{opacity:0.45;cursor:not-allowed;transform:none;}
+.sm-btn{flex:0.55;background:rgba(255,255,255,0.09);color:#e8f4fd;border:1px solid rgba(255,255,255,0.18);}
+.sm-btn:hover{background:rgba(255,255,255,0.16);}
+
+/* TOASTS */
+.toast-area{position:absolute;top:66px;left:50%;transform:translateX(-50%);z-index:30;display:flex;flex-direction:column;gap:5px;align-items:center;width:92%;pointer-events:none;}
+.toast{background:rgba(0,0,0,0.88);border-radius:20px;padding:6px 17px;font-size:13px;font-weight:600;border:1px solid rgba(255,255,255,0.13);text-align:center;animation:tin 0.3s ease,tout 0.4s ease 1.9s forwards;}
+.toast.good{border-color:rgba(46,204,113,0.5);color:#2ecc71;}
+.toast.bad{border-color:rgba(231,76,60,0.5);color:#e74c3c;}
+.toast.warn{border-color:rgba(241,196,15,0.5);color:#f1c40f;}
+.toast.info{border-color:rgba(52,152,219,0.5);color:#74b9ff;}
+@keyframes tin{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+@keyframes tout{to{opacity:0;transform:translateY(-8px);}}
+
+/* CONAPESCA SHIP */
+.cop-ship{position:absolute;top:152px;z-index:18;font-size:44px;pointer-events:none;white-space:nowrap;}
+.cop-label{position:absolute;top:198px;font-size:10px;font-weight:700;color:#e74c3c;background:rgba(0,0,0,0.75);border-radius:8px;padding:2px 7px;white-space:nowrap;z-index:19;}
+
+/* CONAPESCA MODAL */
+.cop-modal{position:absolute;inset:0;background:rgba(0,0,0,0.82);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50;border-radius:12px;gap:10px;padding:20px;}
+.cop-modal .icon{font-size:52px;}
+.cop-modal h2{font-family:'Righteous',sans-serif;font-size:20px;color:#e74c3c;text-align:center;}
+.cop-modal p{font-size:13px;opacity:0.8;text-align:center;line-height:1.5;}
+.cop-verdict{font-size:15px;font-weight:700;padding:10px 20px;border-radius:10px;text-align:center;}
+.cop-ok{background:rgba(46,204,113,0.15);border:1px solid rgba(46,204,113,0.4);color:#2ecc71;}
+.cop-warn{background:rgba(231,76,60,0.15);border:1px solid rgba(231,76,60,0.4);color:#e74c3c;}
+.cop-close{padding:10px 28px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:10px;color:#e8f4fd;font-size:14px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;}
+
+/* BLOCKED */
+.blk{position:absolute;inset:0;background:rgba(0,0,0,0.78);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50;border-radius:12px;gap:10px;}
+.blk .icon{font-size:58px;}
+.blk h2{font-family:'Righteous',sans-serif;font-size:21px;color:#e74c3c;}
+.blk p{font-size:13px;opacity:0.75;text-align:center;padding:0 20px;}
+.blk .timer{font-size:34px;font-weight:700;color:#f1c40f;}
+
+/* STATS */
+.stats-v{position:absolute;inset:0;background:rgba(5,18,38,0.97);z-index:40;border-radius:12px;padding:18px;overflow-y:auto;}
+.stats-v h2{font-family:'Righteous',sans-serif;color:#f1c40f;margin-bottom:14px;font-size:19px;}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px;}
+.sc{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:11px;text-align:center;}
+.sc .val{font-size:21px;font-weight:700;color:#f1c40f;}
+.sc .lbl{font-size:11px;opacity:0.55;margin-top:2px;}
+.sp-list{background:rgba(255,255,255,0.04);border-radius:8px;padding:9px;margin-bottom:9px;}
+.sp-list h3{font-size:13px;color:#a8d8f0;margin-bottom:7px;}
+.sp-row{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.05);}
+.cls-btn{width:100%;padding:10px;background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.18);border-radius:10px;color:#e8f4fd;font-size:13px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;}
+
+/* CASTING STATE */
+.casting-bar{height:4px;background:rgba(52,152,219,0.3);border-radius:2px;margin-bottom:9px;overflow:hidden;display:none;}
+.casting-fill{height:100%;background:#3498db;border-radius:2px;animation:cast 1.4s ease-in-out forwards;}
+@keyframes cast{0%{width:0%;}100%{width:100%;}}
+
+/* STUDENT CREDIT */
+.student-credit{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);border-top:1px solid rgba(241,196,15,0.25);padding:5px 14px;z-index:35;display:flex;justify-content:space-between;align-items:center;pointer-events:none;}
+.student-credit .sc-name{font-family:'Nunito',sans-serif;font-size:11px;font-weight:700;color:#f1c40f;}
+.student-credit .sc-info{font-family:'Nunito',sans-serif;font-size:10px;color:rgba(232,244,253,0.65);}
 </style>
-</head>
-<body>
-<div class="container">
-  <div class="screen active" id="welcomeScreen">
-    <div class="welcome-section">
-      <div class="welcome-title">Capitán de Aguas Sostenibles</div>
-      <div class="welcome-desc">
-        Dirige tu barco pesquero durante 10 años. Tus decisiones afectan la biodiversidad marina: peces, tiburones, langostas y pulpos. 
-        Equilibra rentabilidad, salud del océano y bienestar comunitario.
+
+<div id="gr">
+  <div class="sky"><div class="sun"></div>
+    <div class="cloud" style="width:75px;height:28px;top:28px;animation-duration:26s;animation-delay:-4s;"></div>
+    <div class="cloud" style="width:110px;height:38px;top:14px;animation-duration:38s;animation-delay:-14s;"></div>
+    <div class="cloud" style="width:55px;height:22px;top:52px;animation-duration:19s;animation-delay:-2s;"></div>
+  </div>
+  <div class="ocean">
+    <svg class="wave" viewBox="0 0 1440 35" preserveAspectRatio="none"><path d="M0,18 C360,35 720,0 1080,18 C1260,28 1380,8 1440,18 L1440,35 L0,35 Z" fill="rgba(255,255,255,0.07)"/></svg>
+    <svg class="wave wave2" viewBox="0 0 1440 35" preserveAspectRatio="none"><path d="M0,22 C240,8 480,32 720,18 C960,4 1200,28 1440,18 L1440,35 L0,35 Z" fill="rgba(255,255,255,0.04)"/></svg>
+  </div>
+  <div class="fish-bg" style="top:245px;animation-duration:10s;animation-delay:-4s;">🐟</div>
+  <div class="fish-bg" style="top:305px;animation-duration:14s;animation-delay:-8s;font-size:14px;">🦐</div>
+  <div class="fish-bg" style="top:275px;animation-duration:7s;animation-delay:-1s;font-size:13px;">🐠</div>
+
+  <div class="boat-wrap" id="boat-wrap">
+    <span class="boat-emoji" id="boat-emoji" onclick="castNet()" title="¡Lanza la red!">⛵</span>
+    <div class="boat-hint" id="boat-hint">TAP para lanzar red</div>
+  </div>
+
+  <!-- CONAPESCA ship (hidden by default) -->
+  <div class="cop-ship" id="cop-ship" style="display:none;">🚢</div>
+  <div class="cop-label" id="cop-label" style="display:none;">⚓ CONAPESCA</div>
+
+  <div class="hud">
+    <div class="hud-l">
+      <div class="pill">💰 <span>$</span><span id="hud-m">0</span></div>
+      <div class="pill">⚓ <span>Nivel </span><span id="hud-lv">1</span></div>
+    </div>
+    <div style="pointer-events:all;">
+      <div class="xpw">
+        <div class="xpl" id="xpl">XP: 0 / 100</div>
+        <div class="xpbg"><div class="xpfill" id="xpf" style="width:0%"></div></div>
       </div>
     </div>
-
-    <div class="features-grid">
-      <div class="feature-item">
-        <div class="feature-icon">⛵</div>
-        <div class="feature-name">Tu Barco</div>
-        <div class="feature-text">Gestiona tu embarcación y operaciones diarias</div>
-      </div>
-      <div class="feature-item">
-        <div class="feature-icon">🌊</div>
-        <div class="feature-name">Biodiversidad Marina</div>
-        <div class="feature-text">Múltiples especies con roles únicos</div>
-      </div>
-      <div class="feature-item">
-        <div class="feature-icon">💰</div>
-        <div class="feature-name">Economía Real</div>
-        <div class="feature-text">Gestiona ingresos y gastos operacionales</div>
-      </div>
-      <div class="feature-item">
-        <div class="feature-icon">🏆</div>
-        <div class="feature-name">Sostenibilidad</div>
-        <div class="feature-text">Mantén el balance ecológico perfectamente</div>
-      </div>
-    </div>
-
-    <div style="text-align: center;">
-      <button class="start-btn" onclick="startGame()">Zarpar Ahora</button>
+    <div class="hud-r">
+      <div class="pill" style="cursor:pointer;" onclick="showStats()">📊 Stats</div>
+      <div class="pill">🎣 <span id="hud-cap">0/5</span></div>
     </div>
   </div>
 
-  <div class="screen" id="gameScreen">
-    <div class="game-header">
-      <div class="header-left">
-        <h2>Año <span id="yearDisplay">1</span>/10</h2>
-        <p id="seasonText">Temporada de pesca activa</p>
-      </div>
-      <div class="progress-section">
-        <div class="progress-bar">
-          <div class="progress-fill" id="yearProgress"></div>
-        </div>
-        <div class="progress-text" id="progressPercent">0%</div>
-      </div>
-      <div class="header-right">
-        <p>Ingresos</p>
-        <div class="value">$<span id="moneyHeader">0</span></div>
-      </div>
+  <div class="toast-area" id="ta"></div>
+
+  <div class="bp" id="bp">
+    <div class="ptitle">🌊 El Dátil, BCS — <span id="bp-sub">listo para pescar</span></div>
+    <div class="casting-bar" id="cast-bar"><div class="casting-fill" id="cast-fill"></div></div>
+    <div class="hold-box" id="hold-disp"><span class="hold-empty">Bodega vacía — ¡lanza la red!</span></div>
+    <div class="eco-row">
+      <span class="eco-lbl">🌿 Ecosistema</span>
+      <div class="eco-bg"><div class="eco-fill" id="eco-fill" style="width:100%;background:#2ecc71;"></div></div>
+      <span class="eco-v" id="eco-v">100%</span>
     </div>
-
-    <div class="ocean-scene">
-      <div class="sun"></div>
-      <div class="marine-life" id="marineLifeContainer"></div>
-      
-      <div class="boat-container">
-        <div class="boat-hull">
-          <div class="cabin">
-            <div class="window"></div>
-            <div class="window"></div>
-          </div>
-        </div>
-        <div class="mast">
-          <div class="flag"></div>
-        </div>
-        <div class="nets"></div>
-        <div class="boat-anchor"></div>
-      </div>
-
-      <div class="boat-message" id="boatMessage">Listo para zarpar</div>
-      <div class="waves"></div>
+    <div class="act-row">
+      <button class="abtn sell-btn" onclick="sellAll()">💵 Vender todo</button>
+      <button class="abtn cast-btn" id="cast-btn" onclick="castNet()">🎣 Lanzar red</button>
+      <button class="abtn sm-btn" onclick="showStats()">📊</button>
     </div>
-
-    <div class="biodiversity-info">
-      <div style="margin-bottom: 0.5rem; font-weight: 500;">Biodiversidad Actual</div>
-      <div class="species-indicator">
-        <div class="species-badge">
-          <div class="species-dot" style="background: #ffa500;"></div>
-          <span>Peces</span>
-        </div>
-        <div class="species-badge">
-          <div class="species-dot" style="background: #ff6b6b;"></div>
-          <span>Tiburones</span>
-        </div>
-        <div class="species-badge">
-          <div class="species-dot" style="background: #d4af37;"></div>
-          <span>Langostas</span>
-        </div>
-        <div class="species-badge">
-          <div class="species-dot" style="background: #9b59b6;"></div>
-          <span>Pulpos</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="action-grid">
-      <button class="action-btn" id="fishBtn" onclick="fishingTrip()">Viaje de Pesca</button>
-      <button class="action-btn" id="restBtn" onclick="restAndRecover()">Descanso Ecológico</button>
-    </div>
-
-    <div class="stats-row">
-      <div class="stat-card">
-        <div class="stat-label">Peces Capturados</div>
-        <div class="stat-value" id="fishStats">0</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Ingresos Totales</div>
-        <div class="stat-value" id="moneyStats">$0</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Años Restantes</div>
-        <div class="stat-value" id="yearsLeft">10</div>
-      </div>
-    </div>
-
-    <div class="ecosystem-status">
-      <div class="status-title">Estado del Ecosistema Marino</div>
-      <div class="indicator">
-        <div class="indicator-name">Población de Peces</div>
-        <div class="indicator-track">
-          <div class="indicator-value" id="fishPopValue" style="width: 100%;">100%</div>
-        </div>
-      </div>
-      <div class="indicator">
-        <div class="indicator-name">Salud del Océano</div>
-        <div class="indicator-track">
-          <div class="indicator-value" id="oceanHealthValue" style="width: 100%;">100%</div>
-        </div>
-      </div>
-      <div class="indicator">
-        <div class="indicator-name">Bienestar Comunitario</div>
-        <div class="indicator-track">
-          <div class="indicator-value" id="communityValue" style="width: 100%;">100%</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="message-alert" id="messageAlert"></div>
   </div>
 
-  <div class="modal-overlay" id="gameOverModal">
-    <div class="modal-box">
-      <div class="modal-title" id="endTitle">Fin de la Travesía</div>
-      <div class="modal-text" id="endMessage"></div>
-      <div class="modal-stats">
-        <div class="modal-stat">
-          <div class="modal-stat-label">Peces Capturados</div>
-          <div class="modal-stat-value" id="endFish">0</div>
-        </div>
-        <div class="modal-stat">
-          <div class="modal-stat-label">Ingresos Totales</div>
-          <div class="modal-stat-value" id="endMoney">$0</div>
-        </div>
-        <div class="modal-stat">
-          <div class="modal-stat-label">Sostenibilidad</div>
-          <div class="modal-stat-value" id="endScore">0%</div>
-        </div>
-      </div>
-      <div class="modal-actions">
-        <button class="modal-btn" onclick="restartGame()">Otra Travesía</button>
-      </div>
+  <!-- CONAPESCA MODAL -->
+  <div class="cop-modal" id="cop-modal" style="display:none;">
+    <div class="icon">🚢</div>
+    <h2 id="cop-title">Inspección CONAPESCA</h2>
+    <p id="cop-msg">Revisando tu actividad pesquera...</p>
+    <div class="cop-verdict" id="cop-verdict"></div>
+    <button class="cop-close" onclick="closeCop()">Continuar</button>
+  </div>
+
+  <!-- BLOCKED -->
+  <div class="blk" id="blk" style="display:none;">
+    <div class="icon">🚫</div>
+    <h2>¡MULTADO!</h2>
+    <p>Capturaste demasiadas especies protegidas.<br>La guardia costera te tiene bloqueado.</p>
+    <div class="timer" id="blk-t">30</div>
+    <p style="font-size:11px;">segundos restantes</p>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-v" id="stats-v" style="display:none;">
+    <h2>📊 Tu Expediente Pescador</h2>
+    <div class="sg">
+      <div class="sc"><div class="val" id="st-m">$0</div><div class="lbl">Ganancias totales</div></div>
+      <div class="sc"><div class="val" id="st-lv">1</div><div class="lbl">Nivel actual</div></div>
+      <div class="sc"><div class="val" id="st-c">0</div><div class="lbl">Capturas totales</div></div>
+      <div class="sc"><div class="val" id="st-e">100%</div><div class="lbl">Ecosistema</div></div>
     </div>
+    <div class="sp-list">
+      <h3>🐟 Capturas por especie</h3>
+      <div id="st-sp"></div>
+    </div>
+    <div class="sp-list" style="margin-bottom:14px;">
+      <h3>⚓ Inspecciones CONAPESCA</h3>
+      <div id="st-cop"></div>
+    </div>
+    <button class="cls-btn" onclick="hideStats()">← Volver al mar</button>
+  </div>
+
+  <!-- CRÉDITO DEL ESTUDIANTE -->
+  <div class="student-credit">
+    <span class="sc-name">✏️ Victor Hugo Javier Hernández</span>
+    <span class="sc-info">Ing. en Pesquerías · Grupo A · 2° Semestre</span>
   </div>
 </div>
 
 <script>
-const game = {
-  year: 1,
-  maxYears: 10,
-  fishCaught: 0,
-  money: 0,
-  fishPopulation: 100,
-  oceanHealth: 100,
-  communityWelfare: 100,
-  restStreak: 0,
-  active: true
+const SP = [
+  {id:'verdillo', name:'Verdillo',  icon:'🐟', val:80,  xp:15, bad:false, rate:0.85, scarceAt:12},
+  {id:'mero',     name:'Mero',      icon:'🐠', val:200, xp:30, bad:false, rate:0.7,  scarceAt:8},
+  {id:'camaron',  name:'Camarón',   icon:'🦐', val:120, xp:20, bad:false, rate:0.8,  scarceAt:15},
+  {id:'langosta', name:'Langosta',  icon:'🦞', val:350, xp:50, bad:false, rate:0.5,  scarceAt:6},
+  {id:'pulpo',    name:'Pulpo',     icon:'🐙', val:250, xp:35, bad:false, rate:0.6,  scarceAt:7},
+  {id:'curvina',  name:'Curvina',   icon:'🐡', val:180, xp:25, bad:false, rate:0.75, scarceAt:10},
+  {id:'tiburon',  name:'Tiburón',   icon:'🦈', val:0,   xp:-60, bad:true,  rate:0.18, scarceAt:3},
+  {id:'manta',    name:'Manta',     icon:'🦋', val:0,   xp:-80, bad:true,  rate:0.12, scarceAt:2},
+];
+const XP_LVL=[0,100,200,320,460,620,820,1060,1340,1680,2100];
+
+let G={
+  money:0,totalMoney:0,xp:0,level:1,
+  hold:[],holdCap:5,
+  catches:{},press:{},
+  eco:100,blocked:false,blockSecs:0,
+  fines:0,totalCatches:0,casting:false,
+  copVisits:0,copGood:0,copBad:0,
+  catchesSinceCop:0,
 };
+SP.forEach(s=>{G.catches[s.id]=0;G.press[s.id]=0;});
 
-function createFishSVG(x, y, type, duration, delay) {
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('width', '50');
-  svg.setAttribute('height', '30');
-  svg.setAttribute('viewBox', '0 0 50 30');
-  
-  let shape;
-  
-  if (type === 'fish') {
-    shape = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    shape.innerHTML = `
-      <ellipse cx="15" cy="15" rx="12" ry="8" fill="#ffa500"/>
-      <polygon points="28,15 35,12 35,18" fill="#ffa500"/>
-      <circle cx="25" cy="12" r="1.5" fill="#000"/>
-    `;
-  } else if (type === 'shark') {
-    shape = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    shape.innerHTML = `
-      <ellipse cx="15" cy="15" rx="14" ry="7" fill="#ff6b6b"/>
-      <polygon points="28,15 36,12 36,18" fill="#ff6b6b"/>
-      <polygon points="3,12 8,15 3,18" fill="#ff6b6b"/>
-      <circle cx="24" cy="11" r="1.5" fill="#000"/>
-    `;
-  } else if (type === 'lobster') {
-    shape = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    shape.innerHTML = `
-      <ellipse cx="15" cy="15" rx="10" ry="7" fill="#d4af37"/>
-      <circle cx="10" cy="13" r="2" fill="#d4af37"/>
-      <circle cx="10" cy="17" r="2" fill="#d4af37"/>
-      <polygon points="25,15 32,13 32,17" fill="#d4af37"/>
-      <circle cx="22" cy="12" r="1.5" fill="#000"/>
-    `;
-  } else if (type === 'octopus') {
-    shape = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    shape.innerHTML = `
-      <circle cx="15" cy="12" r="8" fill="#9b59b6"/>
-      <path d="M 10 20 Q 8 25 7 28" stroke="#9b59b6" stroke-width="1.5" fill="none"/>
-      <path d="M 15 20 Q 15 25 15 28" stroke="#9b59b6" stroke-width="1.5" fill="none"/>
-      <path d="M 20 20 Q 22 25 23 28" stroke="#9b59b6" stroke-width="1.5" fill="none"/>
-      <circle cx="18" cy="9" r="1.5" fill="#000"/>
-    `;
-  }
-  
-  svg.appendChild(shape);
-  svg.style.position = 'absolute';
-  svg.style.left = x + 'px';
-  svg.style.top = y + 'px';
-  svg.style.animation = `swim ${duration}s infinite ease-in-out ${delay}s`;
-  
-  return svg;
+function getBoat(){return G.level>=7?'🛳️':G.level>=4?'🚢':'⛵';}
+function getHoldCap(){return G.level>=7?20:G.level>=4?12:5;}
+function xpFor(lv){return XP_LVL[Math.min(lv,XP_LVL.length-1)]||9999;}
+
+function hud(){
+  document.getElementById('hud-m').textContent=G.money.toLocaleString();
+  document.getElementById('hud-lv').textContent=G.level;
+  document.getElementById('hud-cap').textContent=G.hold.length+'/'+G.holdCap;
+  document.getElementById('boat-emoji').textContent=getBoat();
+  const prev=xpFor(G.level-1),need=xpFor(G.level),pct=Math.min(100,Math.round((G.xp-prev)/(need-prev)*100));
+  document.getElementById('xpf').style.width=pct+'%';
+  document.getElementById('xpl').textContent='XP: '+G.xp+' / '+need;
+  const ef=document.getElementById('eco-fill'),ev=document.getElementById('eco-v');
+  ef.style.width=G.eco+'%';
+  ef.style.background=G.eco>60?'#2ecc71':G.eco>30?'#f39c12':'#e74c3c';
+  ev.textContent=G.eco+'%';
 }
 
-function renderMarineLife() {
-  const container = document.getElementById('marineLifeContainer');
-  container.innerHTML = '';
-  
-  const styles = document.createElement('style');
-  styles.textContent = `
-    @keyframes swim {
-      0%, 100% { left: -50px; }
-      50% { left: calc(100% + 20px); }
-    }
-  `;
-  if (!document.getElementById('swim-styles')) {
-    styles.id = 'swim-styles';
-    document.head.appendChild(styles);
+function checkLvl(){
+  while(G.xp>=xpFor(G.level)&&G.level<10){
+    G.level++;G.holdCap=getHoldCap();
+    toast('🎉 ¡Nivel '+G.level+'! Barco mejorado: '+getBoat(),'good');
   }
-  
-  const species = [
-    { type: 'fish', x: 0, y: 20, dur: 5.5, delay: 0 },
-    { type: 'shark', x: 0, y: 50, dur: 7, delay: 1 },
-    { type: 'lobster', x: 0, y: 80, dur: 6, delay: 0.5 },
-    { type: 'octopus', x: 0, y: 35, dur: 5.8, delay: 1.5 },
-    { type: 'fish', x: 0, y: 65, dur: 6.2, delay: 0.8 },
-    { type: 'shark', x: 0, y: 100, dur: 6.5, delay: 1.2 },
-    { type: 'lobster', x: 0, y: 120, dur: 5.3, delay: 0.3 },
-    { type: 'octopus', x: 0, y: 45, dur: 6.8, delay: 2 }
-  ];
-  
-  species.forEach(s => {
-    const svg = createFishSVG(s.x, s.y, s.type, s.dur, s.delay);
-    container.appendChild(svg);
+}
+
+function holdDisp(){
+  const el=document.getElementById('hold-disp');
+  if(!G.hold.length){el.innerHTML='<span class="hold-empty">Bodega vacía — ¡lanza la red!</span>';return;}
+  const c={};G.hold.forEach(s=>c[s.id]=(c[s.id]||0)+1);
+  el.innerHTML=Object.entries(c).map(([id,n])=>{const s=SP.find(x=>x.id===id);return`<div class="hold-chip">${s.icon} ${s.name} ×${n}</div>`;}).join('');
+}
+
+/* ===== CAST NET ===== */
+function castNet(){
+  if(G.blocked){toast('🚫 Estás bloqueado temporalmente','bad');return;}
+  if(G.casting){return;}
+  if(G.hold.length>=G.holdCap){toast('🧳 Bodega llena, vende primero','warn');return;}
+  G.casting=true;
+  const castBtn=document.getElementById('cast-btn');
+  castBtn.disabled=true;
+  document.getElementById('boat-hint').textContent='Lanzando red...';
+  document.getElementById('bp-sub').textContent='lanzando la red...';
+
+  // Show casting bar
+  const bar=document.getElementById('cast-bar');
+  bar.style.display='block';
+  bar.innerHTML='<div class="casting-fill" id="cast-fill"></div>';
+
+  // Animate net dropping
+  const root=document.getElementById('gr');
+  const net=document.createElement('div');
+  net.className='net-anim';
+  net.textContent='🕸️';
+  root.appendChild(net);
+
+  setTimeout(()=>{
+    net.remove();
+    bar.style.display='none';
+    doRandomCatch();
+    G.casting=false;
+    castBtn.disabled=false;
+    document.getElementById('boat-hint').textContent='TAP para lanzar red';
+    document.getElementById('bp-sub').textContent='listo para pescar';
+    checkCop();
+  },1500);
+}
+
+function doRandomCatch(){
+  // Weighted random pick: legal species more likely, bad ones rare
+  const pool=[];
+  SP.forEach(s=>{
+    const press=G.press[s.id]||0;
+    const scarce=press>=s.scarceAt;
+    const eff=s.rate*(scarce?0.3:1);
+    const weight=Math.round(eff*100);
+    for(let i=0;i<weight;i++)pool.push(s);
   });
-}
+  // Add "nothing" slots
+  for(let i=0;i<40;i++)pool.push(null);
 
-function startGame() {
-  document.getElementById('welcomeScreen').classList.remove('active');
-  document.getElementById('gameScreen').classList.add('active');
-  renderMarineLife();
-  updateUI();
-}
+  const pick=pool[Math.floor(Math.random()*pool.length)];
+  if(!pick){
+    toast('🎣 La red vino vacía... el mar está tranquilo','warn');
+    return;
+  }
 
-function fishingTrip() {
-  if (!game.active) return;
-  
-  const catch_amount = Math.random() > 0.3 ? Math.floor(Math.random() * 12) + 4 : Math.floor(Math.random() * 5) + 1;
-  game.fishCaught += catch_amount;
-  game.money += catch_amount * 95;
-  
-  game.fishPopulation = Math.max(0, game.fishPopulation - catch_amount * 2.2);
-  game.oceanHealth = Math.max(0, game.oceanHealth - 7);
-  game.communityWelfare = Math.min(100, game.communityWelfare + 20);
-  game.restStreak = 0;
-  
-  const species = ['peces', 'tiburones', 'langostas'];
-  const caught_species = species[Math.floor(Math.random() * species.length)];
-  showMessage(`Capturaste ${catch_amount} ${caught_species}. La comunidad está feliz.`);
-  nextYear();
-}
+  G.press[pick.id]=(G.press[pick.id]||0)+1;
+  G.catches[pick.id]=(G.catches[pick.id]||0)+1;
+  G.totalCatches++;
+  G.catchesSinceCop++;
 
-function restAndRecover() {
-  if (!game.active) return;
-  
-  game.fishPopulation = Math.min(100, game.fishPopulation + 28);
-  game.oceanHealth = Math.min(100, game.oceanHealth + 22);
-  game.communityWelfare = Math.max(0, game.communityWelfare - 10);
-  game.restStreak++;
-  
-  const msg = game.restStreak > 2 ? 'Océano se regenera. Comunidad preocupada...' : 'La biodiversidad marina se está recuperando.';
-  showMessage(msg);
-  nextYear();
-}
-
-function nextYear() {
-  game.year++;
-  if (game.year > game.maxYears || game.fishPopulation <= 0 || game.oceanHealth <= 0 || game.communityWelfare <= 0) {
-    endGame();
+  if(pick.bad){
+    G.xp=Math.max(0,G.xp+pick.xp);
+    G.money=Math.max(0,G.money-600);
+    G.fines++;
+    G.eco=Math.max(0,G.eco-12);
+    splash('⚠️');
+    toast(`⚠️ ¡MULTA! Capturaste ${pick.name} protegida. -$600 y ${Math.abs(pick.xp)} XP`,'bad');
+    if(G.fines>=3)blockPlayer();
   } else {
-    updateUI();
+    G.hold.push(pick);
+    G.xp+=pick.xp;
+    G.eco=Math.max(0,G.eco-((G.press[pick.id]||0)>=pick.scarceAt?4:1));
+    splash(pick.icon);
+    const scarce=(G.press[pick.id]||0)>=pick.scarceAt;
+    toast(`${pick.icon} ¡${pick.name} capturada! +${pick.xp} XP${scarce?' ⚠️ (especie escasa)':''}`,'good');
+  }
+  checkLvl();
+  hud();holdDisp();
+}
+
+/* ===== CONAPESCA ===== */
+function checkCop(){
+  if(G.catchesSinceCop>=10){
+    G.catchesSinceCop=0;
+    G.copVisits++;
+    setTimeout(()=>triggerCop(),800);
   }
 }
 
-function updateUI() {
-  document.getElementById('yearDisplay').textContent = game.year;
-  document.getElementById('yearsLeft').textContent = game.maxYears - game.year + 1;
-  document.getElementById('fishStats').textContent = game.fishCaught;
-  document.getElementById('moneyStats').textContent = '$' + game.money.toLocaleString();
-  document.getElementById('moneyHeader').textContent = game.money.toLocaleString();
-  
-  const prog = Math.round((game.year - 1) / game.maxYears * 100);
-  document.getElementById('yearProgress').style.width = prog + '%';
-  document.getElementById('progressPercent').textContent = prog + '%';
-  
-  updateIndicator('fishPopValue', game.fishPopulation);
-  updateIndicator('oceanHealthValue', game.oceanHealth);
-  updateIndicator('communityValue', game.communityWelfare);
+function triggerCop(){
+  if(G.blocked)return;
+  const ship=document.getElementById('cop-ship');
+  const lbl=document.getElementById('cop-label');
+  ship.style.display='block';
+  lbl.style.display='block';
+
+  // Ship enters from right, crosses screen
+  ship.style.right='';
+  ship.style.left='-80px';
+  ship.style.transition='left 3s linear';
+  lbl.style.left='-80px';
+  lbl.style.transition='left 3s linear';
+
+  setTimeout(()=>{
+    ship.style.left='40%';
+    lbl.style.left='calc(40% - 10px)';
+  },50);
+
+  setTimeout(()=>{
+    ship.style.transition='none';
+    lbl.style.transition='none';
+    ship.style.display='none';
+    lbl.style.display='none';
+    showCopModal();
+  },3200);
 }
 
-function updateIndicator(id, val) {
-  const elem = document.getElementById(id);
-  const safe = Math.max(0, Math.min(100, val));
-  elem.style.width = safe + '%';
-  elem.textContent = Math.round(safe) + '%';
-  
-  if (safe <= 25) elem.className = 'indicator-value danger';
-  else if (safe <= 50) elem.className = 'indicator-value warning';
-  else elem.className = 'indicator-value';
-}
+function showCopModal(){
+  // Calculate eco & illegal catches
+  const illegal=G.catches['tiburon']+G.catches['manta'];
+  const eco=G.eco;
+  let good=true,title='',msg='',verdict='';
 
-function showMessage(text) {
-  const msg = document.getElementById('messageAlert');
-  msg.textContent = text;
-  msg.classList.add('show');
-  setTimeout(() => msg.classList.remove('show'), 2500);
-}
-
-function endGame() {
-  game.active = false;
-  const sust = Math.round((game.fishPopulation + game.oceanHealth + game.communityWelfare) / 3);
-  
-  let title = 'Fin de la Travesía';
-  let text = '';
-  
-  if (game.fishPopulation <= 0 || game.oceanHealth <= 0) {
-    title = 'Colapso del Ecosistema';
-    text = 'La sobrepesca destruyó toda la biodiversidad marina. El océano está vacío.';
-  } else if (game.communityWelfare <= 0) {
-    title = 'Crisis Comunitaria';
-    text = 'La comunidad pesquera entró en crisis económica insostenible.';
-  } else if (sust >= 80) {
-    title = 'Capitán Legendario';
-    text = 'Mantuviste todas las especies en equilibrio perfecto. Eres un modelo de sostenibilidad.';
-  } else if (sust >= 60) {
-    title = 'Buen Balance';
-    text = 'Completaste una travesía responsable con biodiversidad preservada.';
+  if(illegal>5){
+    good=false;
+    title='⚠️ Actividad ilegal detectada';
+    msg=`Registramos ${illegal} capturas de especies protegidas en tu historial. Esto está severamente penalizado.`;
+    verdict='🚫 Expediente sancionado — próxima infracción: suspensión permanente';
+  } else if(eco<30){
+    good=false;
+    title='🌊 Zona en estado crítico';
+    msg='El ecosistema de tu zona está muy deteriorado. Debes parar para que se recupere.';
+    verdict='⚠️ Aviso formal por sobrepesca — monitoreo intensivo';
+  } else if(eco<60){
+    good=false;
+    title='📋 Advertencia por sobrepesca';
+    msg='El nivel del ecosistema está bajando. Recomendamos reducir la presión de pesca en la zona.';
+    verdict='⚠️ Observación preventiva emitida';
+  } else if(illegal>0){
+    good=false;
+    title='📋 Captura irregular registrada';
+    msg=`Se detectaron ${illegal} capturas de tiburón o manta en tu embarcación. Emitimos multa preventiva.`;
+    verdict='⚠️ Multa preventiva — $300 descontados';
+    G.money=Math.max(0,G.money-300);
+  } else {
+    title='✅ Inspección aprobada';
+    msg='Tu actividad pesquera cumple con la NOM-059. El ecosistema está saludable. ¡Sigue así!';
+    verdict='✅ Todo en orden — pesca responsable certificada';
   }
-  
-  document.getElementById('endTitle').textContent = title;
-  document.getElementById('endMessage').textContent = text;
-  document.getElementById('endFish').textContent = game.fishCaught;
-  document.getElementById('endMoney').textContent = '$' + game.money.toLocaleString();
-  document.getElementById('endScore').textContent = sust + '%';
-  
-  document.getElementById('gameOverModal').classList.add('show');
+
+  if(good)G.copGood++;else G.copBad++;
+
+  const modal=document.getElementById('cop-modal');
+  document.getElementById('cop-title').textContent=title;
+  document.getElementById('cop-msg').textContent=msg;
+  const v=document.getElementById('cop-verdict');
+  v.textContent=verdict;
+  v.className='cop-verdict '+(good?'cop-ok':'cop-warn');
+  modal.style.display='flex';
+  toast('🚢 ¡CONAPESCA está aquí!','info');
+  hud();
 }
 
-function restartGame() {
-  game.year = 1;
-  game.fishCaught = 0;
-  game.money = 0;
-  game.fishPopulation = 100;
-  game.oceanHealth = 100;
-  game.communityWelfare = 100;
-  game.restStreak = 0;
-  game.active = true;
-  
-  document.getElementById('gameOverModal').classList.remove('show');
-  renderMarineLife();
-  updateUI();
+function closeCop(){
+  document.getElementById('cop-modal').style.display='none';
 }
 
-renderMarineLife();
-updateUI();
+/* ===== SELL ===== */
+function sellAll(){
+  if(!G.hold.length){toast('Nada que vender','warn');return;}
+  let total=0;G.hold.forEach(s=>total+=s.val);
+  G.money+=total;G.totalMoney+=total;
+  const n=G.hold.length;G.hold=[];
+  SP.forEach(s=>{if(!s.bad)G.press[s.id]=Math.max(0,(G.press[s.id]||0)-1);});
+  G.eco=Math.min(100,G.eco+2);
+  splash('💰');
+  toast('💵 Vendiste '+n+' capturas por $'+total.toLocaleString(),'good');
+  holdDisp();hud();
+}
+
+/* ===== BLOCK ===== */
+function blockPlayer(){
+  G.blocked=true;G.fines=0;
+  let s=30;
+  document.getElementById('blk').style.display='flex';
+  document.getElementById('blk-t').textContent=s;
+  toast('🚫 ¡Bloqueado 30s por la guardia costera!','bad');
+  const iv=setInterval(()=>{
+    s--;document.getElementById('blk-t').textContent=s;
+    if(s<=0){clearInterval(iv);G.blocked=false;document.getElementById('blk').style.display='none';toast('✅ Desbloqueado — ¡pesca responsable!','good');}
+  },1000);
+}
+
+/* ===== STATS ===== */
+function showStats(){
+  document.getElementById('st-m').textContent='$'+G.totalMoney.toLocaleString();
+  document.getElementById('st-lv').textContent=G.level;
+  document.getElementById('st-c').textContent=G.totalCatches;
+  document.getElementById('st-e').textContent=G.eco+'%';
+  document.getElementById('st-sp').innerHTML=SP.map(s=>{
+    const n=G.catches[s.id]||0;
+    const p=G.press[s.id]||0;
+    const sc=p>=s.scarceAt;
+    return`<div class="sp-row"><span>${s.icon} ${s.name}</span><span style="color:${s.bad?'#e74c3c':sc?'#f39c12':'#2ecc71'}">${n}${sc&&!s.bad?' ⚠️':s.bad&&n>0?' 🚫':''}</span></div>`;
+  }).join('');
+  document.getElementById('st-cop').innerHTML=
+    `<div class="sp-row"><span>🚢 Visitas CONAPESCA</span><span>${G.copVisits}</span></div>`+
+    `<div class="sp-row"><span>✅ Inspecciones aprobadas</span><span style="color:#2ecc71">${G.copGood}</span></div>`+
+    `<div class="sp-row"><span>⚠️ Infracciones detectadas</span><span style="color:#e74c3c">${G.copBad}</span></div>`;
+  document.getElementById('stats-v').style.display='block';
+}
+function hideStats(){document.getElementById('stats-v').style.display='none';}
+
+/* ===== SPLASH ===== */
+function splash(icon){
+  const r=document.getElementById('gr');
+  const d=document.createElement('div');
+  d.className='catch-burst';d.textContent=icon;
+  d.style.left=(35+Math.random()*30)+'%';d.style.top='195px';
+  r.appendChild(d);setTimeout(()=>d.remove(),950);
+}
+
+/* ===== TOAST ===== */
+function toast(msg,type='good'){
+  const a=document.getElementById('ta');
+  const d=document.createElement('div');
+  d.className='toast '+type;d.textContent=msg;
+  a.appendChild(d);setTimeout(()=>d.remove(),2400);
+}
+
+/* Eco recovery */
+setInterval(()=>{
+  G.eco=Math.min(100,G.eco+1);
+  SP.forEach(s=>{if(!s.bad)G.press[s.id]=Math.max(0,(G.press[s.id]||0)-0.25);});
+},15000);
+
+hud();holdDisp();
 </script>
-</body>
-</html>
