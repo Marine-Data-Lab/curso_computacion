@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EnergoHéroe - Ingeniero de Energías Renovables</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap');
+  :root {
+    --green:#00ff88; --solar:#ffd700; --wind:#00cfff; --red:#ff4444;
+    --bg:#0a0e1a; --panel:#0f1829; --glow:0 0 20px #00ff8866;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:#fff;font-family:'Exo 2',sans-serif;overflow:hidden;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  #gameWrapper{position:relative;width:800px;max-width:100vw;}
+  #hud{display:flex;justify-content:space-between;align-items:center;padding:7px 12px;background:var(--panel);border:1px solid #00ff8833;border-bottom:none;border-radius:8px 8px 0 0;font-family:'Orbitron',monospace;font-size:11px;gap:4px;}
+  .hud-group{display:flex;align-items:center;gap:8px;}
+  .hud-label{color:#888;font-size:9px;text-transform:uppercase;}
+  .hud-val{color:var(--green);font-weight:700;font-size:13px;}
+  #energyBar{width:110px;height:10px;background:#1a2a1a;border-radius:5px;overflow:hidden;border:1px solid #00ff8844;}
+  #energyFill{height:100%;background:linear-gradient(90deg,#00aa55,#00ff88);transition:width .3s;box-shadow:0 0 8px #00ff88;}
+  #shieldBar{width:60px;height:6px;background:#1a1a2a;border-radius:3px;overflow:hidden;border:1px solid #00cfffaa;}
+  #shieldFill{height:100%;background:linear-gradient(90deg,#0088cc,#00cfff);transition:width .3s;}
+  #lifeBar{display:flex;gap:3px;}
+  .heart{font-size:13px;filter:drop-shadow(0 0 4px red);}
+  .heart.empty{filter:grayscale(1) opacity(.3);}
+  #gameCanvas{display:block;border-left:1px solid #00ff8833;border-right:1px solid #00ff8833;}
+  #bottomBar{display:flex;justify-content:space-between;align-items:center;padding:5px 12px;background:var(--panel);border:1px solid #00ff8833;border-top:none;border-radius:0 0 8px 8px;font-size:10px;color:#555;}
+  #levelName{color:var(--wind);font-family:'Orbitron',monospace;font-size:10px;}
+  .screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(10,14,26,.96);z-index:10;border-radius:0 0 8px 8px;gap:12px;}
+  .screen h1{font-family:'Orbitron',monospace;font-size:26px;font-weight:900;background:linear-gradient(135deg,var(--green),var(--wind));-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-align:center;line-height:1.2;}
+  .screen p{color:#aaa;font-size:12px;text-align:center;max-width:400px;line-height:1.6;}
+  .screen .subtitle{color:var(--solar);font-family:'Orbitron',monospace;font-size:10px;letter-spacing:3px;}
+  .btn{background:linear-gradient(135deg,#004433,#006644);border:1px solid var(--green);color:var(--green);padding:9px 26px;font-family:'Orbitron',monospace;font-size:12px;cursor:pointer;border-radius:4px;box-shadow:var(--glow);transition:all .2s;letter-spacing:1px;}
+  .btn:hover{background:linear-gradient(135deg,#006644,#00aa66);transform:scale(1.05);box-shadow:0 0 30px #00ff88aa;}
+  .legend{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:460px;}
+  .legend-item{display:flex;align-items:center;gap:4px;font-size:10px;color:#aaa;}
+  .legend-dot{width:10px;height:10px;border-radius:2px;}
+  #messageBox{position:absolute;bottom:55px;left:50%;transform:translateX(-50%);background:rgba(0,255,136,.15);border:1px solid var(--green);padding:5px 14px;border-radius:4px;font-family:'Orbitron',monospace;font-size:10px;color:var(--green);pointer-events:none;opacity:0;transition:opacity .3s;white-space:nowrap;z-index:5;}
+  #levelBadge{position:absolute;top:45px;left:50%;transform:translateX(-50%);background:rgba(0,255,136,.12);border:1px solid var(--green);padding:6px 18px;border-radius:20px;font-family:'Orbitron',monospace;font-size:12px;color:var(--green);pointer-events:none;opacity:0;transition:opacity .5s;z-index:5;text-align:center;white-space:nowrap;}
+</style>
+</head>
+<body>
+<div id="gameWrapper">
+  <div id="hud">
+    <div class="hud-group">
+      <div><div class="hud-label">Vidas</div>
+      <div id="lifeBar"><span class="heart">❤️</span><span class="heart">❤️</span><span class="heart">❤️</span></div></div>
+    </div>
+    <div class="hud-group">
+      <div><div class="hud-label">Escudo</div><div id="shieldBar"><div id="shieldFill" style="width:100%"></div></div></div>
+    </div>
+    <div class="hud-group">
+      <div><div class="hud-label">Red Energética</div><div id="energyBar"><div id="energyFill" style="width:0%"></div></div></div>
+    </div>
+    <div class="hud-group">
+      <div class="hud-label">Combo</div><div class="hud-val" id="comboDisplay">x1</div>
+    </div>
+    <div class="hud-group">
+      <div class="hud-label">Puntos</div><div class="hud-val" id="scoreDisplay">0</div>
+    </div>
+    <div class="hud-group">
+      <div class="hud-label">Nivel</div><div class="hud-val" id="levelDisplay">1</div>
+    </div>
+  </div>
+  <canvas id="gameCanvas" width="800" height="440"></canvas>
+  <div id="bottomBar">
+    <span>← → Mover &nbsp;|&nbsp; ESPACIO/↑ Saltar &nbsp;|&nbsp; ESC Pausar</span>
+    <span id="levelName">NIVEL 1</span>
+    <span id="timerDisplay">⏱ 70s</span>
+  </div>
+
+  <div class="screen" id="startScreen">
+    <div class="subtitle">INGENIERÍA · ENERGÍAS RENOVABLES</div>
+    <h1>ENERGO<br>HÉROE</h1>
+    <p>7 niveles de dificultad progresiva. Activa fuentes renovables, evita contaminantes, sobrevive tormentas eléctricas y destruye el Reactor Fósil en el nivel final.</p>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#ffd700"></div>☀️ Solar +15</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#00cfff"></div>💨 Eólica +20</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#aa88ff"></div>🔋 Batería +10</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#00aaff"></div>💧 Hidro +25</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ff8844"></div>🌋 Geotérmica +30</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ccff00"></div>⚛️ Hidrógeno +35</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ff4444"></div>☠️ Tóxico -❤️</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ffcc00"></div>⚡ Rayo -escudo</div>
+    </div>
+    <button class="btn" id="startBtn">▶ INICIAR MISIÓN</button>
+  </div>
+
+  <div class="screen" id="pauseScreen" style="display:none">
+    <h1>PAUSA</h1>
+    <p>La red espera tu regreso, ingeniero.</p>
+    <button class="btn" id="resumeBtn">▶ CONTINUAR</button>
+  </div>
+
+  <div class="screen" id="gameOverScreen" style="display:none">
+    <div class="subtitle">MISIÓN FALLIDA</div>
+    <h1>RED<br>COLAPSADA</h1>
+    <p id="goMsg">La red eléctrica no pudo sostenerse.</p>
+    <button class="btn" id="restartBtn">↺ REINTENTAR</button>
+  </div>
+
+  <div class="screen" id="winScreen" style="display:none">
+    <div class="subtitle">¡MISIÓN COMPLETADA!</div>
+    <h1>RED<br>ESTABILIZADA</h1>
+    <div id="winStars" style="font-size:22px;letter-spacing:5px"></div>
+    <p id="winMsg"></p>
+    <button class="btn" id="nextBtn">⚡ SIGUIENTE NIVEL</button>
+  </div>
+
+  <div class="screen" id="finalScreen" style="display:none">
+    <div class="subtitle">¡JUEGO COMPLETADO!</div>
+    <h1>INGENIERO<br>MAESTRO ⚡</h1>
+    <div style="font-size:28px;letter-spacing:6px">⭐⭐⭐⭐⭐</div>
+    <p id="finalMsg"></p>
+    <button class="btn" id="replayBtn">↺ JUGAR DE NUEVO</button>
+  </div>
+
+  <div id="messageBox"></div>
+  <div id="levelBadge"></div>
+</div>
+<script>
+const canvas=document.getElementById('gameCanvas'), ctx=canvas.getContext('2d');
+const W=800,H=440,GROUND_Y=380,GRAVITY=0.55,JUMP=-13,SPD=4;
+
+const LEVELS=[
+  {name:'NVL 1: GRANJA SOLAR',time:70,goal:70,nHaz:2,hSpd:1.2,mobile:false,storm:false,boss:false,bgT:'#0a0e1a',bgB:'#0d1a12',
+   types:['solar','solar','solar','battery','solar','battery','solar'],
+   plats:[{x:0,y:GROUND_Y,w:800,h:20},{x:150,y:320,w:90,h:12},{x:310,y:275,w:80,h:12},{x:460,y:235,w:90,h:12},{x:600,y:295,w:80,h:12},{x:560,y:195,w:70,h:12},{x:100,y:210,w:80,h:12},{x:690,y:165,w:100,h:12}]},
+  {name:'NVL 2: PARQUE EÓLICO',time:62,goal:78,nHaz:3,hSpd:1.5,mobile:false,storm:false,boss:false,bgT:'#060a18',bgB:'#0a1830',
+   types:['wind','wind','solar','battery','wind','wind','battery','solar'],
+   plats:[{x:0,y:GROUND_Y,w:800,h:20},{x:120,y:330,w:70,h:12},{x:260,y:280,w:70,h:12},{x:400,y:240,w:80,h:12},{x:550,y:300,w:70,h:12},{x:660,y:210,w:70,h:12},{x:80,y:200,w:80,h:12},{x:340,y:170,w:80,h:12},{x:490,y:165,w:70,h:12}]},
+  {name:'NVL 3: HIDROELÉCTRICA',time:55,goal:83,nHaz:4,hSpd:1.7,mobile:true,storm:false,boss:false,bgT:'#06101a',bgB:'#0a1c2a',
+   types:['hydro','solar','wind','hydro','battery','hydro','solar','wind','hydro'],
+   plats:[{x:0,y:GROUND_Y,w:280,h:20},{x:520,y:GROUND_Y,w:280,h:20},{x:130,y:320,w:80,h:12},{x:280,y:265,w:80,h:12},{x:430,y:230,w:70,h:12},{x:580,y:280,w:80,h:12},{x:90,y:190,w:80,h:12},{x:650,y:185,w:90,h:12},{x:360,y:175,w:80,h:12},{x:200,y:145,w:70,h:12}]},
+  {name:'NVL 4: GEOTERMIA',time:50,goal:88,nHaz:5,hSpd:2.0,mobile:true,storm:false,boss:false,bgT:'#150805',bgB:'#2a1000',
+   types:['geo','solar','wind','geo','battery','geo','wind','hydro','geo','solar'],
+   plats:[{x:0,y:GROUND_Y,w:800,h:20},{x:120,y:340,w:70,h:12},{x:240,y:295,w:70,h:12},{x:370,y:255,w:65,h:12},{x:490,y:215,w:65,h:12},{x:610,y:280,w:70,h:12},{x:700,y:185,w:85,h:12},{x:70,y:185,w:80,h:12},{x:300,y:165,w:70,h:12},{x:530,y:145,w:70,h:12},{x:170,y:130,w:65,h:12}]},
+  {name:'NVL 5: RED HÍBRIDA + TORMENTA',time:46,goal:92,nHaz:6,hSpd:2.3,mobile:true,storm:true,boss:false,bgT:'#0a0a20',bgB:'#1a0a30',
+   types:['solar','wind','hydro','geo','battery','hydrogen','solar','wind','geo','hydro'],
+   plats:[{x:0,y:GROUND_Y,w:800,h:20},{x:100,y:340,w:65,h:12},{x:220,y:295,w:60,h:12},{x:340,y:255,w:60,h:12},{x:460,y:220,w:60,h:12},{x:580,y:260,w:65,h:12},{x:680,y:190,w:80,h:12},{x:60,y:185,w:75,h:12},{x:290,y:165,w:65,h:12},{x:500,y:148,w:65,h:12},{x:170,y:125,w:60,h:12},{x:650,y:130,w:60,h:12}]},
+  {name:'NVL 6: HIDRÓGENO VERDE',time:40,goal:97,nHaz:7,hSpd:2.7,mobile:true,storm:true,boss:false,bgT:'#050a10',bgB:'#0a2010',
+   types:['hydrogen','hydrogen','wind','solar','geo','hydro','hydrogen','battery','wind','hydrogen','geo'],
+   plats:[{x:0,y:GROUND_Y,w:800,h:20},{x:90,y:345,w:60,h:12},{x:200,y:300,w:55,h:12},{x:315,y:260,w:55,h:12},{x:430,y:225,w:55,h:12},{x:545,y:265,w:60,h:12},{x:655,y:200,w:75,h:12},{x:50,y:195,w:70,h:12},{x:275,y:170,w:60,h:12},{x:480,y:148,w:60,h:12},{x:160,y:130,w:55,h:12},{x:620,y:130,w:55,h:12},{x:355,y:115,w:55,h:12}]},
+  {name:'NVL 7: JEFE — REACTOR FÓSIL',time:55,goal:100,nHaz:5,hSpd:2.5,mobile:true,storm:true,boss:true,bgT:'#100505',bgB:'#200808',
+   types:['hydrogen','geo','wind','solar','hydro','battery','hydrogen','wind','geo','solar','hydrogen'],
+   plats:[{x:0,y:GROUND_Y,w:800,h:20},{x:100,y:340,w:70,h:12},{x:230,y:295,w:65,h:12},{x:360,y:255,w:65,h:12},{x:490,y:220,w:65,h:12},{x:610,y:270,w:70,h:12},{x:690,y:195,w:90,h:12},{x:60,y:195,w:80,h:12},{x:300,y:170,w:65,h:12},{x:510,y:152,w:65,h:12},{x:180,y:135,w:60,h:12},{x:640,y:140,w:60,h:12}]},
+];
+
+let gs={screen:'start',level:1,score:0,energy:0,lives:3,time:70,timeTimer:null,fx:[],msgTimer:null,combo:1,comboT:0,shield:100,bossHp:0,bossX:550,bossDir:-1,bossPhaseT:0,bossBullets:[],stormBolts:[],stormT:0};
+const P={x:80,y:300,w:28,h:36,vx:0,vy:0,onGround:false,dir:1,frame:0,frameT:0,inv:0};
+let platforms=[],mobPlats=[],collectibles=[],hazards=[];
+const keys={};
+
+document.addEventListener('keydown',e=>{
+  keys[e.code]=true;
+  if(e.code==='Escape'&&gs.screen==='play') togglePause();
+  if((e.code==='Space'||e.code==='ArrowUp')&&gs.screen==='play'&&P.onGround){P.vy=JUMP;P.onGround=false;}
+  e.preventDefault();
+});
+document.addEventListener('keyup',e=>{keys[e.code]=false;});
+
+function setupLevel(lvl){
+  const idx=Math.min(lvl-1,LEVELS.length-1);
+  const cfg=LEVELS[idx];
+  document.getElementById('levelName').textContent=cfg.name;
+  document.getElementById('levelDisplay').textContent=lvl;
+  P.x=80;P.y=280;P.vx=0;P.vy=0;P.onGround=false;P.inv=0;
+  gs.energy=0;gs.combo=1;gs.comboT=0;gs.shield=100;
+  gs.bossHp=cfg.boss?8:0;gs.bossX=550;gs.bossDir=-1;gs.bossPhaseT=0;
+  gs.bossBullets=[];gs.stormBolts=[];gs.stormT=0;gs.time=cfg.time;gs.fx=[];
+
+  platforms=cfg.plats.map(p=>({...p,color:platColor(idx)}));
+  mobPlats=[];
+  if(cfg.mobile){
+    const n=2+Math.floor(idx/2);
+    const ys=[305,260,215,180];
+    for(let i=0;i<n;i++) mobPlats.push({x:60+i*190,y:ys[i%ys.length],w:68,h:12,vx:(i%2===0?1:-1)*(1+idx*0.22),color:'#1a2a44'});
+  }
+
+  const cPos=[{x:165,y:295},{x:325,y:248},{x:475,y:208},{x:615,y:268},{x:110,y:183},{x:575,y:168},{x:705,y:138},{x:215,y:118},{x:360,y:148},{x:510,y:120},{x:85,y:358},{x:680,y:355}];
+  collectibles=cfg.types.map((t,i)=>({...cPos[i%cPos.length],x:cPos[i%cPos.length].x+(i>=cPos.length?(i-cPos.length)*35:0),type:t,active:true,pulse:Math.random()*Math.PI*2}));
+
+  hazards=[];
+  const hs=cfg.hSpd*(1+(lvl-idx-1)*0.08);
+  const hPos=[{x:230,y:GROUND_Y-22,vx:hs},{x:530,y:GROUND_Y-22,vx:-hs},{x:380,y:GROUND_Y-22,vx:hs*1.1},{x:660,y:GROUND_Y-22,vx:-hs*0.9},{x:160,y:316-22,vx:hs*0.85},{x:460,y:224-22,vx:hs},{x:300,y:280-22,vx:-hs*1.05},{x:580,y:190-22,vx:hs*0.9}];
+  for(let i=0;i<cfg.nHaz&&i<hPos.length;i++) hazards.push({...hPos[i],w:22,h:22,active:true,bobT:Math.random()*6});
+
+  startTimer();
+  flashBadge(cfg.name);
+}
+
+function platColor(i){return['#1a3a2a','#1a2a3a','#0a2a3a','#2a1508','#151520','#082a14','#200810'][i]||'#1a3a2a';}
+
+function startTimer(){
+  clearInterval(gs.timeTimer);
+  gs.timeTimer=setInterval(()=>{
+    if(gs.screen!=='play') return;
+    gs.time--;
+    document.getElementById('timerDisplay').textContent=`⏱ ${gs.time}s`;
+    if(gs.time<=0) triggerGameOver('¡Tiempo agotado! La red colapsó.');
+  },1000);
+}
+
+let lastT=0;
+function loop(ts){
+  const dt=Math.min((ts-lastT)/16.67,3); lastT=ts;
+  if(gs.screen==='play') update(dt);
+  render();
+  requestAnimationFrame(loop);
+}
+
+function update(dt){
+  if(keys['ArrowLeft']){P.vx=-SPD;P.dir=-1;}
+  else if(keys['ArrowRight']){P.vx=SPD;P.dir=1;}
+  else P.vx*=0.8;
+  P.vy+=GRAVITY*dt; P.x+=P.vx*dt; P.y+=P.vy*dt;
+  if(P.x<0)P.x=0; if(P.x+P.w>W)P.x=W-P.w;
+
+  P.onGround=false;
+  const allP=[...platforms,...mobPlats];
+  for(const pl of allP){
+    if(P.x+P.w>pl.x&&P.x<pl.x+pl.w&&P.y+P.h>pl.y&&P.y+P.h<pl.y+pl.h+15&&P.vy>=0){
+      P.y=pl.y-P.h; P.vy=0; P.onGround=true;
+      if(pl.vx!==undefined) P.x+=pl.vx*dt;
+    }
+  }
+  if(P.y>500) loseLife();
+  if(P.inv>0) P.inv-=dt;
+  if(Math.abs(P.vx)>0.5){P.frameT+=dt;if(P.frameT>8){P.frame=(P.frame+1)%4;P.frameT=0;}}else P.frame=0;
+
+  for(const mp of mobPlats){mp.x+=mp.vx*dt; if(mp.x<0||mp.x+mp.w>W)mp.vx*=-1;}
+
+  if(gs.comboT>0){gs.comboT-=dt; if(gs.comboT<=0){gs.combo=1;updateCombo();}}
+
+  for(const c of collectibles){
+    if(!c.active)continue;
+    c.pulse+=0.06*dt;
+    if(P.x<c.x+22&&P.x+P.w>c.x&&P.y<c.y+22&&P.y+P.h>c.y) collectItem(c);
+  }
+
+  for(const h of hazards){
+    if(!h.active)continue;
+    h.bobT+=0.04*dt; h.x+=h.vx*dt;
+    if(h.x<0||h.x+h.w>W)h.vx*=-1;
+    if(P.inv<=0&&P.x<h.x+h.w&&P.x+P.w>h.x&&P.y<h.y+h.h&&P.y+P.h>h.y) loseLife();
+  }
+
+  const cfg=LEVELS[Math.min(gs.level-1,LEVELS.length-1)];
+  if(cfg.storm){
+    gs.stormT-=dt;
+    if(gs.stormT<=0){
+      gs.stormT=110-gs.level*7;
+      const n=1+Math.floor(gs.level/3);
+      for(let i=0;i<n;i++) gs.stormBolts.push({x:Math.random()*(W-20)+10,y:0,vy:5+Math.random()*5,life:65,hit:false});
+    }
+    for(let i=gs.stormBolts.length-1;i>=0;i--){
+      const b=gs.stormBolts[i]; b.y+=b.vy*dt; b.life-=dt;
+      if(b.life<=0){gs.stormBolts.splice(i,1);continue;}
+      if(!b.hit&&P.inv<=0&&Math.abs(b.x-P.x-14)<18&&b.y>P.y&&b.y<P.y+P.h){
+        b.hit=true; gs.shield=Math.max(0,gs.shield-26);
+        spawnFx(P.x+14,P.y+18,'#ffcc00');
+        showMsg('⚡ ¡Rayo! Escudo dañado');
+        if(gs.shield<=0) loseLife();
+        gs.stormBolts.splice(i,1);
+      }
+    }
+  }
+
+  if(cfg.boss&&gs.bossHp>0){
+    gs.bossX+=gs.bossDir*1.9*dt;
+    if(gs.bossX<80||gs.bossX>560)gs.bossDir*=-1;
+    gs.bossPhaseT+=dt;
+    if(gs.bossPhaseT>90){
+      gs.bossPhaseT=0;
+      for(let i=0;i<2+Math.floor((8-gs.bossHp)/3);i++)
+        gs.bossBullets.push({x:gs.bossX+45,y:288,vx:(Math.random()-0.5)*5,vy:-1.5-Math.random()*2,life:130});
+    }
+    for(let i=gs.bossBullets.length-1;i>=0;i--){
+      const b=gs.bossBullets[i]; b.x+=b.vx*dt; b.y+=b.vy*dt; b.vy+=0.1*dt; b.life-=dt;
+      if(b.life<=0){gs.bossBullets.splice(i,1);continue;}
+      if(P.inv<=0&&P.x<b.x+9&&P.x+P.w>b.x&&P.y<b.y+9&&P.y+P.h>b.y){gs.bossBullets.splice(i,1);loseLife();}
+    }
+    // Stomp boss
+    if(P.vy>0&&P.y+P.h>287&&P.y+P.h<310&&P.x+P.w>gs.bossX&&P.x<gs.bossX+90){
+      gs.bossHp--; P.vy=JUMP*0.7;
+      spawnFx(gs.bossX+45,300,'#ff4444');
+      showMsg(gs.bossHp>0?`💥 ¡Golpe! HP Reactor: ${gs.bossHp}`:'🏆 ¡Reactor destruido!');
+      if(gs.bossHp<=0){gs.score+=500;gs.bossBullets=[];}
+    }
+  }
+
+  for(let i=gs.fx.length-1;i>=0;i--){const e=gs.fx[i]; e.x+=e.vx*dt;e.y+=e.vy*dt;e.vy+=0.15*dt;e.life-=dt;if(e.life<=0)gs.fx.splice(i,1);}
+
+  document.getElementById('energyFill').style.width=Math.min(gs.energy,100)+'%';
+  document.getElementById('scoreDisplay').textContent=gs.score;
+  document.getElementById('shieldFill').style.width=gs.shield+'%';
+  updateHearts();
+
+  const allDone=collectibles.every(c=>!c.active);
+  const bossOk=!cfg.boss||gs.bossHp<=0;
+  if(allDone&&gs.energy>=cfg.goal&&bossOk) triggerWin();
+}
+
+function collectItem(c){
+  c.active=false;
+  gs.combo=Math.min(gs.combo+1,8); gs.comboT=200;
+  const pts={solar:15,wind:20,battery:10,hydro:25,geo:30,hydrogen:35}[c.type]||15;
+  const eng={solar:12,wind:15,battery:9,hydro:18,geo:20,hydrogen:22}[c.type]||12;
+  const lbl={solar:'☀️ Solar',wind:'💨 Eólica',battery:'🔋 Batería',hydro:'💧 Hidro',geo:'🌋 Geo',hydrogen:'⚛️ H₂ Verde'}[c.type]||'⚡';
+  const final=Math.round(pts*gs.combo);
+  gs.score+=final; gs.energy=Math.min(gs.energy+eng,100);
+  spawnFx(c.x+11,c.y+11,tColor(c.type));
+  showMsg(`${lbl} +${final}${gs.combo>1?' x'+gs.combo+' COMBO!':''}`);
+  updateCombo();
+}
+
+function tColor(t){return{solar:'#ffd700',wind:'#00cfff',battery:'#aa88ff',hydro:'#00aaff',geo:'#ff8844',hydrogen:'#ccff00'}[t]||'#00ff88';}
+
+function loseLife(){
+  if(P.inv>0)return;
+  gs.lives--; gs.shield=50; P.inv=95; P.x=80;P.y=280;P.vx=0;P.vy=0;
+  gs.combo=1; updateCombo(); spawnFx(P.x+14,P.y+18,'#ff4444');
+  if(gs.lives<=0) triggerGameOver('¡El ingeniero quedó fuera de servicio!');
+}
+
+function triggerGameOver(msg){
+  clearInterval(gs.timeTimer); gs.screen='gameover';
+  document.getElementById('goMsg').textContent=msg;
+  document.getElementById('gameOverScreen').style.display='flex';
+}
+
+function triggerWin(){
+  clearInterval(gs.timeTimer); gs.screen='win';
+  const bonus=gs.time*3; gs.score+=bonus;
+  const stars=gs.time>30?3:gs.time>15?2:1;
+  document.getElementById('winStars').textContent='⭐'.repeat(stars)+'☆'.repeat(3-stars);
+  document.getElementById('winMsg').textContent=`Red estabilizada! Bonus: +${bonus} pts · Total: ${gs.score}`;
+  if(gs.level>=7){
+    document.getElementById('winScreen').style.display='none';
+    document.getElementById('finalScreen').style.display='flex';
+    document.getElementById('finalMsg').textContent=`¡Puntuación final: ${gs.score} pts! Eres un verdadero Ingeniero de Energías Renovables.`;
+  } else {
+    document.getElementById('winScreen').style.display='flex';
+  }
+}
+
+function togglePause(){
+  if(gs.screen==='play'){gs.screen='pause';clearInterval(gs.timeTimer);document.getElementById('pauseScreen').style.display='flex';}
+  else if(gs.screen==='pause'){gs.screen='play';startTimer();document.getElementById('pauseScreen').style.display='none';}
+}
+
+function spawnFx(x,y,color){for(let i=0;i<14;i++){const a=Math.random()*Math.PI*2,sp=1+Math.random()*4;gs.fx.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,color,life:25+Math.random()*20,size:2+Math.random()*3});}}
+function showMsg(msg){clearTimeout(gs.msgTimer);const el=document.getElementById('messageBox');el.textContent=msg;el.style.opacity=1;gs.msgTimer=setTimeout(()=>{el.style.opacity=0;},2100);}
+function flashBadge(name){const el=document.getElementById('levelBadge');el.textContent='⚡ '+name;el.style.opacity=1;setTimeout(()=>{el.style.opacity=0;},2600);}
+function updateCombo(){const el=document.getElementById('comboDisplay');el.textContent='x'+gs.combo;el.style.color=gs.combo>=4?'#ff8800':gs.combo>=2?'#ffd700':'var(--green)';}
+function updateHearts(){document.querySelectorAll('.heart').forEach((h,i)=>h.classList.toggle('empty',i>=gs.lives));}
+
+// ── RENDER ─────────────────────────────────────────────
+const bgStars=Array.from({length:70},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.5,b:Math.random()}));
+
+function render(){
+  const idx=Math.min(gs.level-1,LEVELS.length-1);
+  const cfg=LEVELS[idx];
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,cfg.bgT); g.addColorStop(1,cfg.bgB);
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+
+  // Stars
+  const t=Date.now()/1000;
+  for(const s of bgStars){ctx.fillStyle=`rgba(150,200,255,${0.2+0.2*Math.sin(t*.5+s.b*10)})`;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill();}
+
+  // Mountains
+  const mc=['#0d1522','#0a1020','#081820','#200a00','#0a0a20','#051510','#180505'];
+  ctx.fillStyle=mc[idx]||mc[0]; ctx.beginPath(); ctx.moveTo(0,H);
+  [[0,300],[80,240],[160,300],[250,220],[340,295],[420,200],[500,300],[600,230],[700,300],[800,250],[800,H]].forEach(([x,y])=>ctx.lineTo(x,y));
+  ctx.fill();
+
+  // Platforms
+  for(const pl of platforms){ctx.fillStyle=pl.color;ctx.fillRect(pl.x,pl.y,pl.w,pl.h);ctx.fillStyle='rgba(0,255,136,0.15)';ctx.fillRect(pl.x,pl.y,pl.w,2);}
+  // Mobile platforms
+  for(const mp of mobPlats){
+    ctx.fillStyle=mp.color;ctx.fillRect(mp.x,mp.y,mp.w,mp.h);
+    ctx.fillStyle='rgba(0,200,255,0.25)';ctx.fillRect(mp.x,mp.y,mp.w,2);
+    ctx.fillStyle='#00cfff66';ctx.font='9px Arial';ctx.fillText(mp.vx>0?'→':'←',mp.x+mp.w/2-4,mp.y-3);
+  }
+
+  // Storm
+  for(const b of gs.stormBolts){
+    const a=b.life/65; ctx.strokeStyle=`rgba(255,220,50,${a})`; ctx.lineWidth=3; ctx.shadowColor='#ffcc00';ctx.shadowBlur=12;
+    ctx.beginPath();ctx.moveTo(b.x,0);ctx.lineTo(b.x+8,b.y*.4);ctx.lineTo(b.x-5,b.y*.7);ctx.lineTo(b.x+4,b.y);ctx.stroke();
+    ctx.shadowBlur=0;ctx.lineWidth=1;
+  }
+
+  // Collectibles
+  for(const c of collectibles){if(!c.active)continue;drawItem(c);}
+  // Hazards
+  for(const h of hazards){if(!h.active)continue;drawHazard(h);}
+  // Boss
+  if(cfg.boss&&gs.bossHp>0) drawBoss();
+  for(const b of gs.bossBullets){ctx.fillStyle='#ff4400';ctx.shadowColor='#ff4400';ctx.shadowBlur=8;ctx.beginPath();ctx.arc(b.x+4,b.y+4,5,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;}
+
+  // FX
+  for(const e of gs.fx){ctx.globalAlpha=e.life/45;ctx.fillStyle=e.color;ctx.beginPath();ctx.arc(e.x,e.y,e.size,0,Math.PI*2);ctx.fill();}
+  ctx.globalAlpha=1;
+
+  drawPlayer();
+
+  // Grid
+  ctx.strokeStyle='rgba(0,255,136,0.025)';ctx.lineWidth=1;
+  for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+}
+
+function drawItem(c){
+  const t=Date.now()/800, bob=Math.sin(t+c.pulse)*4, glow=.5+.5*Math.sin(t*2+c.pulse);
+  const cx=c.x+11, cy=c.y+11+bob, col=tColor(c.type);
+  ctx.shadowColor=col; ctx.shadowBlur=10+glow*10;
+  if(c.type==='solar'){
+    ctx.fillStyle='#003366';ctx.fillRect(c.x+2,c.y+2+bob,20,16);
+    ctx.fillStyle='#ffd700';[[4,4],[10,4],[16,4],[4,11],[10,11],[16,11]].forEach(([dx,dy])=>ctx.fillRect(c.x+dx,c.y+dy+bob,4,5));
+    ctx.strokeStyle=`rgba(255,220,0,${.4+glow*.4})`;ctx.lineWidth=1;
+    for(let i=0;i<8;i++){const a=i/8*Math.PI*2+t;ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*12,cy+Math.sin(a)*12);ctx.lineTo(cx+Math.cos(a)*17,cy+Math.sin(a)*17);ctx.stroke();}
+  } else if(c.type==='wind'){
+    ctx.fillStyle='#aaa';ctx.fillRect(c.x+9,c.y+4+bob,3,14);
+    ctx.save();ctx.translate(cx,c.y+6+bob);ctx.rotate(t*2);ctx.fillStyle='#00cfff';
+    for(let i=0;i<3;i++){ctx.save();ctx.rotate(i/3*Math.PI*2);ctx.beginPath();ctx.ellipse(0,-9,2.5,8,0,0,Math.PI*2);ctx.fill();ctx.restore();}
+    ctx.restore();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(cx,c.y+6+bob,2.5,0,Math.PI*2);ctx.fill();
+  } else if(c.type==='battery'){
+    ctx.fillStyle='#333';ctx.fillRect(c.x+3,c.y+3+bob,16,14);ctx.fillStyle='#555';ctx.fillRect(c.x+7,c.y+1+bob,8,3);
+    ctx.fillStyle=`rgba(100,255,100,${.5+glow*.5})`;ctx.fillRect(c.x+5,c.y+5+bob,Math.floor(12*(.5+glow*.5)),10);
+    ctx.strokeStyle='#00ff88';ctx.lineWidth=1;ctx.strokeRect(c.x+3,c.y+3+bob,16,14);
+    ctx.fillStyle='#fff';ctx.font='bold 10px Arial';ctx.fillText('⚡',c.x+5,c.y+15+bob);
+  } else if(c.type==='hydro'){
+    ctx.fillStyle='#00aaff';ctx.beginPath();ctx.moveTo(cx,c.y+2+bob);
+    ctx.bezierCurveTo(cx+10,c.y+10+bob,cx+10,c.y+18+bob,cx,c.y+20+bob);
+    ctx.bezierCurveTo(cx-10,c.y+18+bob,cx-10,c.y+10+bob,cx,c.y+2+bob);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.45)';ctx.beginPath();ctx.ellipse(cx-3,c.y+8+bob,2,4,-.5,0,Math.PI*2);ctx.fill();
+  } else if(c.type==='geo'){
+    ctx.fillStyle='#aa3300';ctx.beginPath();ctx.moveTo(c.x,c.y+20+bob);ctx.lineTo(cx,c.y+bob);ctx.lineTo(c.x+22,c.y+20+bob);ctx.closePath();ctx.fill();
+    ctx.fillStyle=`rgba(255,100,0,${glow})`;ctx.beginPath();ctx.arc(cx,c.y+bob,4+glow*3,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#ff8844';ctx.font='11px Arial';ctx.fillText('🌋',c.x+3,c.y+17+bob);
+  } else if(c.type==='hydrogen'){
+    ctx.strokeStyle='#ccff00';ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(cx,cy,9,0,Math.PI*2);ctx.stroke();
+    ctx.beginPath();ctx.ellipse(cx,cy,9,3,t,0,Math.PI*2);ctx.stroke();
+    ctx.beginPath();ctx.ellipse(cx,cy,9,3,t+Math.PI/2,0,Math.PI*2);ctx.stroke();
+    ctx.fillStyle='#ccff00';ctx.beginPath();ctx.arc(cx,cy,4,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#001100';ctx.font='bold 6px Arial';ctx.textAlign='center';ctx.fillText('H₂',cx,cy+2);ctx.textAlign='left';
+  }
+  ctx.shadowBlur=0;
+}
+
+function drawHazard(h){
+  const bob=Math.sin(h.bobT*1.5)*3;
+  ctx.shadowColor='#ff4444';ctx.shadowBlur=12;
+  ctx.fillStyle='#331111';ctx.beginPath();ctx.arc(h.x+11,h.y+11+bob,11,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#882222';ctx.beginPath();ctx.arc(h.x+8,h.y+8+bob,8,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#cc3333';ctx.beginPath();ctx.arc(h.x+14,h.y+9+bob,7,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ff6666';ctx.font='13px Arial';ctx.fillText('☠',h.x+4,h.y+16+bob);
+  ctx.shadowBlur=0;
+}
+
+function drawBoss(){
+  const t=Date.now()/300, bx=gs.bossX, by=258;
+  ctx.shadowColor='#ff2200';ctx.shadowBlur=18+Math.sin(t)*7;
+  ctx.fillStyle='#441100';ctx.fillRect(bx,by,90,62);
+  ctx.fillStyle='#661100';ctx.fillRect(bx+5,by+5,80,52);
+  ctx.fillStyle='#880000';ctx.fillRect(bx+15,by-28,15,33);ctx.fillRect(bx+60,by-28,15,33);
+  for(let c=0;c<2;c++){const ox=c===0?22.5:67.5;for(let i=0;i<4;i++){const sx=bx+ox+Math.sin(t+i)*5,sy=by-28-i*11;ctx.fillStyle=`rgba(80,80,80,${.5-i*.1})`;ctx.beginPath();ctx.arc(sx,sy,7+i*2.5,0,Math.PI*2);ctx.fill();}}
+  ctx.fillStyle='#ff4400';ctx.shadowColor='#ff4400';ctx.shadowBlur=10;
+  ctx.beginPath();ctx.arc(bx+28,by+24,8,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(bx+62,by+24,8,0,Math.PI*2);ctx.fill();
+  // HP bar
+  ctx.shadowBlur=0;ctx.fillStyle='#330000';ctx.fillRect(bx,by-38,90,9);
+  ctx.fillStyle='#ff2200';ctx.fillRect(bx,by-38,90*(gs.bossHp/8),9);
+  ctx.strokeStyle='#ff4400';ctx.lineWidth=1;ctx.strokeRect(bx,by-38,90,9);
+  ctx.fillStyle='#ff9988';ctx.font='bold 8px monospace';ctx.fillText('REACTOR FÓSIL',bx+5,by-41);
+}
+
+function drawPlayer(){
+  const t=Date.now()/200;
+  if(P.inv>0&&Math.floor(P.inv/6)%2===0)return;
+  ctx.save();ctx.translate(P.x+P.w/2,P.y+P.h);ctx.scale(P.dir,1);ctx.translate(-P.w/2,-P.h);
+  const sw=P.onGround?Math.sin(t*1.5)*4:0;
+  ctx.fillStyle='#1a3a6a';ctx.fillRect(4,14,20,14);
+  ctx.fillStyle='#00ff88';ctx.fillRect(5,4,18,12);
+  ctx.fillStyle='#003333';ctx.fillRect(8,7,12,6);
+  ctx.fillStyle='rgba(0,255,200,0.3)';ctx.fillRect(8,7,12,6);
+  ctx.fillStyle='#1a3a6a';ctx.fillRect(0,16,5,8);ctx.fillRect(23,16,5,8);
+  ctx.fillStyle='#0a1a3a';ctx.fillRect(5+sw,28,8,8);ctx.fillRect(15-sw,28,8,8);
+  ctx.fillStyle='#ff8800';ctx.fillRect(4+sw,34,10,4);ctx.fillRect(14-sw,34,10,4);
+  ctx.fillStyle='#00ff88';ctx.fillRect(8,19,Math.floor(12*(gs.energy/100)),3);
+  ctx.strokeStyle='#00ff8866';ctx.lineWidth=1;ctx.strokeRect(8,19,12,3);
+  if(gs.shield>40){ctx.strokeStyle=`rgba(0,200,255,${gs.shield/200})`;ctx.lineWidth=2;ctx.strokeRect(1,1,26,35);}
+  ctx.restore();
+  ctx.fillStyle='rgba(0,0,0,0.22)';ctx.beginPath();ctx.ellipse(P.x+P.w/2,GROUND_Y,14,4,0,0,Math.PI*2);ctx.fill();
+}
+
+// ── BUTTONS ────────────────────────────────────────────
+document.getElementById('startBtn').addEventListener('click',()=>{
+  document.getElementById('startScreen').style.display='none';
+  gs.level=1;gs.score=0;gs.lives=3;gs.screen='play';setupLevel(1);
+});
+document.getElementById('resumeBtn').addEventListener('click',togglePause);
+document.getElementById('restartBtn').addEventListener('click',()=>{
+  document.getElementById('gameOverScreen').style.display='none';
+  gs.lives=3;gs.score=0;gs.screen='play';setupLevel(gs.level);
+});
+document.getElementById('nextBtn').addEventListener('click',()=>{
+  document.getElementById('winScreen').style.display='none';
+  gs.level++;gs.lives=Math.min(gs.lives+1,3);gs.screen='play';setupLevel(gs.level);
+});
+document.getElementById('replayBtn').addEventListener('click',()=>{
+  document.getElementById('finalScreen').style.display='none';
+  gs.level=1;gs.score=0;gs.lives=3;gs.screen='play';setupLevel(1);
+});
+
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

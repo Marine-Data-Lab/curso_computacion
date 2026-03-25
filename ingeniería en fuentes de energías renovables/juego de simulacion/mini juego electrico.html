@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>ELECTRO SOLAR — Técnico Eléctrico</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+:root{
+  --sy:#FFD600;--eo:#FF6B00;--eb:#00E5FF;--dr:#FF1744;--og:#00E676;
+  --bg:#0A0E1A;--pb:#0D1422;--br:#1E2D4A;--tx:#C8D8F0;--dm:#4A6080;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);font-family:'Share Tech Mono',monospace;color:var(--tx);overflow:hidden;height:100vh;display:flex;flex-direction:column;user-select:none;}
+
+#hud{background:linear-gradient(90deg,#060810,#0D1833,#060810);border-bottom:2px solid var(--eb);padding:5px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;box-shadow:0 0 20px rgba(0,229,255,0.25);}
+#hud-title{font-family:'Orbitron',monospace;font-size:1rem;font-weight:900;color:var(--sy);text-shadow:0 0 12px rgba(255,214,0,0.6);letter-spacing:3px;}
+#hud-title span{color:var(--eb);}
+.hud-grp{display:flex;gap:18px;align-items:center;}
+.hud-it{display:flex;flex-direction:column;align-items:center;font-size:0.55rem;color:var(--dm);letter-spacing:1px;}
+.hud-v{font-size:0.9rem;font-weight:bold;color:var(--eb);}
+.hud-v.g{color:var(--og);}.hud-v.w{color:var(--eo);}.hud-v.d{color:var(--dr);animation:blink .4s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+#ebar-w{width:120px;height:11px;background:#111;border:1px solid var(--br);border-radius:6px;overflow:hidden;}
+#ebar{height:100%;background:linear-gradient(90deg,var(--sy),var(--eo));transition:width .4s;box-shadow:0 0 8px rgba(255,214,0,.5);}
+#hpbar-w{width:80px;height:11px;background:#111;border:1px solid var(--br);border-radius:6px;overflow:hidden;}
+#hpbar{height:100%;background:linear-gradient(90deg,#ff3333,#00E676);transition:width .3s;}
+
+#game-wrap{flex:1;display:flex;overflow:hidden;position:relative;}
+#cc{flex:1;position:relative;overflow:hidden;}
+canvas{display:block;}
+
+#rpanel{width:195px;background:var(--pb);border-left:1px solid var(--br);display:flex;flex-direction:column;flex-shrink:0;}
+.rp-sec{padding:8px 10px;border-bottom:1px solid var(--br);}
+.rp-h{font-family:'Orbitron',monospace;font-size:0.53rem;color:var(--eb);letter-spacing:2px;margin-bottom:6px;}
+#task-list{flex:1;overflow-y:auto;padding:8px 10px;}
+.ti{background:#0d1320;border:1px solid var(--br);border-radius:4px;padding:6px 8px;margin-bottom:5px;font-size:0.6rem;line-height:1.45;position:relative;}
+.ti.done{border-color:var(--og);opacity:.5;}
+.ti-tag{font-size:0.49rem;color:var(--dm);display:block;margin-bottom:2px;}
+.ti-s{position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:.75rem;}
+#clog{height:78px;background:#040709;border-top:1px solid var(--br);padding:5px 8px;overflow-y:auto;font-size:0.57rem;}
+.lg{line-height:1.7;}.lg.ok{color:var(--og);}.lg.w{color:var(--sy);}.lg.e{color:var(--dr);}.lg.i{color:var(--eb);}
+
+#toolbar{background:var(--pb);border-top:1px solid var(--br);padding:5px 14px;display:flex;gap:7px;align-items:center;flex-shrink:0;flex-wrap:wrap;}
+.tb-lbl{font-size:0.53rem;color:var(--dm);letter-spacing:2px;margin-right:3px;}
+.tool{background:#0d1320;border:1px solid var(--br);border-radius:5px;padding:4px 9px;cursor:pointer;font-size:0.62rem;transition:all .15s;display:flex;gap:4px;align-items:center;}
+.tool:hover{border-color:var(--eb);background:#162030;}
+.tool.active{border-color:var(--sy);background:#1a1500;box-shadow:0 0 10px rgba(255,214,0,.3);}
+.tool .ico{font-size:.95rem;}
+.kbd{background:#111;border:1px solid var(--br);border-radius:3px;padding:1px 5px;font-size:0.5rem;color:var(--dm);}
+#ih{display:none;margin-left:auto;font-size:0.58rem;color:var(--sy);animation:blink .7s infinite;padding:4px 9px;border:1px solid var(--sy);border-radius:4px;}
+#ctrl-hint{font-size:0.52rem;color:var(--dm);margin-left:6px;}
+
+#modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:200;align-items:center;justify-content:center;}
+#modal-ov.show{display:flex;}
+#mbox{background:var(--pb);border:2px solid var(--eb);border-radius:8px;padding:22px;width:520px;max-height:82vh;overflow-y:auto;box-shadow:0 0 50px rgba(0,229,255,.25);}
+#mbox h2{font-family:'Orbitron',monospace;font-size:.88rem;color:var(--sy);margin-bottom:13px;letter-spacing:2px;}
+.wgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:10px 0;}
+.wbtn{padding:10px 5px;border-radius:5px;border:2px solid #444;cursor:pointer;font-size:1.05rem;text-align:center;transition:all .15s;}
+.wbtn:hover{filter:brightness(1.3);transform:scale(1.06);}
+.wbtn.cut{opacity:.28;cursor:default;transform:none;}
+.wbtn span{display:block;font-size:.53rem;color:#aaa;margin-top:3px;}
+.slr{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.slr label{width:135px;font-size:.7rem;}
+.slr input[type=range]{flex:1;accent-color:var(--eb);}
+.slv{width:50px;text-align:right;font-size:.7rem;color:var(--sy);}
+.dgg{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:10px 0;}
+.dgc{background:#0a0f1a;border:1px solid var(--br);border-radius:5px;padding:9px;cursor:pointer;font-size:.7rem;transition:all .2s;}
+.dgc:hover{border-color:var(--eb);}
+.dgc.sel{border-color:var(--sy);background:#1a1400;}
+.dgl{font-weight:bold;color:var(--eb);font-size:.58rem;margin-bottom:3px;}
+.m-act{display:flex;gap:8px;margin-top:13px;}
+.bok{flex:1;padding:9px;background:var(--eb);color:#000;border:none;border-radius:5px;font-family:'Orbitron',monospace;font-size:.68rem;font-weight:bold;cursor:pointer;}
+.bok:hover{background:var(--sy);}
+.bno{flex:1;padding:9px;background:transparent;color:var(--dm);border:1px solid var(--br);border-radius:5px;font-family:'Orbitron',monospace;font-size:.68rem;cursor:pointer;}
+.bno:hover{border-color:var(--dr);color:var(--dr);}
+.rok{background:rgba(0,230,118,.12);color:var(--og);border:1px solid var(--og);border-radius:5px;padding:9px;text-align:center;font-family:'Orbitron',monospace;font-size:.72rem;margin-top:8px;}
+.rfail{background:rgba(255,23,68,.12);color:var(--dr);border:1px solid var(--dr);border-radius:5px;padding:9px;text-align:center;font-family:'Orbitron',monospace;font-size:.72rem;margin-top:8px;}
+#pbw{width:100%;height:20px;background:#111;border:1px solid var(--br);border-radius:10px;overflow:hidden;margin:10px 0;}
+#pb{height:100%;background:linear-gradient(90deg,var(--eo),var(--sy));width:0%;transition:width .08s;}
+.spc-p{text-align:center;font-size:.73rem;color:var(--sy);margin:5px 0;animation:blink .5s infinite;}
+
+#lvlov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:300;align-items:center;justify-content:center;flex-direction:column;gap:14px;}
+#lvlov.show{display:flex;}
+#lvlov h2{font-family:'Orbitron',monospace;font-size:1.5rem;color:var(--sy);text-shadow:0 0 30px rgba(255,214,0,.7);animation:blink 1s infinite;}
+#lvlov p{font-size:.82rem;color:var(--tx);}
+#lvlov button{padding:11px 30px;background:var(--eb);color:#000;border:none;border-radius:6px;font-family:'Orbitron',monospace;font-size:.78rem;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<div id="hud">
+  <div id="hud-title">⚡ ELECTRO<span>SOLAR</span></div>
+  <div class="hud-grp">
+    <div class="hud-it">NIVEL<span class="hud-v" id="hlv">1</span></div>
+    <div class="hud-it">PUNTOS<span class="hud-v g" id="hsc">0</span></div>
+    <div class="hud-it">SOLAR<div id="ebar-w"><div id="ebar" style="width:60%"></div></div></div>
+    <div class="hud-it">HP<div id="hpbar-w"><div id="hpbar" style="width:100%"></div></div></div>
+    <div class="hud-it">VOLTAJE<span class="hud-v w" id="hvt">220V</span></div>
+    <div class="hud-it">TIEMPO<span class="hud-v" id="htm">10:00</span></div>
+    <div class="hud-it">ZONA<span class="hud-v" id="hzone" style="font-size:.58rem;color:var(--sy)">PLANTA</span></div>
+  </div>
+</div>
+
+<div id="game-wrap">
+  <div id="cc"><canvas id="gc"></canvas></div>
+  <div id="rpanel">
+    <div class="rp-sec"><div class="rp-h">MISIONES ACTIVAS</div></div>
+    <div id="task-list"></div>
+    <div class="rp-sec">
+      <div class="rp-h">ESTADO SISTEMA</div>
+      <div id="sdiag" style="font-size:.58rem;line-height:2.1;color:var(--dm);">
+        <div>PANELES: <span id="d-pan" style="color:var(--og)">ONLINE</span></div>
+        <div>TRANSFORMADOR: <span id="d-tr" style="color:var(--dr)">QUEMADO</span></div>
+        <div>CABLES: <span id="d-cb" style="color:var(--dr)">FALLA RATA</span></div>
+        <div>MOTOR A: <span id="d-ma" style="color:var(--dr)">FALLA</span></div>
+        <div>POSTE: <span id="d-po" style="color:var(--eo)">ALERTA</span></div>
+        <div>INVERSOR: <span id="d-iv" style="color:var(--eo)">ALERTA</span></div>
+        <div>TABLERO: <span id="d-tb" style="color:var(--dr)">DISPARADO</span></div>
+      </div>
+    </div>
+    <div id="clog"></div>
+  </div>
+</div>
+
+<div id="toolbar">
+  <span class="tb-lbl">TOOL:</span>
+  <div class="tool active" data-tool="inspect"><span class="ico">🔍</span>Inspeccionar<span class="kbd">1</span></div>
+  <div class="tool" data-tool="cut"><span class="ico">✂️</span>Cortador<span class="kbd">2</span></div>
+  <div class="tool" data-tool="repair"><span class="ico">🔧</span>Reparar<span class="kbd">3</span></div>
+  <div class="tool" data-tool="multimeter"><span class="ico">📟</span>Multímetro<span class="kbd">4</span></div>
+  <div class="tool" data-tool="solar"><span class="ico">☀️</span>Solar<span class="kbd">5</span></div>
+  <div class="tool" data-tool="extinguish"><span class="ico">🧯</span>Extintor<span class="kbd">6</span></div>
+  <span id="ih">[ E ] INTERACTUAR</span>
+  <span id="ctrl-hint">← → mover &nbsp;|&nbsp; ESPACIO saltar &nbsp;|&nbsp; E interactuar &nbsp;|&nbsp; 1-6 herramienta</span>
+</div>
+
+<div id="modal-ov">
+  <div id="mbox">
+    <h2 id="mt">MINIJUEGO</h2>
+    <div id="mc"></div>
+    <div id="mr"></div>
+    <div class="m-act">
+      <button class="bok" id="mok">CONFIRMAR</button>
+      <button class="bno" id="mno">CANCELAR</button>
+    </div>
+  </div>
+</div>
+
+<div id="lvlov">
+  <h2 id="lot">¡NIVEL COMPLETADO!</h2>
+  <p id="lod">Todos los sistemas restaurados.</p>
+  <button onclick="advLv()">SIGUIENTE NIVEL ▶</button>
+</div>
+
+<script>
+const canvas=document.getElementById('gc');
+const ctx=canvas.getContext('2d');
+function rsz(){const c=document.getElementById('cc');canvas.width=c.clientWidth;canvas.height=c.clientHeight;}
+rsz();window.addEventListener('resize',()=>{rsz();buildLevel(G.level);});
+
+const GRAV=0.52,JFORCE=-13,SPD=3.6,IDIST=70,TILE=48;
+
+const G={
+  level:1,score:0,energy:60,voltage:220,time:600,hp:100,
+  timerH:null,tool:'inspect',
+  camX:0,camY:0,
+  P:{x:140,y:300,vx:0,vy:0,onGround:false,fR:true,climbing:false,frame:0,ft:0},
+  keys:{},
+  objects:[],tasks:[],tasksDone:0,
+  parts:[],fts:[],
+  nearObj:null,modalOpen:false,
+  WW:2600,WH:0,
+  plats:[],
+};
+
+// ── LEVELS ──────────────────────────────────────────────
+const LEVELS=[
+{
+  name:'PLANTA SOLAR',bg:'#080c18',time:660,
+  intro:'¡Emergencia! Rata mordió cables, transformador en llamas, poste dañado. ¡Repáralo todo!',
+  build(W,H){
+    const plats=[
+      {x:0,   y:H-58,w:W,  h:58, gr:true},
+      {x:280, y:H-155,w:150,h:16},
+      {x:520, y:H-235,w:130,h:16},
+      {x:770, y:H-175,w:110,h:16},
+      {x:1020,y:H-275,w:150,h:16},
+      {x:1300,y:H-195,w:110,h:16},
+      {x:1560,y:H-305,w:170,h:16},
+      {x:1840,y:H-195,w:140,h:16},
+      {x:1720,y:H-390,w:480,h:16,roof:true},
+    ];
+    const objects=[
+      // Solar panels on roof
+      {id:'sp1',type:'solar_panel',x:1730,y:H-490,status:'ok',  fault:null,       task:null},
+      {id:'sp2',type:'solar_panel',x:1800,y:H-490,status:'ok',  fault:null,       task:null},
+      {id:'sp3',type:'solar_panel',x:1870,y:H-490,status:'warn',fault:'soiling',  task:{tp:'solar',  lb:'Limpiar panel solar sucio #3'}},
+      {id:'sp4',type:'solar_panel',x:1940,y:H-490,status:'warn',fault:'low_irr',  task:{tp:'solar',  lb:'Optimizar ángulo panel #4'}},
+      // Rat cables
+      {id:'rat1',type:'rat_cable',x:380, y:H-92, status:'fault',fault:'rat_bite', task:{tp:'cut',    lb:'Aislar cable mordido por rata — zona A'}},
+      {id:'rat2',type:'rat_cable',x:940, y:H-92, status:'fault',fault:'rat_bite', task:{tp:'cut',    lb:'Aislar cable mordido por rata — zona B'}},
+      {id:'rat3',type:'rat_cable',x:1580,y:H-92, status:'fault',fault:'rat_bite', task:{tp:'cut',    lb:'Cable mordido por rata — sala control'}},
+      // Burning transformer
+      {id:'tr1', type:'transformer',x:640, y:H-210,status:'fault',fault:'burning', task:{tp:'extinguish',lb:'🔥 Apagar transformador en llamas'}},
+      // Motor
+      {id:'mot1',type:'motor',    x:1080,y:H-105,status:'fault',fault:'winding_short',task:{tp:'repair',lb:'Reparar motor bomba eléctrica #1'}},
+      // Utility pole
+      {id:'pole1',type:'pole',   x:1390,y:H-58, status:'warn', fault:'loose_wire',task:{tp:'climb',  lb:'⛑️ Subir al poste — revisar cable aéreo'}},
+      // Inverter
+      {id:'inv1', type:'inverter',x:1860,y:H-120,status:'warn', fault:'overtemp', task:{tp:'diagnose',lb:'Diagnosticar inversor solar'}},
+      // Breaker
+      {id:'brk1', type:'breaker', x:2280,y:H-105,status:'fault',fault:'trip',     task:{tp:'diagnose',lb:'Resetear tablero principal'}},
+      // Battery (no task)
+      {id:'bat1', type:'battery', x:2150,y:H-105,status:'ok',  fault:null,        task:null},
+    ];
+    return {plats,objects};
+  }
+},
+{
+  name:'SISTEMA INDUSTRIAL',bg:'#0c081a',time:780,
+  intro:'Sistema trifásico industrial. Múltiples fallas críticas simultáneas.',
+  build(W,H){
+    const plats=[
+      {x:0,   y:H-58,w:W,  h:58,gr:true},
+      {x:240, y:H-155,w:140,h:16},
+      {x:480, y:H-245,w:150,h:16},
+      {x:750, y:H-175,w:115,h:16},
+      {x:980, y:H-295,w:170,h:16},
+      {x:1270,y:H-205,w:115,h:16},
+      {x:1520,y:H-325,w:190,h:16},
+      {x:1860,y:H-185,w:150,h:16},
+      {x:2080,y:H-285,w:190,h:16},
+    ];
+    const objects=[
+      {id:'sp1',type:'solar_panel',x:100, y:H-155,status:'ok',  fault:null,      task:null},
+      {id:'sp2',type:'solar_panel',x:170, y:H-155,status:'ok',  fault:null,      task:null},
+      {id:'sp3',type:'solar_panel',x:1535,y:H-425,status:'warn',fault:'soiling', task:{tp:'solar',   lb:'Limpiar panel solar industrial'}},
+      {id:'rat1',type:'rat_cable', x:360, y:H-92, status:'fault',fault:'rat_bite',task:{tp:'cut',    lb:'Cable mordido — fase L1'}},
+      {id:'rat2',type:'rat_cable', x:820, y:H-92, status:'fault',fault:'rat_bite',task:{tp:'cut',    lb:'Cable mordido — fase L3'}},
+      {id:'rat3',type:'rat_cable', x:1200,y:H-92, status:'fault',fault:'rat_bite',task:{tp:'cut',    lb:'Cable mordido — sala de control'}},
+      {id:'tr1', type:'transformer',x:580,y:H-205,status:'fault',fault:'burning', task:{tp:'extinguish',lb:'🔥 Extinguir transformador industrial'}},
+      {id:'tr2', type:'transformer',x:1020,y:H-305,status:'fault',fault:'overload',task:{tp:'diagnose',lb:'Diagnosticar transformador sobrecargado'}},
+      {id:'mot1',type:'motor',     x:1310,y:H-110,status:'fault',fault:'burnt_winding',task:{tp:'repair',lb:'Motor compresor A — bobinado quemado'}},
+      {id:'mot2',type:'motor',     x:1450,y:H-110,status:'fault',fault:'bearing_fail', task:{tp:'repair',lb:'Motor bomba hidráulica — rodamientos'}},
+      {id:'pole1',type:'pole',     x:1660,y:H-58, status:'warn', fault:'loose_wire',   task:{tp:'climb', lb:'⛑️ Poste — cambiar fusible aéreo'}},
+      {id:'inv1', type:'inverter', x:1960,y:H-280,status:'warn', fault:'overload',     task:{tp:'diagnose',lb:'Inversor trifásico industrial'}},
+      {id:'brk1', type:'breaker',  x:2180,y:H-105,status:'fault',fault:'trip',         task:{tp:'diagnose',lb:'Tablero de distribución industrial'}},
+    ];
+    return {plats,objects};
+  }
+}
+];
+
+const OCFG={
+  solar_panel: {w:50,h:40,lb:'Panel Solar',ic:'☀️'},
+  rat_cable:   {w:80,h:32,lb:'Cable Dañado',ic:'🐀'},
+  transformer: {w:56,h:62,lb:'Transformador',ic:'🔌'},
+  motor:       {w:50,h:46,lb:'Motor',ic:'⚙️'},
+  pole:        {w:20,h:190,lb:'Poste de Luz',ic:'💡'},
+  inverter:    {w:46,h:50,lb:'Inversor',ic:'⚡'},
+  battery:     {w:42,h:42,lb:'Batería',ic:'🔋'},
+  breaker:     {w:38,h:48,lb:'Tablero',ic:'🛑'},
+};
+
+const FD={
+  rat_bite:'🐀 Cable mordido por rata',
+  burning:'🔥 Transformador en llamas',
+  overload:'⚡ Sobrecarga de corriente',
+  soiling:'🌫️ Panel sucio/sombreado',
+  low_irr:'☁️ Baja irradiancia solar',
+  winding_short:'🔴 Cortocircuito en bobinado',
+  burnt_winding:'🔥 Bobinado quemado',
+  bearing_fail:'🔩 Falla en rodamientos',
+  overtemp:'🌡️ Sobretemperatura',
+  loose_wire:'⚠️ Cable aéreo suelto',
+  trip:'🛑 Disparo por protección',
+};
+
+// ── BUILD LEVEL ──────────────────────────────────────────
+function buildLevel(lv){
+  const idx=(lv-1)%LEVELS.length;
+  const def=LEVELS[idx];
+  const H=canvas.height,W=G.WW;
+  G.WH=H;
+  const {plats,objects}=def.build(W,H);
+  G.plats=plats; G.objects=objects;
+  G.tasks=objects.filter(o=>o.task).map(o=>({id:o.id,tp:o.task.tp,lb:o.task.lb,done:false}));
+  G.tasksDone=0; G.time=def.time; G.hp=100; G.energy=60;
+  G.parts=[]; G.fts=[];
+  G.P.x=140; G.P.y=H-200; G.P.vx=0; G.P.vy=0;
+  G.P.onGround=false; G.P.climbing=false; G.camX=0;
+  if(G.timerH) clearInterval(G.timerH);
+  G.timerH=setInterval(tick,1000);
+  renderTasks();
+  log('i',`> NIVEL ${lv}: ${def.name}`);
+  log('w',`> ${def.intro}`);
+  updateHUD();
+  document.getElementById('hzone').textContent=def.name;
+}
+
+// ── INPUT ────────────────────────────────────────────────
+document.addEventListener('keydown',e=>{
+  G.keys[e.code]=true;
+  if(G.modalOpen) return;
+  const tm={'Digit1':'inspect','Digit2':'cut','Digit3':'repair','Digit4':'multimeter','Digit5':'solar','Digit6':'extinguish'};
+  if(tm[e.code]) selTool(tm[e.code]);
+  if(e.code==='KeyE'&&G.nearObj) interactWith(G.nearObj);
+});
+document.addEventListener('keyup',e=>G.keys[e.code]=false);
+document.querySelectorAll('.tool[data-tool]').forEach(b=>b.addEventListener('click',()=>selTool(b.dataset.tool)));
+function selTool(t){G.tool=t;document.querySelectorAll('.tool').forEach(b=>b.classList.toggle('active',b.dataset.tool===t));log('i',`> Herramienta: ${t}`);}
+
+// ── PHYSICS ──────────────────────────────────────────────
+function phys(){
+  const p=G.P;
+  if(p.climbing) return;
+  const ml=G.keys['ArrowLeft']||G.keys['KeyA'];
+  const mr=G.keys['ArrowRight']||G.keys['KeyD'];
+  if(ml){p.vx=-SPD;p.fR=false;}
+  else if(mr){p.vx=SPD;p.fR=true;}
+  else p.vx*=0.72;
+  if(ml||mr){p.ft++;if(p.ft>7){p.frame=(p.frame+1)%4;p.ft=0;}}else{p.frame=0;p.ft=0;}
+  p.vy+=GRAV; if(p.vy>18)p.vy=18;
+  if((G.keys['Space']||G.keys['ArrowUp']||G.keys['KeyW'])&&p.onGround){p.vy=JFORCE;p.onGround=false;}
+  p.x+=p.vx; p.y+=p.vy;
+  p.onGround=false;
+  for(const pl of G.plats){
+    if(p.x+14>pl.x&&p.x-14<pl.x+pl.w){
+      if(p.vy>=0&&p.y+28>pl.y&&p.y+28<pl.y+pl.h+8){
+        p.y=pl.y-28; p.vy=0; p.onGround=true;
+      }
+    }
+  }
+  p.x=Math.max(14,Math.min(G.WW-14,p.x));
+  if(p.y>G.WH+80){p.y=80;G.hp=Math.max(0,G.hp-20);updateHUD();log('e','> ¡Caída! -20 HP');}
+  const tw=canvas.width;
+  G.camX=Math.max(0,Math.min(G.WW-tw,p.x-tw/2));
+}
+
+// ── DRAW ─────────────────────────────────────────────────
+function draw(){
+  const W=canvas.width,H=canvas.height;
+  const idx=(G.level-1)%LEVELS.length;
+  ctx.fillStyle=LEVELS[idx].bg||'#080c18';
+  ctx.fillRect(0,0,W,H);
+  drawBG(W,H);
+  ctx.save();ctx.translate(-G.camX,0);
+  drawPlats();drawObjs();drawPlayer();drawParts();drawFTs();
+  if(G.nearObj){
+    const o=G.nearObj,cfg=OCFG[o.type];
+    ctx.save();ctx.globalAlpha=.12;ctx.beginPath();
+    ctx.arc(o.x+cfg.w/2,o.y+cfg.h/2,IDIST,0,Math.PI*2);
+    ctx.fillStyle='#00E5FF';ctx.fill();ctx.restore();
+  }
+  ctx.restore();
+  document.getElementById('ih').style.display=G.nearObj?'block':'none';
+  if(G.nearObj)document.getElementById('ih').textContent=`[ E ] ${OCFG[G.nearObj.type].lb}`;
+}
+
+let _stars=null,_sw=0,_sh=0;
+function drawBG(W,H){
+  if(!_stars||_sw!==W){_stars=[];_sw=W;_sh=H;for(let i=0;i<100;i++)_stars.push({x:Math.random()*G.WW,y:Math.random()*H*.65,r:Math.random()*1.4+.4,b:Math.random()});}
+  _stars.forEach(s=>{
+    ctx.save();ctx.globalAlpha=0.2+0.4*(0.5+0.5*Math.sin(Date.now()/900+s.b*12));
+    ctx.beginPath();ctx.arc(s.x-G.camX*0.28,s.y,s.r,0,Math.PI*2);
+    ctx.fillStyle='#fff';ctx.fill();ctx.restore();
+  });
+  // Moon
+  ctx.save();ctx.globalAlpha=0.55;ctx.beginPath();ctx.arc(W-80-G.camX*.05,55,28,0,Math.PI*2);
+  const mg=ctx.createRadialGradient(W-80-G.camX*.05,55,4,W-80-G.camX*.05,55,28);
+  mg.addColorStop(0,'#fffde7');mg.addColorStop(1,'#c8b400');
+  ctx.fillStyle=mg;ctx.shadowColor='#FFD600';ctx.shadowBlur=25;ctx.fill();ctx.restore();
+}
+
+function drawPlats(){
+  for(const pl of G.plats){
+    if(pl.gr){
+      ctx.fillStyle='#162a10';ctx.fillRect(pl.x,pl.y,pl.w,pl.h);
+      ctx.fillStyle='#2d5c18';ctx.fillRect(pl.x,pl.y,pl.w,7);
+      // grid
+      ctx.strokeStyle='rgba(45,92,24,0.25)';ctx.lineWidth=1;
+      for(let gx=pl.x;gx<pl.x+pl.w;gx+=50){ctx.beginPath();ctx.moveTo(gx,pl.y);ctx.lineTo(gx,pl.y+pl.h);ctx.stroke();}
+    } else if(pl.roof){
+      ctx.fillStyle='#243a1a';ctx.fillRect(pl.x,pl.y,pl.w,pl.h);
+      ctx.fillStyle='#3a5a28';ctx.fillRect(pl.x,pl.y,pl.w,4);
+    } else {
+      ctx.fillStyle='#1a2a3a';ctx.fillRect(pl.x,pl.y,pl.w,pl.h);
+      ctx.fillStyle='rgba(0,229,255,0.18)';ctx.fillRect(pl.x,pl.y,pl.w,3);
+    }
+  }
+}
+
+function drawObjs(){
+  const now=Date.now();
+  for(const o of G.objects){
+    if(o.status==='done') continue;
+    const cfg=OCFG[o.type];
+    const sx=o.x,sy=o.y;
+    const sc=o.status==='fault'?'#FF1744':o.status==='warn'?'#FF6B00':'#00E676';
+
+    if(o.type==='pole'){
+      // Pole shaft
+      ctx.fillStyle='#6a6a6a';ctx.fillRect(sx+6,sy,8,cfg.h);
+      ctx.fillStyle='#555';ctx.fillRect(sx+7,sy,6,cfg.h);
+      // Cross arms
+      ctx.fillStyle='#777';ctx.fillRect(sx-14,sy+18,50,6);ctx.fillRect(sx-8,sy+40,36,5);
+      // Insulators
+      ctx.fillStyle='#cc4400';
+      ctx.beginPath();ctx.arc(sx-14,sy+21,4,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(sx+36,sy+21,4,0,Math.PI*2);ctx.fill();
+      // Wires
+      const wc=o.status==='fault'?'#FF6600':'#999';
+      ctx.strokeStyle=wc;ctx.lineWidth=2;
+      if(o.status==='fault')ctx.setLineDash([5,4]);
+      ctx.beginPath();ctx.moveTo(sx-14,sy+21);ctx.lineTo(sx-70,sy+28);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(sx+36,sy+21);ctx.lineTo(sx+80,sy+26);ctx.stroke();
+      ctx.setLineDash([]);
+      // Lamp
+      const gl=0.5+0.5*Math.sin(now/350);
+      ctx.save();ctx.globalAlpha=gl*0.85;ctx.shadowColor='#FFD600';ctx.shadowBlur=20;
+      ctx.beginPath();ctx.arc(sx+10,sy+6,7,0,Math.PI*2);ctx.fillStyle='#FFD600';ctx.fill();ctx.restore();
+      if(o.status!=='ok'&&Math.sin(now/180)>0){
+        ctx.font='16px serif';ctx.textAlign='center';ctx.fillText('⚠️',sx+10,sy-6);
+      }
+      // Label
+      objLabel(cfg.lb,sc,sx+10,sy-18);
+      continue;
+    }
+
+    if(o.type==='transformer'){
+      // Body
+      ctx.fillStyle='#2a1a08';ctx.beginPath();ctx.roundRect(sx,sy,cfg.w,cfg.h,4);ctx.fill();
+      ctx.strokeStyle=o.fault==='burning'?'#FF4400':'#FF8C00';ctx.lineWidth=2;
+      ctx.beginPath();ctx.roundRect(sx,sy,cfg.w,cfg.h,4);ctx.stroke();
+      // Cooling fins
+      ctx.fillStyle='#3a2a10';
+      for(let fi=0;fi<4;fi++){ctx.fillRect(sx-5,sy+8+fi*13,7,9);ctx.fillRect(sx+cfg.w-2,sy+8+fi*13,7,9);}
+      // Coil symbol
+      ctx.strokeStyle='#FF8C00';ctx.lineWidth=1.5;
+      for(let ci=0;ci<3;ci++){ctx.beginPath();ctx.arc(sx+cfg.w/2,sy+20+ci*12,8,0,Math.PI);ctx.stroke();}
+      if(o.fault==='burning'){
+        const f=Math.sin(now/90)*3;
+        ctx.font='20px serif';ctx.textAlign='center';
+        ctx.fillText('🔥',sx+cfg.w/2+f,sy-3);ctx.fillText('🔥',sx+cfg.w/2-12+Math.sin(now/70)*2,sy+5);
+        ctx.fillText('💨',sx+cfg.w/2+8,sy-16);
+        ctx.save();ctx.globalAlpha=0.12+0.08*Math.sin(now/130);
+        ctx.beginPath();ctx.arc(sx+cfg.w/2,sy+cfg.h/2,cfg.w*.8,0,Math.PI*2);
+        ctx.fillStyle='#FF4400';ctx.fill();ctx.restore();
+      }
+      ctx.font='16px serif';ctx.textAlign='center';ctx.fillText('🔌',sx+cfg.w/2,sy+cfg.h-10);
+      objLabel(cfg.lb,sc,sx+cfg.w/2,sy-7);
+      continue;
+    }
+
+    if(o.type==='rat_cable'){
+      // Cable lines
+      ctx.strokeStyle='#555';ctx.lineWidth=6;
+      ctx.beginPath();ctx.moveTo(sx,sy+16);ctx.lineTo(sx+cfg.w,sy+16);ctx.stroke();
+      // Damage area
+      ctx.strokeStyle='#FF1744';ctx.lineWidth=3;ctx.setLineDash([5,4]);
+      ctx.beginPath();ctx.moveTo(sx,sy+16);ctx.lineTo(sx+cfg.w,sy+16);ctx.stroke();
+      ctx.setLineDash([]);
+      // Rat
+      const wb=Math.sin(now/280)*2;
+      ctx.font='22px serif';ctx.textAlign='center';ctx.fillText('🐀',sx+cfg.w/2,sy+wb);
+      // Sparks
+      if(Math.sin(now/85)>0.4){
+        ctx.fillStyle='#FFD600';ctx.font='11px serif';
+        ctx.fillText('✦',sx+cfg.w/2+18+Math.sin(now/80)*4,sy+4);
+        ctx.fillText('✦',sx+15,sy+9+Math.sin(now/65)*3);
+        ctx.fillText('✦',sx+cfg.w/2-12,sy-3+Math.sin(now/95)*2);
+      }
+      objLabel(cfg.lb,sc,sx+cfg.w/2,sy-9);
+      continue;
+    }
+
+    // Generic
+    ctx.save();
+    ctx.shadowColor=sc;ctx.shadowBlur=10;
+    const bg2=ctx.createLinearGradient(sx,sy,sx,sy+cfg.h);
+    bg2.addColorStop(0,'#1e2c40');bg2.addColorStop(1,'#0d1520');
+    ctx.fillStyle=bg2;ctx.beginPath();ctx.roundRect(sx,sy,cfg.w,cfg.h,5);ctx.fill();
+    ctx.strokeStyle=sc;ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(sx,sy,cfg.w,cfg.h,5);ctx.stroke();
+    ctx.shadowBlur=0;
+    ctx.font=`${Math.min(cfg.w,cfg.h)*.48}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(cfg.ic,sx+cfg.w/2,sy+cfg.h/2);
+    if(o.status==='fault'&&Math.sin(now/195)>0){ctx.font='11px serif';ctx.fillText('⚠️',sx+cfg.w-7,sy+5);}
+    ctx.restore();
+    objLabel(cfg.lb,sc,sx+cfg.w/2,sy-7);
+  }
+}
+
+function objLabel(lb,col,cx,cy){
+  ctx.save();ctx.font='bold 8.5px Share Tech Mono,monospace';
+  ctx.textAlign='center';ctx.textBaseline='bottom';
+  ctx.fillStyle=col;ctx.shadowColor=col;ctx.shadowBlur=4;
+  ctx.fillText(lb.toUpperCase(),cx,cy);ctx.restore();
+}
+
+function drawPlayer(){
+  const p=G.P;
+  ctx.save();
+  const flipX=p.fR?1:-1;
+  ctx.translate(p.x,p.y);ctx.scale(flipX,1);
+  if(p.climbing){
+    ctx.font='28px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('🧗',0,0);
+  } else {
+    ctx.font='27px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('🧑‍🔧',0,0);
+    // Tool in hand
+    const ti={cut:'✂️',repair:'🔧',multimeter:'📟',solar:'☀️',extinguish:'🧯'};
+    if(ti[G.tool]){ctx.font='13px serif';ctx.fillText(ti[G.tool],16,6);}
+  }
+  // Hard hat
+  ctx.font='12px serif';ctx.fillText('⛑️',0,-17);
+  ctx.restore();
+  // Interact hint bounce
+  if(G.nearObj){
+    const b=Math.sin(Date.now()/280)*3;
+    ctx.save();ctx.font='bold 10px Share Tech Mono';ctx.textAlign='center';
+    ctx.fillStyle='#FFD600';ctx.shadowColor='#FFD600';ctx.shadowBlur=8;
+    ctx.fillText('[E]',p.x,p.y-30+b);ctx.restore();
+  }
+}
+
+function drawParts(){
+  G.parts=G.parts.filter(p=>p.l>0);
+  G.parts.forEach(p=>{
+    ctx.save();ctx.globalAlpha=p.l;ctx.beginPath();ctx.arc(p.x,p.y,p.s,0,Math.PI*2);
+    ctx.fillStyle=p.c;ctx.shadowColor=p.c;ctx.shadowBlur=6;ctx.fill();ctx.restore();
+    p.x+=p.vx;p.y+=p.vy;p.l-=0.025;p.s*=0.97;
+  });
+}
+
+function drawFTs(){
+  G.fts=G.fts.filter(t=>t.l>0);
+  G.fts.forEach(t=>{
+    ctx.save();ctx.globalAlpha=t.l;ctx.font=`bold ${t.sz||14}px Orbitron,monospace`;
+    ctx.textAlign='center';ctx.fillStyle=t.c||'#FFD600';
+    ctx.shadowColor=t.c||'#FFD600';ctx.shadowBlur=10;ctx.fillText(t.tx,t.x,t.y);ctx.restore();
+    t.y-=1.1;t.l-=0.017;
+  });
+}
+
+// ── PROXIMITY ────────────────────────────────────────────
+function proximity(){
+  const p=G.P;let best=null,md=IDIST;
+  for(const o of G.objects){
+    if(o.status==='done')continue;
+    const cfg=OCFG[o.type];
+    const d=Math.hypot(p.x-(o.x+cfg.w/2),p.y-(o.y+cfg.h/2));
+    if(d<md){md=d;best=o;}
+  }
+  G.nearObj=best;
+}
+
+// ── INTERACT ─────────────────────────────────────────────
+function interactWith(o){
+  if(G.modalOpen)return;
+  const t=G.tool;
+  if(o.type==='rat_cable'){
+    if(t==='cut')cutMini(o);
+    else if(t==='inspect')inspectObj(o);
+    else log('w','> Usa ✂️ CORTADOR para cables dañados por rata');
+  } else if(o.type==='transformer'){
+    if(o.fault==='burning'){
+      if(t==='extinguish')extMini(o); else log('w','> ¡Usa 🧯 EXTINTOR para apagar el fuego!');
+    } else {
+      if(t==='multimeter')diagMini(o); else if(t==='inspect')inspectObj(o); else log('w','> Usa 📟 MULTÍMETRO');
+    }
+  } else if(o.type==='motor'){
+    if(t==='repair')repMini(o); else if(t==='inspect')inspectObj(o); else log('w','> Usa 🔧 REPARAR para motores');
+  } else if(o.type==='pole'){
+    climbMini(o);
+  } else if(o.type==='inverter'||o.type==='breaker'){
+    if(t==='multimeter')diagMini(o); else if(t==='inspect')inspectObj(o); else log('w','> Usa 📟 MULTÍMETRO');
+  } else if(o.type==='solar_panel'){
+    if(t==='solar')solarMini(o); else if(t==='inspect')inspectObj(o); else log('w','> Usa ☀️ SOLAR para paneles');
+  } else inspectObj(o);
+}
+
+// ── MINIGAMES ────────────────────────────────────────────
+function inspectObj(o){
+  const cfg=OCFG[o.type];
+  const V=(212+Math.random()*20).toFixed(1),I=(Math.random()*16+2).toFixed(2),T=(35+Math.random()*55).toFixed(0);
+  const extra=o.type==='solar_panel'?`Voc:${(36+Math.random()*4).toFixed(1)}V | Isc:${(8+Math.random()*2).toFixed(2)}A | Ef:${(16+Math.random()*7).toFixed(1)}%`:
+    o.type==='motor'?`Bobinado:${(55+Math.random()*60).toFixed(0)}°C | RPM:${Math.floor(Math.random()*1500+1000)} | P:${(Math.random()*15+3).toFixed(1)}kW`:
+    o.type==='transformer'?`Ratio:${(380/220).toFixed(2)}:1 | kVA:${(Math.random()*50+10).toFixed(0)} | Ef:${(96+Math.random()*3).toFixed(1)}%`:
+    `V:${V}V | I:${I}A | T:${T}°C`;
+  showM(`🔍 ${cfg.lb.toUpperCase()}`,`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.7rem;line-height:2.2;">
+      <div>ID: <b style="color:var(--eb)">${o.id}</b></div>
+      <div>Estado: ${stLbl(o.status)}</div>
+      <div style="grid-column:span 2">Falla: <span style="color:var(--dr)">${FD[o.fault]||'Sin falla activa'}</span></div>
+    </div>
+    <div style="margin-top:10px;background:#050810;border:1px solid var(--br);border-radius:4px;padding:9px;font-size:.67rem;color:var(--dm);line-height:2;">
+      ${extra}
+    </div>`,()=>{G.score+=5;ft(o.x+25,o.y,'💡 +5',13,'#00E5FF');updateHUD();closeM();},false);
+}
+
+function cutMini(o){
+  const cols=[
+    {e:'🔴',bg:'#aa2222',lb:'ROJO'},{e:'🟡',bg:'#998800',lb:'AMARILLO'},
+    {e:'🟢',bg:'#226622',lb:'VERDE'},{e:'⚫',bg:'#333',lb:'NEGRO'},
+    {e:'⚪',bg:'#888',lb:'BLANCO'},{e:'🔵',bg:'#224499',lb:'AZUL'},
+    {e:'🟠',bg:'#994400',lb:'NARANJA'},{e:'🟤',bg:'#553311',lb:'MARRÓN'},
+  ];
+  const safe=Math.floor(Math.random()*8);
+  const wh=cols.map((c,i)=>`<div class="wbtn" id="wb${i}" style="background:${c.bg}" onclick="cutW(${i},${i===safe})">${c.e}<span>${c.lb}</span></div>`).join('');
+  showM('✂️ CABLE MORDIDO POR RATA',`
+    <p style="font-size:.76rem;margin-bottom:10px;color:var(--tx);">
+      🐀 Rata mordió el aislamiento. Debes cortar el cable en falla (continuidad a tierra) + el neutro de seguridad.<br>
+      <span style="color:var(--sy);font-size:.68rem;">Tensión detectada: ${(220+Math.random()*80).toFixed(0)}V | Resistencia: ${(Math.random()*.5).toFixed(3)}Ω → tierra</span>
+    </p>
+    <p style="font-size:.67rem;color:var(--og);margin-bottom:8px;">Corta 2 cables: el defectuoso + el neutro de seguridad.</p>
+    <div class="wgrid">${wh}</div>
+    <div style="font-size:.62rem;color:var(--dm);margin-top:5px;">⚡ Tip: Cable defectuoso = mayor continuidad con la carcasa. Usa el megóhmetro primero.</div>`,
+  null,false);
+  let cuts=0;
+  window.cutW=(i,isSafe)=>{
+    const b=document.getElementById('wb'+i);if(!b||b.classList.contains('cut'))return;
+    b.classList.add('cut');b.textContent='✂️';cuts++;
+    spawnP(o.x+40,o.y,'#FF1744',8);
+    if(isSafe&&cuts>=2){
+      finTask('cut',o.id);o.status='done';
+      document.getElementById('mr').innerHTML=`<div class="rok">✓ CABLE AISLADO. ¡Zona segura! Sistema restaurado.</div>`;
+      ft(o.x+40,o.y,'✂️ +50',16,'#00E676');G.score+=50;updateHUD();
+      spawnP(o.x+40,o.y,'#00E676',20);setTimeout(closeM,1900);
+    } else if(!isSafe&&cuts===1){
+      G.hp=Math.max(0,G.hp-10);updateHUD();
+      document.getElementById('mr').innerHTML=`<div class="rfail">⚡ Descarga parcial — -10 HP. Sigue cortando.</div>`;
+      spawnP(G.P.x,G.P.y,'#FF1744',14);
+    }
+  };
+}
+
+function extMini(o){
+  let prog=0,done=false;
+  showM('🧯 APAGAR TRANSFORMADOR EN LLAMAS',`
+    <p style="font-size:.76rem;margin-bottom:12px;color:var(--tx);">
+      🔥 Transformador en llamas por sobrecalentamiento. El fuego eléctrico requiere CO₂ o polvo ABC.<br>
+      <span style="color:var(--dr);font-size:.67rem;">⚠️ NUNCA usar agua en equipos bajo tensión — riesgo electrocución fatal.</span>
+    </p>
+    <p style="font-size:.7rem;color:var(--sy);margin-bottom:8px;">Presiona ESPACIO rápidamente para aplicar el extintor:</p>
+    <div id="pbw"><div id="pb"></div></div>
+    <div class="spc-p">[ ESPACIO ] — ¡PRESIONA RÁPIDO!</div>
+    <div style="font-size:.62rem;color:var(--dm);margin-top:7px;">
+      Pasos: 1. Cortar tensión al transformador &nbsp;2. Aplicar CO₂ desde la base &nbsp;3. Ventilar la zona &nbsp;4. Reportar al supervisor
+    </div>`,null,false);
+  const kh=e=>{
+    if(e.code==='Space'&&!done){
+      prog=Math.min(100,prog+13);
+      document.getElementById('pb').style.width=prog+'%';
+      if(prog>=100){done=true;document.removeEventListener('keydown',kh);
+        finTask('extinguish',o.id);o.status='done';o.fault=null;
+        document.getElementById('mr').innerHTML=`<div class="rok">✓ INCENDIO EXTINGUIDO. Zona despejada. Transformador aislado.</div>`;
+        ft(o.x+28,o.y,'🧯 +80',17,'#FF6B00');G.score+=80;updateHUD();
+        spawnP(o.x+28,o.y,'#FF6B00',30);setTimeout(closeM,1900);
+      }
+    }
+  };
+  document.addEventListener('keydown',kh);
+  document.getElementById('mno').onclick=()=>{document.removeEventListener('keydown',kh);closeM();};
+}
+
+function climbMini(o){
+  let prog=0,done=false,lastK='';
+  G.P.climbing=true;
+  showM('⛑️ SUBIR AL POSTE DE LUZ',`
+    <p style="font-size:.76rem;margin-bottom:12px;color:var(--tx);">
+      Poste de distribución de ${(8+Math.random()*5).toFixed(0)}m. Cable aéreo suelto por condiciones climáticas.<br>
+      <span style="color:var(--sy);font-size:.67rem;">EPP requerido: Arnés clase III | Guantes dieléctricos 20kV | Casco | Botas aislantes | Percha aislada</span>
+    </p>
+    <p style="font-size:.7rem;color:var(--eb);margin-bottom:8px;">Alterna las teclas ← → para escalar:</p>
+    <div id="pbw"><div id="pb"></div></div>
+    <div style="text-align:center;font-size:.7rem;color:var(--sy);margin:6px 0;">[ ← ] y [ → ] — ¡ALTERNA RÁPIDO!</div>
+    <div style="font-size:.62rem;color:var(--dm);margin-top:7px;">
+      En la cima: 1. Verificar tensión con percha &nbsp;2. Cambiar aislador dañado &nbsp;3. Asegurar con ligadura doble &nbsp;4. Probar continuidad
+    </div>`,null,false);
+  const kh=e=>{
+    if(done)return;
+    if((e.code==='ArrowLeft'||e.code==='KeyA')&&lastK!=='L'){lastK='L';prog=Math.min(100,prog+9);}
+    else if((e.code==='ArrowRight'||e.code==='KeyD')&&lastK!=='R'){lastK='R';prog=Math.min(100,prog+9);}
+    document.getElementById('pb').style.width=prog+'%';
+    if(prog>=100){done=true;document.removeEventListener('keydown',kh);G.P.climbing=false;
+      finTask('climb',o.id);o.status='done';o.fault=null;
+      document.getElementById('mr').innerHTML=`<div class="rok">✓ LLEGASTE A LA CIMA — Cable aéreo reparado y asegurado.</div>`;
+      ft(o.x+10,o.y,'⛑️ +70',17,'#FFD600');G.score+=70;updateHUD();
+      spawnP(o.x+10,o.y,'#FFD600',25);setTimeout(closeM,1900);
+    }
+  };
+  document.addEventListener('keydown',kh);
+  document.getElementById('mno').onclick=()=>{G.P.climbing=false;document.removeEventListener('keydown',kh);closeM();};
+}
+
+function repMini(o){
+  const tgt={v:220,i:10,f:60,r:5};
+  const cur={v:Math.floor(Math.random()*120+140),i:Math.floor(Math.random()*18+3),f:Math.floor(Math.random()*25+48),r:Math.floor(Math.random()*12+1)};
+  showM(`⚙️ REPARAR MOTOR — ${FD[o.fault]||o.fault}`,`
+    <p style="font-size:.74rem;margin-bottom:10px;color:var(--tx);">Ajusta los parámetros al valor nominal. Tolerancia: ±8%</p>
+    ${sl('Tensión (V)','sv',100,300,cur.v,tgt.v)}
+    ${sl('Corriente (A)','si',1,30,cur.i,tgt.i)}
+    ${sl('Frecuencia (Hz)','sf',40,80,cur.f,tgt.f)}
+    ${sl('Resist.Aisla.(MΩ)','sr',0,20,cur.r,tgt.r)}
+    <div style="font-size:.6rem;color:var(--dm);margin-top:5px;">OBJETIVO → V:${tgt.v} | I:${tgt.i}A | F:${tgt.f}Hz | R:${tgt.r}MΩ</div>`,
+  ()=>{
+    const v=+document.getElementById('sv').value,i=+document.getElementById('si').value;
+    const f=+document.getElementById('sf').value,r=+document.getElementById('sr').value;
+    if(Math.abs(v-tgt.v)<=18&&Math.abs(i-tgt.i)<=2&&Math.abs(f-tgt.f)<=5&&Math.abs(r-tgt.r)<=1){
+      finTask('repair',o.id);o.status='done';
+      document.getElementById('mr').innerHTML=`<div class="rok">✓ MOTOR REPARADO EXITOSAMENTE</div>`;
+      ft(o.x+25,o.y,'🔧 +80',16,'#00E5FF');G.score+=80;updateHUD();
+      spawnP(o.x+25,o.y,'#00E5FF',25);setTimeout(closeM,1900);
+    } else {G.hp=Math.max(0,G.hp-5);updateHUD();
+      document.getElementById('mr').innerHTML=`<div class="rfail">✗ Parámetros incorrectos. Ajusta los valores. -5 HP</div>`;
+    }
+  },true);
+  setTimeout(()=>['v','i','f','r'].forEach(k=>{
+    const s=document.getElementById('s'+k),vl=document.getElementById('vl'+k);
+    if(s&&vl)s.addEventListener('input',()=>vl.textContent=s.value);
+  }),60);
+}
+
+function sl(lb,id,mn,mx,val,tgt){
+  return `<div class="slr"><label>${lb}</label><input type="range" id="${id}" min="${mn}" max="${mx}" value="${val}"><div class="slv" id="vl${id}">${val}</div></div>`;
+}
+
+function diagMini(o){
+  const qb={
+    burning:{q:'¿Qué extintor usas en un transformador eléctrico en llamas?',c:1,opts:['Agua a presión','CO₂ o polvo ABC (NUNCA agua)','Espuma AFFF','Halon 1211']},
+    overload:{q:'¿Qué parámetro evidencia sobrecarga en un transformador?',c:2,opts:['Baja tensión de salida','Vibración excesiva','Corriente > capacidad nominal (kVA)','Panel solar sucio']},
+    overtemp:{q:'¿Causa principal de sobretemperatura en un inversor solar?',c:0,opts:['Sobrecarga sostenida + ventilación insuficiente','Batería cargada al 100%','Cable suelto en terminal','Orientación del panel']},
+    trip:{q:'¿Por qué dispara el interruptor termomagnético?',c:3,opts:['Baja tensión de red','Alta temperatura ambiente','Conexión floja','Corriente de falla supera el umbral de disparo (In)']},
+    loose_wire:{q:'¿Cuál es el EPP MÍNIMO para trabajar en un poste de distribución?',c:1,opts:['Solo casco','Casco + arnés clase III + guantes dieléctricos + botas aislantes','Guantes de cuero + gafas','Solo chaleco reflectivo']},
+    default:{q:'¿Qué instrumento mide la resistencia de aislamiento de un cable?',c:2,opts:['Voltímetro digital','Pinza amperimétrica','Megóhmetro (Megger) 500/1000V','Osciloscopio']},
+  };
+  const fd=qb[o.fault]||qb.default;
+  let sel=null;
+  const oh=fd.opts.map((op,i)=>`<div class="dgc" id="dg${i}" onclick="sDg(${i})"><div class="dgl">OPCIÓN ${String.fromCharCode(65+i)}</div>${op}</div>`).join('');
+  showM(`📟 DIAGNÓSTICO — ${OCFG[o.type].lb.toUpperCase()}`,`
+    <p style="font-size:.76rem;margin-bottom:10px;">⚡ Falla: <span style="color:var(--sy)">${FD[o.fault]||'Anomalía eléctrica'}</span></p>
+    <div style="background:#050810;border:1px solid var(--br);border-radius:4px;padding:9px;font-size:.78rem;line-height:1.55;margin-bottom:10px;">${fd.q}</div>
+    <div class="dgg">${oh}</div>`,
+  ()=>{
+    if(sel===null){document.getElementById('mr').innerHTML=`<div class="rfail">Selecciona una opción.</div>`;return;}
+    if(sel===fd.c){finTask('diagnose',o.id);o.status='done';
+      document.getElementById('mr').innerHTML=`<div class="rok">✓ DIAGNÓSTICO CORRECTO — Falla identificada y documentada.</div>`;
+      ft(o.x+24,o.y,'📟 +60',15,'#FFD600');G.score+=60;updateHUD();
+      spawnP(o.x+24,o.y,'#FFD600',20);setTimeout(closeM,1900);
+    } else {G.score=Math.max(0,G.score-10);G.hp=Math.max(0,G.hp-5);updateHUD();
+      document.getElementById('mr').innerHTML=`<div class="rfail">✗ Diagnóstico incorrecto. -10 pts, -5 HP</div>`;
+    }
+  },true);
+  window.sDg=i=>{sel=i;document.querySelectorAll('.dgc').forEach(c=>c.classList.remove('sel'));document.getElementById('dg'+i)?.classList.add('sel');};
+}
+
+function solarMini(o){
+  if(o.type!=='solar_panel'){log('w','> Solo para paneles solares');return;}
+  const voc=(36+Math.random()*4).toFixed(1),isc=(8+Math.random()*2).toFixed(2);
+  showM('☀️ CONFIGURAR PANEL SOLAR',`
+    <p style="font-size:.74rem;margin-bottom:10px;">Falla: <span style="color:var(--sy)">${FD[o.fault]||'Parámetros subóptimos'}</span></p>
+    ${sl('Inclinación (°)','sang',0,90,45,32)}
+    ${sl('Orientación (°)','sort',0,360,90,180)}
+    <div style="font-size:.6rem;color:var(--dm);margin-top:6px;">ÓPTIMO (zona tropical): Inclinación 15°-35° | Orientación 180° (Sur) | Voc:${voc}V | Isc:${isc}A</div>`,
+  ()=>{
+    const ang=+document.getElementById('sang').value,ort=+document.getElementById('sort').value;
+    if(Math.abs(ang-32)<=12&&Math.abs(ort-180)<=28){
+      finTask('solar',o.id);o.status='done';G.energy=Math.min(100,G.energy+12);G.score+=45;updateHUD();
+      document.getElementById('mr').innerHTML=`<div class="rok">✓ PANEL OPTIMIZADO — +12% energía solar</div>`;
+      ft(o.x+25,o.y,'☀️ +45',16,'#FFD600');spawnP(o.x+25,o.y,'#FFD600',18);setTimeout(closeM,1900);
+    } else document.getElementById('mr').innerHTML=`<div class="rfail">✗ Ángulo/orientación no óptimos. Reajusta.</div>`;
+  },true);
+  setTimeout(()=>['ang','rt'].forEach(k=>{
+    const s=document.getElementById('s'+k),vl=document.getElementById('vl'+k);
+    if(s&&vl)s.addEventListener('input',()=>vl.textContent=s.value);
+  }),60);
+}
+
+// ── MODAL ────────────────────────────────────────────────
+function showM(title,content,onOk,showOk=true){
+  G.modalOpen=true;
+  document.getElementById('mt').textContent=title;
+  document.getElementById('mc').innerHTML=content;
+  document.getElementById('mr').innerHTML='';
+  document.getElementById('mok').style.display=showOk?'block':'none';
+  document.getElementById('modal-ov').classList.add('show');
+  document.getElementById('mok').onclick=onOk||closeM;
+  document.getElementById('mno').onclick=closeM;
+}
+function closeM(){G.modalOpen=false;document.getElementById('modal-ov').classList.remove('show');}
+
+// ── TASKS ────────────────────────────────────────────────
+function finTask(tp,id){
+  const t=G.tasks.find(t=>t.id===id&&!t.done);if(!t)return;
+  t.done=true;G.tasksDone++;
+  log('ok',`> ✓ ${t.lb}`);renderTasks();updDiag(id);
+  if(G.tasksDone>=G.tasks.length){
+    setTimeout(()=>{
+      document.getElementById('lot').textContent=`¡NIVEL ${G.level} COMPLETADO!`;
+      document.getElementById('lod').textContent=`Puntos: ${G.score.toLocaleString()} | HP: ${G.hp} | Tiempo restante: ${Math.floor(G.time/60)}:${String(G.time%60).padStart(2,'0')}`;
+      document.getElementById('lvlov').classList.add('show');
+      clearInterval(G.timerH);
+    },900);
+  }
+}
+
+function renderTasks(){
+  document.getElementById('task-list').innerHTML=G.tasks.map(t=>`
+    <div class="ti ${t.done?'done':''}">
+      <span class="ti-tag">${{cut:'CORTE CABLE',repair:'REPARACIÓN',diagnose:'DIAGNÓSTICO',extinguish:'EXTINCIÓN INCENDIO',climb:'ESCALADA POSTE',solar:'PANEL SOLAR'}[t.tp]||t.tp}</span>
+      ${t.lb}<span class="ti-s">${t.done?'✅':'⏳'}</span>
+    </div>`).join('');
+}
+
+function updDiag(id){
+  const m={rat1:'d-cb',rat2:'d-cb',rat3:'d-cb',tr1:'d-tr',tr2:'d-tr',mot1:'d-ma',mot2:'d-ma',pole1:'d-po',inv1:'d-iv',brk1:'d-tb'};
+  const el=document.getElementById(m[id]);
+  if(el){el.textContent='OK';el.style.color='var(--og)';}
+}
+
+// ── HUD / TIMER ──────────────────────────────────────────
+function updateHUD(){
+  document.getElementById('hlv').textContent=G.level;
+  document.getElementById('hsc').textContent=G.score.toLocaleString();
+  document.getElementById('hvt').textContent=G.voltage.toFixed(0)+'V';
+  document.getElementById('ebar').style.width=G.energy+'%';
+  document.getElementById('hpbar').style.width=G.hp+'%';
+  document.getElementById('hpbar').style.background=G.hp>60?'linear-gradient(90deg,#ff4444,#00E676)':G.hp>30?'linear-gradient(90deg,#ff4444,#FF6B00)':'#FF1744';
+  const ve=document.getElementById('hvt');ve.className='hud-v';
+  if(G.voltage>242||G.voltage<198)ve.classList.add('d');
+  else if(G.voltage>232||G.voltage<208)ve.classList.add('w');
+  else ve.classList.add('g');
+}
+function tick(){
+  G.time=Math.max(0,G.time-1);
+  const m=String(Math.floor(G.time/60)).padStart(2,'0'),s=String(G.time%60).padStart(2,'0');
+  const el=document.getElementById('htm');el.textContent=`${m}:${s}`;el.className='hud-v';
+  if(G.time<30)el.classList.add('d');else if(G.time<90)el.classList.add('w');
+  if(G.time===0){clearInterval(G.timerH);log('e','> ¡TIEMPO AGOTADO!');}
+  G.energy=Math.max(10,Math.min(100,G.energy+(Math.random()-.5)*1.8));
+  G.voltage=Math.max(192,Math.min(248,G.voltage+(Math.random()-.5)*3));
+  updateHUD();
+}
+
+// ── HELPERS ──────────────────────────────────────────────
+function stLbl(s){
+  return s==='fault'?`<span style="color:var(--dr)">✗ FALLA</span>`:s==='warn'?`<span style="color:var(--eo)">⚠ ALERTA</span>`:s==='done'?`<span style="color:var(--og)">✓ REPARADO</span>`:`<span style="color:var(--og)">✓ OK</span>`;
+}
+function spawnP(x,y,c,n){for(let i=0;i<n;i++)G.parts.push({x,y,vx:(Math.random()-.5)*7,vy:(Math.random()-.5)*7,l:1,c,s:Math.random()*4+2});}
+function ft(x,y,tx,sz,c){G.fts.push({x,y,tx,sz,c,l:1});}
+function log(tp,msg){const b=document.getElementById('clog'),d=document.createElement('div');d.className=`lg ${tp}`;d.textContent=msg;b.appendChild(d);b.scrollTop=b.scrollHeight;while(b.children.length>28)b.removeChild(b.firstChild);}
+function advLv(){document.getElementById('lvlov').classList.remove('show');G.level++;buildLevel(G.level);}
+
+// ── LOOP ─────────────────────────────────────────────────
+function loop(){if(!G.modalOpen)phys();proximity();draw();}
+
+// ── INIT ─────────────────────────────────────────────────
+buildLevel(1);
+setInterval(loop,1000/60);
+log('i','> ← → mover | ESPACIO saltar | E interactuar | 1-6 herramienta');
+log('w','> ¡Selecciona la herramienta correcta antes de interactuar!');
+log('i','> Bienvenido, Técnico Eléctrico Solar 🧑‍🔧⚡');
+</script>
+</body>
+</html>

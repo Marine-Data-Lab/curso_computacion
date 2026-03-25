@@ -1,0 +1,2507 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EnerGrid — Simulador de Energías Renovables</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Nunito:wght@300;400;600;700;800&display=swap');
+
+  :root {
+    --bg: #f0f4ee;
+    --bg2: #e4ede0;
+    --card: #ffffff;
+    --card2: #f7faf5;
+    --border: #c8ddc0;
+    --text: #1e3a1e;
+    --text2: #4a6e4a;
+    --accent: #3a7d44;
+    --accent2: #6ab04c;
+    --accent3: #f0a500;
+    --accent4: #e05d2f;
+    --accent5: #2980b9;
+    --wind: #55a8c4;
+    --geo: #c0392b;
+    --solar: #f39c12;
+    --conv: #7f8c8d;
+    --city: #5d4e8c;
+    --freq-ok: #27ae60;
+    --freq-warn: #f39c12;
+    --freq-crit: #e74c3c;
+    --shadow: 0 4px 20px rgba(30,58,30,0.10);
+    --r: 14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  header {
+    background: linear-gradient(135deg, #1e3a1e 0%, #2d5a2d 60%, #3a7d44 100%);
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+    position: sticky; top: 0; z-index: 100;
+  }
+  header .logo { font-family: 'Space Mono', monospace; font-size: 1.5rem; color: #a8e6a0; font-weight: 700; letter-spacing: -1px; }
+  header .subtitle { font-size: 0.78rem; color: #7fbf7f; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; }
+  header .spacer { flex: 1; }
+  .freq-badge {
+    background: rgba(0,0,0,0.3);
+    border-radius: 40px;
+    padding: 6px 18px;
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Space Mono', monospace;
+  }
+  .freq-badge .freq-label { font-size: 0.7rem; color: #9abf9a; text-transform: uppercase; letter-spacing: 1px; }
+  .freq-badge .freq-value { font-size: 1.3rem; font-weight: 700; color: #fff; transition: color 0.4s; }
+  .freq-badge .freq-unit { font-size: 0.7rem; color: #9abf9a; }
+  .freq-bar-wrap { width: 120px; height: 8px; background: rgba(255,255,255,0.12); border-radius: 4px; overflow: hidden; }
+  .freq-bar { height: 100%; border-radius: 4px; transition: width 0.5s, background 0.5s; }
+
+  .time-badge {
+    background: rgba(0,0,0,0.25);
+    border-radius: 30px;
+    padding: 6px 14px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.85rem;
+    color: #c8ecc8;
+  }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    gap: 0;
+    background: var(--bg2);
+    border-bottom: 2px solid var(--border);
+    padding: 0 20px;
+    overflow-x: auto;
+  }
+  .tab {
+    padding: 11px 22px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+    color: var(--text2);
+    letter-spacing: 0.5px;
+    display: flex; align-items: center; gap: 7px;
+    margin-bottom: -2px;
+    user-select: none;
+  }
+  .tab:hover { color: var(--accent); background: rgba(58,125,68,0.06); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); background: var(--card); }
+  .tab .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  /* PANELS */
+  .panel { display: none; padding: 20px; animation: fadein 0.3s; }
+  .panel.active { display: block; }
+  @keyframes fadein { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+  /* GRID LAYOUTS */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .grid-auto { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+
+  /* CARDS */
+  .card {
+    background: var(--card);
+    border-radius: var(--r);
+    padding: 18px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+  }
+  .card h3 {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text2);
+    margin-bottom: 14px;
+    font-weight: 700;
+    display: flex; align-items: center; gap: 7px;
+  }
+  .card h3 .icon { font-size: 1rem; }
+
+  /* CONTROLS */
+  .control-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .control-row label { font-size: 0.82rem; font-weight: 600; min-width: 130px; color: var(--text2); }
+  .control-row input[type=range] { flex: 1; accent-color: var(--accent); cursor: pointer; height: 5px; }
+  .control-row .val {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--accent);
+    min-width: 60px;
+    text-align: right;
+  }
+
+  /* METRICS */
+  .metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .metric {
+    background: var(--bg2);
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .metric .mlabel { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text2); }
+  .metric .mval { font-family: 'Space Mono', monospace; font-size: 1.1rem; font-weight: 700; color: var(--accent); }
+  .metric .munit { font-size: 0.65rem; color: var(--text2); }
+
+  /* BUTTONS */
+  .btn {
+    padding: 8px 18px;
+    border-radius: 30px;
+    border: none;
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 0.82rem;
+    transition: all 0.18s;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #2d6636; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(58,125,68,0.3); }
+  .btn-secondary { background: var(--bg2); color: var(--text); border: 1.5px solid var(--border); }
+  .btn-secondary:hover { background: var(--border); }
+  .btn-danger { background: #e74c3c; color: #fff; }
+  .btn-danger:hover { background: #c0392b; }
+  .btn-solar { background: var(--solar); color: #fff; }
+  .btn-wind { background: var(--wind); color: #fff; }
+
+  /* TOGGLE */
+  .toggle-wrap { display: flex; align-items: center; gap: 8px; }
+  .toggle { position: relative; width: 40px; height: 22px; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+    background: #ccc; transition: .3s; border-radius: 22px;
+  }
+  .toggle-slider:before {
+    position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px;
+    background: white; transition: .3s; border-radius: 50%;
+  }
+  input:checked + .toggle-slider { background: var(--accent); }
+  input:checked + .toggle-slider:before { transform: translateX(18px); }
+  .toggle-label { font-size: 0.82rem; font-weight: 600; color: var(--text2); }
+
+  /* SELECT */
+  select {
+    padding: 7px 12px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--card);
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.82rem;
+    color: var(--text);
+    cursor: pointer;
+    outline: none;
+  }
+  select:focus { border-color: var(--accent); }
+
+  /* CANVAS */
+  canvas { border-radius: 10px; display: block; }
+
+  /* CITY CANVAS */
+  #cityCanvas { width: 100%; border-radius: var(--r); border: 2px solid var(--border); cursor: crosshair; }
+
+  /* STATUS PILL */
+  .pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .pill-ok { background: #d4f5e0; color: #1a6b3a; }
+  .pill-warn { background: #fef3cd; color: #856404; }
+  .pill-crit { background: #fde8e8; color: #9b1c1c; }
+  .pill-off { background: #e5e7eb; color: #6b7280; }
+
+  /* TURBINE ANIM */
+  .turbine-anim { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .blade-container { position: relative; width: 80px; height: 80px; }
+  .blade-svg { position: absolute; top:0; left:0; }
+
+  /* POWER BAR */
+  .power-bar-wrap { height: 12px; background: var(--bg2); border-radius: 6px; overflow: hidden; margin: 4px 0; }
+  .power-bar { height: 100%; border-radius: 6px; transition: width 0.5s, background 0.4s; }
+
+  /* ARRAY GRID */
+  .panel-grid {
+    display: grid;
+    gap: 3px;
+    margin: 8px 0;
+  }
+  .panel-cell {
+    border-radius: 3px;
+    aspect-ratio: 1.5/1;
+    background: #cce0ff;
+    border: 1px solid #99c0f0;
+    cursor: pointer;
+    transition: background 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .panel-cell.active { background: #f0c030; border-color: #d4a010; }
+  .panel-cell.active::after {
+    content: '';
+    position: absolute; top:1px; left:1px; right:1px; bottom:1px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.35) 0%, transparent 60%);
+    border-radius: 2px;
+  }
+
+  /* BATTERY BANK */
+  .battery-bank { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
+  .battery-cell {
+    width: 28px; height: 50px;
+    background: var(--bg2);
+    border-radius: 4px;
+    border: 2px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .battery-fill {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: var(--accent2);
+    transition: height 0.5s;
+    border-radius: 0 0 2px 2px;
+  }
+  .battery-cell::before {
+    content: ''; position: absolute; top:-6px; left:6px; right:6px; height:6px;
+    background: var(--border); border-radius: 2px 2px 0 0;
+  }
+
+  /* WIND ROSE */
+  .wind-dir-btn {
+    width: 34px; height: 34px;
+    border-radius: 50%; border: 2px solid var(--border);
+    background: var(--bg2); cursor: pointer; font-size: 0.9rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.18s; font-weight: 700;
+  }
+  .wind-dir-btn.active { background: var(--wind); border-color: var(--wind); color: #fff; }
+  .wind-rose { display: grid; grid-template-columns: repeat(3,34px); gap: 3px; place-items:center; }
+
+  /* CHART MINI */
+  .mini-chart { width: 100%; height: 70px; }
+
+  /* SOIL LAYERS */
+  .soil-diagram { width: 100%; border-radius: 10px; overflow: hidden; }
+
+  /* CITY LEGEND */
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+
+  /* STATUS LINE */
+  .status-line {
+    background: var(--bg2);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 0.8rem;
+    color: var(--text2);
+    border-left: 3px solid var(--accent);
+    margin: 8px 0;
+  }
+
+  /* SCROLL */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ALERT BANNER */
+  .alert-banner {
+    padding: 10px 20px;
+    font-size: 0.83rem;
+    font-weight: 700;
+    text-align: center;
+    display: none;
+    animation: pulse-bg 1s infinite alternate;
+  }
+  @keyframes pulse-bg { from { opacity:0.85; } to { opacity:1; } }
+  .alert-banner.show { display: block; }
+  .alert-warn { background: #fff3cd; color: #856404; border-bottom: 2px solid #ffc107; }
+  .alert-crit { background: #fde8e8; color: #9b1c1c; border-bottom: 2px solid #e74c3c; }
+
+  /* TOOLTIP */
+  .tip { font-size: 0.75rem; color: var(--text2); margin-top: 4px; font-style: italic; }
+
+  @media (max-width: 700px) {
+    .grid2, .grid3 { grid-template-columns: 1fr; }
+    .tabs { padding: 0 8px; }
+    .tab { padding: 10px 12px; font-size: 0.78rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ALERT BANNER -->
+<div class="alert-banner" id="alertBanner"></div>
+
+<!-- HEADER -->
+<header>
+  <div>
+    <div class="logo">⚡ EnerGrid</div>
+    <div class="subtitle">Simulador de Energías Renovables · UABCS</div>
+  </div>
+  <div class="spacer"></div>
+  <div class="time-badge" id="simTimeBadge">🕐 06:00</div>
+  <div class="freq-badge">
+    <div>
+      <div class="freq-label">Frecuencia Red</div>
+      <div style="display:flex;align-items:baseline;gap:4px">
+        <span class="freq-value" id="freqDisplay">60.0</span>
+        <span class="freq-unit">Hz</span>
+      </div>
+    </div>
+    <div>
+      <div class="freq-bar-wrap">
+        <div class="freq-bar" id="freqBar" style="width:50%;background:var(--freq-ok)"></div>
+      </div>
+      <div style="font-size:0.6rem;color:#9abf9a;margin-top:2px;text-align:center" id="freqStatus">NOMINAL</div>
+    </div>
+  </div>
+</header>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="showTab('geo')" id="tab-geo">
+    <span class="dot" style="background:var(--geo)"></span> 🌋 Geotérmica
+  </div>
+  <div class="tab" onclick="showTab('solar')" id="tab-solar">
+    <span class="dot" style="background:var(--solar)"></span> ☀️ Solar FV
+  </div>
+  <div class="tab" onclick="showTab('wind')" id="tab-wind">
+    <span class="dot" style="background:var(--wind)"></span> 💨 Eólica
+  </div>
+  <div class="tab" onclick="showTab('city')" id="tab-city">
+    <span class="dot" style="background:var(--city)"></span> 🏙️ Ciudad & Red
+  </div>
+  <div class="tab" onclick="showTab('conv')" id="tab-conv">
+    <span class="dot" style="background:var(--conv)"></span> 🏭 Convencional
+  </div>
+  <div class="tab" onclick="showTab('dash')" id="tab-dash">
+    <span class="dot" style="background:var(--accent)"></span> 📊 Dashboard
+  </div>
+</div>
+
+<!-- ======================== PANEL: GEOTÉRMICA ======================== -->
+<div class="panel active" id="panel-geo">
+  <div class="grid2">
+    <!-- Configuración del subsuelo -->
+    <div class="card">
+      <h3><span class="icon">🪨</span> Configuración del Subsuelo</h3>
+      <div class="control-row">
+        <label>Tipo de suelo</label>
+        <select id="geoSoilType" onchange="updateGeo()">
+          <option value="granite">Granito (alta conductividad)</option>
+          <option value="basalt" selected>Basalto volcánico</option>
+          <option value="limestone">Caliza (acuífero)</option>
+          <option value="clay">Arcilla (baja perm.)</option>
+          <option value="sandstone">Arenisca porosa</option>
+        </select>
+      </div>
+      <div class="control-row">
+        <label>Profundidad pozo (m)</label>
+        <input type="range" id="geoDepth" min="500" max="4000" value="2000" step="100" oninput="updateGeo()">
+        <span class="val" id="geoDepthVal">2000 m</span>
+      </div>
+      <div class="control-row">
+        <label>Gradiente geotérmico</label>
+        <input type="range" id="geoGrad" min="15" max="80" value="35" step="1" oninput="updateGeo()">
+        <span class="val" id="geoGradVal">35 °C/km</span>
+      </div>
+      <div class="control-row">
+        <label>Canal de magma</label>
+        <select id="geoMagma" onchange="updateGeo()">
+          <option value="0">Sin canal magmático</option>
+          <option value="1" selected>Canal profundo (1200°C)</option>
+          <option value="2">Canal superficial (850°C)</option>
+          <option value="3">Intrusión activa (1400°C)</option>
+        </select>
+      </div>
+      <div class="control-row">
+        <label>Acuífero disponible</label>
+        <input type="range" id="geoAquifer" min="0" max="100" value="70" step="5" oninput="updateGeo()">
+        <span class="val" id="geoAquiferVal">70%</span>
+      </div>
+
+      <!-- Diagrama de capas -->
+      <canvas id="soilCanvas" width="320" height="160" class="soil-diagram" style="margin-top:10px"></canvas>
+    </div>
+
+    <!-- Parámetros de vapor y turbina -->
+    <div class="card">
+      <h3><span class="icon">♨️</span> Parámetros de Vapor</h3>
+      <div class="metric-grid" id="geoMetrics">
+        <div class="metric">
+          <span class="mlabel">Temperatura pozo</span>
+          <span class="mval" id="geoTempVal">182 °C</span>
+        </div>
+        <div class="metric">
+          <span class="mlabel">Presión vapor</span>
+          <span class="mval" id="geoPressVal">10.2 bar</span>
+        </div>
+        <div class="metric">
+          <span class="mlabel">Flujo másico</span>
+          <span class="mval" id="geoFlowVal">45 kg/s</span>
+        </div>
+        <div class="metric">
+          <span class="mlabel">Calidad vapor</span>
+          <span class="mval" id="geoQualVal">0.85</span>
+        </div>
+      </div>
+
+      <h3 style="margin-top:14px"><span class="icon">⚙️</span> Control de Turbina</h3>
+      <div class="control-row">
+        <label>Válvula de vapor</label>
+        <input type="range" id="geoValve" min="0" max="100" value="75" step="1" oninput="updateGeo()">
+        <span class="val" id="geoValveVal">75%</span>
+      </div>
+      <div class="control-row">
+        <label>Tipo ciclo</label>
+        <select id="geoCycle" onchange="updateGeo()">
+          <option value="flash">Flash simple</option>
+          <option value="doubleflash" selected>Flash doble</option>
+          <option value="binary">Ciclo binario (ORC)</option>
+          <option value="drysteam">Vapor seco</option>
+        </select>
+      </div>
+
+      <!-- Turbine visualization -->
+      <div style="display:flex;align-items:center;gap:16px;margin-top:14px">
+        <div class="turbine-anim">
+          <canvas id="geoTurbineCanvas" width="90" height="90"></canvas>
+          <div style="font-size:0.7rem;color:var(--text2)">Turbina de vapor</div>
+        </div>
+        <div style="flex:1">
+          <div class="metric-grid">
+            <div class="metric">
+              <span class="mlabel">RPM Turbina</span>
+              <span class="mval" id="geoRPM" style="color:var(--geo)">3000</span>
+            </div>
+            <div class="metric">
+              <span class="mlabel">Potencia</span>
+              <span class="mval" id="geoPower" style="color:var(--geo)">12.4 MW</span>
+            </div>
+            <div class="metric">
+              <span class="mlabel">Eficiencia</span>
+              <span class="mval" id="geoEfficiency">78%</span>
+            </div>
+            <div class="metric">
+              <span class="mlabel">Estado</span>
+              <span class="mval" id="geoStatus"><span class="pill pill-ok">ACTIVA</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="control-row" style="margin-top:10px">
+        <label>Central activa</label>
+        <label class="toggle">
+          <input type="checkbox" id="geoActive" checked onchange="updateGeo()">
+          <span class="toggle-slider"></span>
+        </label>
+        <span class="toggle-label" id="geoActiveLabel">En operación</span>
+      </div>
+    </div>
+
+    <!-- Historial de potencia -->
+    <div class="card" style="grid-column:1/-1">
+      <h3><span class="icon">📈</span> Historial de Generación — Geotérmica</h3>
+      <canvas id="geoChart" width="800" height="80" class="mini-chart" style="height:80px;width:100%"></canvas>
+      <div class="status-line" id="geoStatusLine">
+        ♨️ Planta geotérmica operando en ciclo flash doble. Temperatura de pozo: 182°C. Reinyección activa.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== PANEL: SOLAR ======================== -->
+<div class="panel" id="panel-solar">
+  <div class="grid2">
+    <!-- Estación meteorológica solar -->
+    <div class="card">
+      <h3><span class="icon">🌤️</span> Estación Meteorológica</h3>
+      <div class="control-row">
+        <label>Radiación solar (W/m²)</label>
+        <input type="range" id="solarIrrad" min="0" max="1100" value="750" step="10" oninput="updateSolar()">
+        <span class="val" id="solarIrradVal">750 W/m²</span>
+      </div>
+      <div class="control-row">
+        <label>Nubosidad (%)</label>
+        <input type="range" id="solarCloud" min="0" max="100" value="20" step="1" oninput="updateSolar()">
+        <span class="val" id="solarCloudVal">20%</span>
+      </div>
+      <div class="control-row">
+        <label>Temperatura amb. (°C)</label>
+        <input type="range" id="solarTemp" min="-5" max="45" value="28" step="1" oninput="updateSolar()">
+        <span class="val" id="solarTempVal">28°C</span>
+      </div>
+      <div class="control-row">
+        <label>Ángulo solar (°)</label>
+        <input type="range" id="solarAngle" min="0" max="90" value="55" step="1" oninput="updateSolar()">
+        <span class="val" id="solarAngleVal">55°</span>
+      </div>
+      <div class="control-row">
+        <label>Modo auto día/noche</label>
+        <label class="toggle">
+          <input type="checkbox" id="solarAutoDay" onchange="updateSolar()">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <canvas id="solarWeatherCanvas" width="300" height="110" style="width:100%;margin-top:10px;border-radius:10px"></canvas>
+
+      <div class="metric-grid" style="margin-top:10px">
+        <div class="metric">
+          <span class="mlabel">Irradiación efectiva</span>
+          <span class="mval" id="solarEffIrrad">600 W/m²</span>
+        </div>
+        <div class="metric">
+          <span class="mlabel">Índice UV</span>
+          <span class="mval" id="solarUV">8.2</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Configuración de paneles -->
+    <div class="card">
+      <h3><span class="icon">🔆</span> Central Fotovoltaica</h3>
+      <div class="control-row">
+        <label>Tipo de panel</label>
+        <select id="solarPanelType" onchange="updateSolar()">
+          <option value="mono" selected>Monocristalino (21% ef.)</option>
+          <option value="poly">Policristalino (17% ef.)</option>
+          <option value="thin">Película delgada (13% ef.)</option>
+          <option value="bifacial">Bifacial (24% ef.)</option>
+          <option value="perovskite">Perovskita (28% ef. exp.)</option>
+        </select>
+      </div>
+      <div class="control-row">
+        <label>Strings (series)</label>
+        <input type="range" id="solarStrings" min="1" max="20" value="8" step="1" oninput="updateSolar()">
+        <span class="val" id="solarStringsVal">8</span>
+      </div>
+      <div class="control-row">
+        <label>Paneles/string (paralelo)</label>
+        <input type="range" id="solarParallel" min="1" max="20" value="10" step="1" oninput="updateSolar()">
+        <span class="val" id="solarParallelVal">10</span>
+      </div>
+      <div class="control-row">
+        <label>Ángulo inclinación (°)</label>
+        <input type="range" id="solarTilt" min="0" max="45" value="23" step="1" oninput="updateSolar()">
+        <span class="val" id="solarTiltVal">23°</span>
+      </div>
+      <div class="control-row">
+        <label>Seguidor solar</label>
+        <select id="solarTracker" onchange="updateSolar()">
+          <option value="fixed">Fijo</option>
+          <option value="1axis" selected>1 eje (+15%)</option>
+          <option value="2axis">2 ejes (+25%)</option>
+        </select>
+      </div>
+
+      <!-- Visual array de paneles -->
+      <div id="solarArrayWrap" style="margin-top:10px">
+        <div class="panel-grid" id="solarPanelGrid"></div>
+        <div class="tip" id="solarArrayInfo">80 paneles · 8 strings × 10 paneles</div>
+      </div>
+    </div>
+
+    <!-- Banco de baterías -->
+    <div class="card">
+      <h3><span class="icon">🔋</span> Banco de Baterías</h3>
+      <div class="control-row">
+        <label>Tipo química</label>
+        <select id="battType" onchange="updateSolar()">
+          <option value="liion" selected>Li-Ion (NMC)</option>
+          <option value="lfp">LFP (Litio-Hierro)</option>
+          <option value="leadacid">Plomo-Ácido</option>
+          <option value="flow">Flujo Redox (VRB)</option>
+          <option value="sodium">Sodio-Azufre</option>
+        </select>
+      </div>
+      <div class="control-row">
+        <label>Módulos (100 kWh c/u)</label>
+        <input type="range" id="battModules" min="1" max="20" value="6" step="1" oninput="updateSolar()">
+        <span class="val" id="battModulesVal">6 (600 kWh)</span>
+      </div>
+      <div class="control-row">
+        <label>SoC Inicial (%)</label>
+        <input type="range" id="battSOC" min="10" max="100" value="65" step="1" oninput="updateSolar()">
+        <span class="val" id="battSOCVal">65%</span>
+      </div>
+      <div class="control-row">
+        <label>Modo baterías</label>
+        <select id="battMode" onchange="updateSolar()">
+          <option value="auto" selected>Auto (balance)</option>
+          <option value="charge">Solo cargar</option>
+          <option value="discharge">Solo descargar</option>
+          <option value="off">Desconectadas</option>
+        </select>
+      </div>
+
+      <div class="battery-bank" id="batteryBankVis"></div>
+
+      <div class="metric-grid">
+        <div class="metric">
+          <span class="mlabel">SoC actual</span>
+          <span class="mval" id="battSOCDisplay" style="color:#27ae60">65%</span>
+        </div>
+        <div class="metric">
+          <span class="mlabel">Flujo batería</span>
+          <span class="mval" id="battFlow">+42 kW</span>
+        </div>
+        <div class="metric">
+          <span class="mlabel">Capacidad total</span>
+          <span class="mval" id="battCapacity">600 kWh</span>
+        </div>
+        <div class="metric">
+          <span class="mlabel">Ciclos usados</span>
+          <span class="mval" id="battCycles">142</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resultados solar -->
+    <div class="card">
+      <h3><span class="icon">📊</span> Generación Solar</h3>
+      <div class="metric-grid">
+        <div class="metric">
+          <span class="mlabel">Potencia DC</span>
+          <span class="mval" id="solarPowerDC" style="color:var(--solar)">0 kW</span>
+        </div>
+        <div class="metric">
+          <span class="mlabel">Potencia AC</span>
+          <span class="mval" id="solarPowerAC" style="color:var(--solar)">0 kW</span>
+        </div>
+        <div class="metric">
+          <span class="mlabel">Eficiencia sistema</span>
+          <span class="mval" id="solarSysEff">0%</span>
+        </div>
+        <div class="metric">
+          <span class="mlabel">Temperatura panel</span>
+          <span class="mval" id="solarCellTemp">28°C</span>
+        </div>
+        <div class="metric">
+          <span class="mlabel">Voltaje array</span>
+          <span class="mval" id="solarVoltage">0 V</span>
+        </div>
+        <div class="metric">
+          <span class="mlabel">Factor de capacidad</span>
+          <span class="mval" id="solarCF">0%</span>
+        </div>
+      </div>
+      <canvas id="solarChart" width="400" height="70" style="width:100%;margin-top:12px;border-radius:8px"></canvas>
+      <div class="control-row" style="margin-top:10px">
+        <label>Inversor activo</label>
+        <label class="toggle">
+          <input type="checkbox" id="solarActive" checked onchange="updateSolar()">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== PANEL: EÓLICA ======================== -->
+<div class="panel" id="panel-wind">
+  <div class="grid2">
+    <!-- Estación meteorológica eólica -->
+    <div class="card">
+      <h3><span class="icon">🌬️</span> Estación Meteorológica</h3>
+      <div class="control-row">
+        <label>Velocidad viento (m/s)</label>
+        <input type="range" id="windSpeed" min="0" max="30" value="9" step="0.5" oninput="updateWind()">
+        <span class="val" id="windSpeedVal">9 m/s</span>
+      </div>
+      <div class="control-row">
+        <label>Turbulencia (%)</label>
+        <input type="range" id="windTurb" min="0" max="40" value="8" step="1" oninput="updateWind()">
+        <span class="val" id="windTurbVal">8%</span>
+      </div>
+      <div class="control-row">
+        <label>Cizalladura vertical</label>
+        <input type="range" id="windShear" min="0.05" max="0.4" value="0.14" step="0.01" oninput="updateWind()">
+        <span class="val" id="windShearVal">0.14</span>
+      </div>
+      <div class="control-row">
+        <label>Densidad aire (kg/m³)</label>
+        <input type="range" id="windDensity" min="0.9" max="1.3" value="1.225" step="0.005" oninput="updateWind()">
+        <span class="val" id="windDensityVal">1.225</span>
+      </div>
+
+      <!-- Rosa de vientos -->
+      <div style="margin-top:12px">
+        <div style="font-size:0.78rem;font-weight:700;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Dirección del viento</div>
+        <div style="display:flex;align-items:center;gap:16px">
+          <div class="wind-rose" id="windRose">
+            <div class="wind-dir-btn" data-dir="NW" onclick="setWindDir('NW')">↖</div>
+            <div class="wind-dir-btn active" data-dir="N" onclick="setWindDir('N')">↑</div>
+            <div class="wind-dir-btn" data-dir="NE" onclick="setWindDir('NE')">↗</div>
+            <div class="wind-dir-btn" data-dir="W" onclick="setWindDir('W')">←</div>
+            <div class="wind-dir-btn" style="background:var(--bg);cursor:default;font-size:0.6rem">💨</div>
+            <div class="wind-dir-btn" data-dir="E" onclick="setWindDir('E')">→</div>
+            <div class="wind-dir-btn" data-dir="SW" onclick="setWindDir('SW')">↙</div>
+            <div class="wind-dir-btn" data-dir="S" onclick="setWindDir('S')">↓</div>
+            <div class="wind-dir-btn" data-dir="SE" onclick="setWindDir('SE')">↘</div>
+          </div>
+          <div>
+            <div class="metric" style="margin-bottom:8px">
+              <span class="mlabel">Dirección</span>
+              <span class="mval" id="windDirDisplay">Norte</span>
+            </div>
+            <div class="metric">
+              <span class="mlabel">Clasificación</span>
+              <span class="mval" id="windBeaufort">Brisa fuerte</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="control-row" style="margin-top:10px">
+        <label>Variación aleatoria</label>
+        <label class="toggle">
+          <input type="checkbox" id="windRandom" onchange="updateWind()">
+          <span class="toggle-slider"></span>
+        </label>
+        <span class="toggle-label">Activar turbulencia</span>
+      </div>
+    </div>
+
+    <!-- Aerogenerador -->
+    <div class="card">
+      <h3><span class="icon">🌀</span> Control del Aerogenerador</h3>
+      <div class="control-row">
+        <label>Núm. aerogeneradores</label>
+        <input type="range" id="windTurbines" min="1" max="20" value="5" step="1" oninput="updateWind()">
+        <span class="val" id="windTurbinesVal">5 WTG</span>
+      </div>
+      <div class="control-row">
+        <label>Diám. rotor (m)</label>
+        <input type="range" id="windRotor" min="40" max="160" value="90" step="5" oninput="updateWind()">
+        <span class="val" id="windRotorVal">90 m</span>
+      </div>
+      <div class="control-row">
+        <label>Ángulo de pala (°)</label>
+        <input type="range" id="windPitch" min="-5" max="90" value="5" step="1" oninput="updateWind()">
+        <span class="val" id="windPitchVal">5° (pitch)</span>
+      </div>
+      <div class="control-row">
+        <label>Relación caja cambios</label>
+        <input type="range" id="windGearbox" min="50" max="120" value="85" step="1" oninput="updateWind()">
+        <span class="val" id="windGearboxVal">1:85</span>
+      </div>
+      <div class="control-row">
+        <label>Tipo generador</label>
+        <select id="windGenType" onchange="updateWind()">
+          <option value="dfig" selected>DFIG (doblemente alimentado)</option>
+          <option value="pmsg">PMSG (imán permanente)</option>
+          <option value="scig">SCIG (jaula ardilla)</option>
+        </select>
+      </div>
+      <div class="control-row">
+        <label>Control</label>
+        <select id="windControl" onchange="updateWind()">
+          <option value="mppt" selected>MPPT (máx. potencia)</option>
+          <option value="pitch">Control de paso</option>
+          <option value="stall">Pérdida aerodinámica</option>
+        </select>
+      </div>
+
+      <!-- Wind turbine visual -->
+      <div style="display:flex;align-items:center;gap:20px;margin-top:14px">
+        <canvas id="windTurbineCanvas" width="100" height="120"></canvas>
+        <div class="metric-grid" style="flex:1">
+          <div class="metric">
+            <span class="mlabel">RPM rotor</span>
+            <span class="mval" id="windRPM" style="color:var(--wind)">12.4</span>
+          </div>
+          <div class="metric">
+            <span class="mlabel">RPM generador</span>
+            <span class="mval" id="windGenRPM" style="color:var(--wind)">1054</span>
+          </div>
+          <div class="metric">
+            <span class="mlabel">Cp (coef. potencia)</span>
+            <span class="mval" id="windCp">0.42</span>
+          </div>
+          <div class="metric">
+            <span class="mlabel">TSR (λ)</span>
+            <span class="mval" id="windTSR">7.2</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resultados eólica -->
+    <div class="card">
+      <h3><span class="icon">📊</span> Generación del Parque Eólico</h3>
+      <div class="metric-grid">
+        <div class="metric">
+          <span class="mlabel">Potencia por WTG</span>
+          <span class="mval" id="windPowerOne" style="color:var(--wind)">0 kW</span>
+        </div>
+        <div class="metric">
+          <span class="mlabel">Potencia total parque</span>
+          <span class="mval" id="windPowerTotal" style="color:var(--wind)">0 MW</span>
+        </div>
+        <div class="metric">
+          <span class="mlabel">Capacidad nominal</span>
+          <span class="mval" id="windCapacity">0 MW</span>
+        </div>
+        <div class="metric">
+          <span class="mlabel">Factor de carga</span>
+          <span class="mval" id="windCF">0%</span>
+        </div>
+        <div class="metric">
+          <span class="mlabel">Vel. nominal</span>
+          <span class="mval" id="windVNom">12 m/s</span>
+        </div>
+        <div class="metric">
+          <span class="mlabel">Estado</span>
+          <span class="mval" id="windStatus"><span class="pill pill-ok">OPERANDO</span></span>
+        </div>
+      </div>
+      <canvas id="windChart" width="400" height="70" style="width:100%;margin-top:12px;border-radius:8px"></canvas>
+    </div>
+
+    <!-- Curva de potencia -->
+    <div class="card">
+      <h3><span class="icon">📉</span> Curva de Potencia</h3>
+      <canvas id="windCurveCanvas" width="400" height="120" style="width:100%;border-radius:8px"></canvas>
+      <div class="tip">Límite Betz: Cp_max = 0.593. Control de paso activo sobre velocidad nominal.</div>
+      <div class="control-row" style="margin-top:10px">
+        <label>Parque activo</label>
+        <label class="toggle">
+          <input type="checkbox" id="windActive" checked onchange="updateWind()">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== PANEL: CIUDAD & RED ======================== -->
+<div class="panel" id="panel-city">
+  <div class="grid2">
+    <div class="card" style="grid-column:1/-1">
+      <h3><span class="icon">🏙️</span> Ciudad Simulada — Balance Energético en Tiempo Real</h3>
+      <canvas id="cityCanvas" width="900" height="320"></canvas>
+    </div>
+
+    <div class="card">
+      <h3><span class="icon">⚡</span> Demanda de la Ciudad</h3>
+      <div class="control-row">
+        <label>Zona residencial (MW)</label>
+        <input type="range" id="demResidential" min="0" max="50" value="15" step="0.5" oninput="updateCity()">
+        <span class="val" id="demResidentialVal">15 MW</span>
+      </div>
+      <div class="control-row">
+        <label>Zona industrial (MW)</label>
+        <input type="range" id="demIndustrial" min="0" max="80" value="25" step="0.5" oninput="updateCity()">
+        <span class="val" id="demIndustrialVal">25 MW</span>
+      </div>
+      <div class="control-row">
+        <label>Zona comercial (MW)</label>
+        <input type="range" id="demCommercial" min="0" max="30" value="10" step="0.5" oninput="updateCity()">
+        <span class="val" id="demCommercialVal">10 MW</span>
+      </div>
+      <div class="control-row">
+        <label>Alumbrado público (MW)</label>
+        <input type="range" id="demPublic" min="0" max="10" value="2" step="0.1" oninput="updateCity()">
+        <span class="val" id="demPublicVal">2 MW</span>
+      </div>
+      <div class="control-row">
+        <label>Pico de demanda</label>
+        <label class="toggle">
+          <input type="checkbox" id="demPeak" onchange="updateCity()">
+          <span class="toggle-slider"></span>
+        </label>
+        <span class="toggle-label">+30% carga</span>
+      </div>
+      <div class="control-row">
+        <label>Vehículos eléctricos</label>
+        <input type="range" id="demEV" min="0" max="10" value="1" step="0.5" oninput="updateCity()">
+        <span class="val" id="demEVVal">1 MW</span>
+      </div>
+
+      <div class="metric-grid" style="margin-top:10px">
+        <div class="metric">
+          <span class="mlabel">Demanda total</span>
+          <span class="mval" id="demTotal" style="color:#e05d2f">53 MW</span>
+        </div>
+        <div class="metric">
+          <span class="mlabel">Balance red</span>
+          <span class="mval" id="gridBalance">0 MW</span>
+        </div>
+        <div class="metric">
+          <span class="mlabel">Costo total generación</span>
+          <span class="mval" id="totalCost">0 MXN/h</span>
+        </div>
+        <div class="metric">
+          <span class="mlabel">Precio a habitantes</span>
+          <span class="mval" id="priceToCitizens">0 MXN/kWh</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3><span class="icon">🔀</span> Gestión de Fuentes</h3>
+      <div class="control-row">
+        <label>Despacho geotérmica</label>
+        <input type="range" id="dispGeo" min="0" max="100" value="100" step="1" oninput="updateCity()">
+        <span class="val" id="dispGeoVal">100%</span>
+      </div>
+      <div class="control-row">
+        <label>Despacho solar</label>
+        <input type="range" id="dispSolar" min="0" max="100" value="100" step="1" oninput="updateCity()">
+        <span class="val" id="dispSolarVal">100%</span>
+      </div>
+      <div class="control-row">
+        <label>Despacho eólico</label>
+        <input type="range" id="dispWind" min="0" max="100" value="100" step="1" oninput="updateCity()">
+        <span class="val" id="dispWindVal">100%</span>
+      </div>
+      <div class="control-row">
+        <label>Despacho convencional</label>
+        <input type="range" id="dispConv" min="0" max="100" value="50" step="1" oninput="updateCity()">
+        <span class="val" id="dispConvVal">50%</span>
+      </div>
+      <div class="control-row">
+        <label>Baterías a red</label>
+        <label class="toggle">
+          <input type="checkbox" id="dispBatt" checked onchange="updateCity()">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="metric-grid" style="margin-top:10px">
+        <div class="metric">
+          <span class="mlabel">Geotérmica →</span>
+          <span class="mval" id="flowGeo" style="color:var(--geo)">12 MW</span>
+        </div>
+        <div class="metric">
+          <span class="mlabel">Solar →</span>
+          <span class="mval" id="flowSolar" style="color:var(--solar)">0 MW</span>
+        </div>
+        <div class="metric">
+          <span class="mlabel">Eólica →</span>
+          <span class="mval" id="flowWind" style="color:var(--wind)">0 MW</span>
+        </div>
+        <div class="metric">
+          <span class="mlabel">Convencional →</span>
+          <span class="mval" id="flowConv" style="color:var(--conv)">20 MW</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Frecuencia y red -->
+    <div class="card" style="grid-column:1/-1">
+      <h3><span class="icon">〰️</span> Monitor de Frecuencia de Red</h3>
+      <canvas id="freqChart" width="900" height="90" style="width:100%;border-radius:8px"></canvas>
+      <div style="display:flex;gap:14px;margin-top:10px;flex-wrap:wrap">
+        <div class="metric" style="flex:1">
+          <span class="mlabel">Frecuencia actual</span>
+          <span class="mval" id="freqCurrent" style="font-size:1.6rem">60.0 Hz</span>
+        </div>
+        <div class="metric" style="flex:1">
+          <span class="mlabel">Desviación</span>
+          <span class="mval" id="freqDev">±0.00 Hz</span>
+        </div>
+        <div class="metric" style="flex:1">
+          <span class="mlabel">Inercia del sistema</span>
+          <span class="mval" id="sysInertia">Alto</span>
+        </div>
+        <div class="metric" style="flex:1">
+          <span class="mlabel">% Renovable</span>
+          <span class="mval" id="renewPercent" style="color:var(--accent2)">0%</span>
+        </div>
+        <div class="metric" style="flex:1">
+          <span class="mlabel">Potencia total generada</span>
+          <span class="mval" id="totalGen">0 MW</span>
+        </div>
+        <div class="metric" style="flex:1">
+          <span class="mlabel">Estado de red</span>
+          <span class="mval" id="gridStateDisplay"><span class="pill pill-ok">ESTABLE</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== PANEL: CONVENCIONAL ======================== -->
+<div class="panel" id="panel-conv">
+  <div class="grid-auto">
+    <div class="card">
+      <h3><span class="icon">🏭</span> Central de Ciclo Combinado (CCGT)</h3>
+      <div class="control-row">
+        <label>Potencia nominal</label>
+        <input type="range" id="convCCGT" min="0" max="100" value="40" step="1" oninput="updateConv()">
+        <span class="val" id="convCCGTVal">40 MW</span>
+      </div>
+      <div class="control-row">
+        <label>Despacho (%)</label>
+        <input type="range" id="convCCGTDisp" min="0" max="100" value="60" step="1" oninput="updateConv()">
+        <span class="val" id="convCCGTDispVal">60%</span>
+      </div>
+      <div class="toggle-wrap" style="margin-bottom:10px">
+        <label class="toggle"><input type="checkbox" id="convCCGTOn" checked onchange="updateConv()"><span class="toggle-slider"></span></label>
+        <span class="toggle-label">En operación</span>
+      </div>
+      <div class="metric-grid">
+        <div class="metric"><span class="mlabel">Generando</span><span class="mval" id="convCCGTOut" style="color:var(--conv)">24 MW</span></div>
+        <div class="metric"><span class="mlabel">Eficiencia</span><span class="mval" id="convCCGTEff">58%</span></div>
+        <div class="metric"><span class="mlabel">Emisiones</span><span class="mval" id="convCCGTCO2" style="color:#e74c3c">4.8 tCO₂/h</span></div>
+        <div class="metric"><span class="mlabel">Combustible</span><span class="mval">Gas Natural</span></div>
+      </div>
+      <div class="tip" style="margin-top:8px">Ciclo combinado: turbina de gas + recuperador de calor + turbina de vapor. Mayor eficiencia que ciclo simple.</div>
+    </div>
+
+    <div class="card">
+      <h3><span class="icon">⚫</span> Central Termoeléctrica (Carbón)</h3>
+      <div class="control-row">
+        <label>Potencia nominal</label>
+        <input type="range" id="convCoal" min="0" max="150" value="80" step="1" oninput="updateConv()">
+        <span class="val" id="convCoalVal">80 MW</span>
+      </div>
+      <div class="control-row">
+        <label>Despacho (%)</label>
+        <input type="range" id="convCoalDisp" min="0" max="100" value="30" step="1" oninput="updateConv()">
+        <span class="val" id="convCoalDispVal">30%</span>
+      </div>
+      <div class="toggle-wrap" style="margin-bottom:10px">
+        <label class="toggle"><input type="checkbox" id="convCoalOn" onchange="updateConv()"><span class="toggle-slider"></span></label>
+        <span class="toggle-label">En operación (contaminante)</span>
+      </div>
+      <div class="metric-grid">
+        <div class="metric"><span class="mlabel">Generando</span><span class="mval" id="convCoalOut" style="color:#555">0 MW</span></div>
+        <div class="metric"><span class="mlabel">Eficiencia</span><span class="mval" id="convCoalEff">35%</span></div>
+        <div class="metric"><span class="mlabel">Emisiones</span><span class="mval" id="convCoalCO2" style="color:#e74c3c">0 tCO₂/h</span></div>
+        <div class="metric"><span class="mlabel">Estado</span><span class="mval"><span class="pill pill-off" id="convCoalStatus">APAGADA</span></span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3><span class="icon">☢️</span> Central Nuclear</h3>
+      <div class="control-row">
+        <label>Potencia nominal</label>
+        <input type="range" id="convNuclear" min="0" max="200" value="100" step="1" oninput="updateConv()">
+        <span class="val" id="convNuclearVal">100 MW</span>
+      </div>
+      <div class="control-row">
+        <label>Potencia de operación</label>
+        <input type="range" id="convNuclearDisp" min="0" max="100" value="0" step="1" oninput="updateConv()">
+        <span class="val" id="convNuclearDispVal">0%</span>
+      </div>
+      <div class="toggle-wrap" style="margin-bottom:10px">
+        <label class="toggle"><input type="checkbox" id="convNuclearOn" onchange="updateConv()"><span class="toggle-slider"></span></label>
+        <span class="toggle-label">En operación</span>
+      </div>
+      <div class="metric-grid">
+        <div class="metric"><span class="mlabel">Generando</span><span class="mval" id="convNuclearOut" style="color:#9b59b6">0 MW</span></div>
+        <div class="metric"><span class="mlabel">Eficiencia</span><span class="mval">33%</span></div>
+        <div class="metric"><span class="mlabel">Emisiones CO₂</span><span class="mval" style="color:var(--accent)">~0 tCO₂/h</span></div>
+        <div class="metric"><span class="mlabel">Arranque frío</span><span class="mval">72 h</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3><span class="icon">💧</span> Presa Hidroeléctrica</h3>
+      <div class="control-row">
+        <label>Nivel embalse (%)</label>
+        <input type="range" id="convHydroLevel" min="0" max="100" value="75" step="1" oninput="updateConv()">
+        <span class="val" id="convHydroLevelVal">75%</span>
+      </div>
+      <div class="control-row">
+        <label>Compuertas abiertas</label>
+        <input type="range" id="convHydroGates" min="0" max="100" value="0" step="5" oninput="updateConv()">
+        <span class="val" id="convHydroGatesVal">0%</span>
+      </div>
+      <div class="toggle-wrap" style="margin-bottom:10px">
+        <label class="toggle"><input type="checkbox" id="convHydroOn" onchange="updateConv()"><span class="toggle-slider"></span></label>
+        <span class="toggle-label">En operación</span>
+      </div>
+      <div class="metric-grid">
+        <div class="metric"><span class="mlabel">Generando</span><span class="mval" id="convHydroOut" style="color:var(--accent5)">0 MW</span></div>
+        <div class="metric"><span class="mlabel">Eficiencia</span><span class="mval">90%</span></div>
+        <div class="metric"><span class="mlabel">Emisiones CO₂</span><span class="mval" style="color:var(--accent)">~0 tCO₂/h</span></div>
+        <div class="metric"><span class="mlabel">Caudal</span><span class="mval" id="convHydroFlow">0 m³/s</span></div>
+      </div>
+    </div>
+
+    <!-- Resumen emisiones -->
+    <div class="card" style="grid-column:1/-1">
+      <h3><span class="icon">🌍</span> Emisiones Totales y Huella de Carbono</h3>
+      <div class="metric-grid">
+        <div class="metric"><span class="mlabel">CO₂ total ahora</span><span class="mval" id="totalCO2" style="color:#e74c3c">0 tCO₂/h</span></div>
+        <div class="metric"><span class="mlabel">CO₂ evitado vs. todo-carbón</span><span class="mval" id="avoidedCO2" style="color:var(--accent)">0 tCO₂/h</span></div>
+        <div class="metric"><span class="mlabel">Mezcla renovable</span><span class="mval" id="renewMix" style="color:var(--accent2)">0%</span></div>
+        <div class="metric"><span class="mlabel">Intensidad carbono</span><span class="mval" id="carbonIntensity">0 gCO₂/kWh</span></div>
+      </div>
+      <canvas id="emissionsChart" width="900" height="70" style="width:100%;margin-top:12px;border-radius:8px"></canvas>
+      <div class="status-line" id="convStatusLine" style="margin-top:10px">
+        💡 Tip: Reduce la generación convencional gradualmente mientras aumentas las renovables para simular una transición energética real.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== PANEL: DASHBOARD ======================== -->
+<div class="panel" id="panel-dash">
+  <div class="grid2">
+    <div class="card" style="grid-column:1/-1">
+      <h3><span class="icon">⚡</span> Mix de Generación en Tiempo Real</h3>
+      <canvas id="mixChart" width="900" height="120" style="width:100%;border-radius:8px"></canvas>
+    </div>
+
+    <div class="card">
+      <h3><span class="icon">🕐</span> Control de Tiempo Simulado</h3>
+      <div class="control-row">
+        <label>Hora del día</label>
+        <input type="range" id="simHour" min="0" max="23" value="6" step="1" oninput="updateSimTime()">
+        <span class="val" id="simHourVal">06:00</span>
+      </div>
+      <div class="control-row">
+        <label>Velocidad simulación</label>
+        <select id="simSpeed">
+          <option value="0">Pausado</option>
+          <option value="1" selected>1× real</option>
+          <option value="60">1 min/s</option>
+          <option value="3600">1 hora/s</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn btn-primary" onclick="toggleSimulation()">▶ / ⏸ Simulación</button>
+        <button class="btn btn-secondary" onclick="resetSim()">↺ Reiniciar</button>
+      </div>
+      <div class="status-line" style="margin-top:10px" id="simStatus">
+        Simulación corriendo · Hora: 06:00
+      </div>
+    </div>
+
+    <div class="card">
+      <h3><span class="icon">📊</span> KPIs Globales</h3>
+      <div class="metric-grid">
+        <div class="metric"><span class="mlabel">Generación total</span><span class="mval" id="kpiGen">0 MW</span></div>
+        <div class="metric"><span class="mlabel">Demanda total</span><span class="mval" id="kpiDem">0 MW</span></div>
+        <div class="metric"><span class="mlabel">Balance</span><span class="mval" id="kpiBalance">0 MW</span></div>
+        <div class="metric"><span class="mlabel">% Renovable</span><span class="mval" id="kpiRenew" style="color:var(--accent2)">0%</span></div>
+        <div class="metric"><span class="mlabel">Frecuencia</span><span class="mval" id="kpiFreq">60.0 Hz</span></div>
+        <div class="metric"><span class="mlabel">CO₂/h total</span><span class="mval" id="kpiCO2" style="color:#e74c3c">0 t</span></div>
+      </div>
+    </div>
+
+    <div class="card" style="grid-column:1/-1">
+      <h3><span class="icon">📈</span> Evolución Temporal — Todas las Fuentes</h3>
+      <canvas id="dashChart" width="900" height="120" style="width:100%;border-radius:8px"></canvas>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--geo)"></div>Geotérmica</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--solar)"></div>Solar</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--wind)"></div>Eólica</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--conv)"></div>Convencional</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#e05d2f"></div>Demanda</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#5d4e8c"></div>Frecuencia</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== STATE ====================
+const state = {
+  // GEO
+  geo: { soilType:'basalt', depth:2000, grad:35, magma:1, aquifer:70, valve:75, cycle:'doubleflash', active:true,
+    temp:0, press:0, flow:0, quality:0, rpm:0, power:0, efficiency:0 },
+  // SOLAR
+  solar: { irrad:750, cloud:20, ambTemp:28, angle:55, autoDay:false, panelType:'mono',
+    strings:8, parallel:10, tilt:23, tracker:'1axis', active:true,
+    effIrrad:0, powerDC:0, powerAC:0, cellTemp:0, voltage:0, cf:0,
+    battType:'liion', battModules:6, battSOC:65, battMode:'auto', battFlow:0 },
+  // WIND
+  wind: { speed:9, turbulence:8, shear:0.14, density:1.225, dir:'N', random:false,
+    nTurbines:5, rotorD:90, pitch:5, gearbox:85, genType:'dfig', control:'mppt', active:true,
+    rpm:0, genRPM:0, cp:0, tsr:0, powerOne:0, powerTotal:0, cf:0 },
+  // CITY DEMAND
+  city: { residential:15, industrial:25, commercial:10, pubLight:2, peak:false, ev:1,
+    dispGeo:100, dispSolar:100, dispWind:100, dispConv:50, battToGrid:true },
+  // CONVENTIONAL
+  conv: { ccgtNom:40, ccgtDisp:60, ccgtOn:true,
+    coalNom:80, coalDisp:30, coalOn:false,
+    nuclearNom:100, nuclearDisp:0, nuclearOn:false,
+    hydroLevel:75, hydroGates:0, hydroOn:false },
+  // GRID
+  grid: { frequency:60, targetFreq:60, inertia:1 },
+  // SIM
+  sim: { hour:6, running:true, speed:60 },
+  // HISTORY
+  history: { geo:[], solar:[], wind:[], conv:[], demand:[], freq:[], time:[] },
+  // COSTS (USD/kWh)
+  costs: { geo:0.05, solar:0.10, wind:0.08, ccgt:0.06, coal:0.04, nuclear:0.03, hydro:0.05 },
+  // EXCHANGE RATE
+  usdToMxn: 20
+};
+
+const MAX_HIST = 120;
+
+// ==================== PHYSICS ====================
+
+function calcGeo() {
+  const g = state.geo;
+  if (!g.active) { g.power = 0; g.rpm = 0; return; }
+
+  const soilK = { granite:1.2, basalt:1.5, limestone:0.8, clay:0.4, sandstone:0.9 };
+  const magmaBonus = [0, 40, 20, 60][g.magma] || 0;
+  const k = soilK[g.soilType] || 1;
+
+  g.temp = Math.min(350, (g.depth / 1000) * g.grad + 15 + magmaBonus * k * 0.8);
+  // Saturation pressure approximation (Antoine eq. simplified)
+  g.press = Math.max(0.1, Math.pow((g.temp - 100) / 120, 1.8) * 70 + 1);
+  g.flow = (g.aquifer / 100) * 60 * k * (g.valve / 100) * (g.magma > 0 ? 1.3 : 1);
+  g.quality = Math.min(1, 0.5 + (g.temp - 100) / 500);
+
+  const cycleEff = { flash:0.12, doubleflash:0.16, binary:0.10, drysteam:0.18 };
+  const ce = cycleEff[g.cycle] || 0.14;
+  // Specific enthalpy drop approximation
+  const h_drop = (g.temp - 40) * 2.1; // kJ/kg simplified
+  const rawPower = g.flow * h_drop * ce * (g.valve / 100);
+  g.power = Math.max(0, rawPower / 1000); // MW
+  g.efficiency = Math.min(95, ce * 100 * (0.7 + g.quality * 0.3) * (g.valve > 10 ? 1 : 0));
+  // Turbine speed: synced to grid (3000 rpm for 50Hz, 3600 for 60Hz nominal, ±variation)
+  const freqRatio = state.grid.frequency / 60;
+  g.rpm = g.active && g.valve > 0 ? Math.round(3600 * freqRatio * (0.95 + 0.1 * (g.valve/100))) : 0;
+}
+
+function calcSolar() {
+  const s = state.solar;
+  if (!s.active) { s.powerDC = 0; s.powerAC = 0; return; }
+
+  const cloudFactor = 1 - (s.cloud / 100) * 0.8;
+  const angleFactor = Math.sin(s.angle * Math.PI / 180);
+  const trackerBonus = { fixed:1, '1axis':1.15, '2axis':1.25 }[s.tracker] || 1;
+
+  s.effIrrad = s.irrad * cloudFactor * angleFactor * trackerBonus;
+
+  const panelEff = { mono:0.21, poly:0.17, thin:0.13, bifacial:0.24, perovskite:0.28 }[s.panelType] || 0.20;
+  // Temperature derating: -0.4%/°C above 25°C
+  s.cellTemp = s.ambTemp + s.effIrrad * 0.025;
+  const tempDerate = 1 - Math.max(0, (s.cellTemp - 25) * 0.004);
+
+  const totalPanels = s.strings * s.parallel;
+  const panelArea = 1.7; // m² per panel
+  s.powerDC = s.effIrrad * panelEff * tempDerate * totalPanels * panelArea / 1000; // kW
+
+  const inverterEff = 0.97;
+  const cableEff = 0.98;
+  s.powerAC = s.powerDC * inverterEff * cableEff;
+  s.sysEff = s.powerDC > 0 ? (s.powerAC / (s.effIrrad * totalPanels * panelArea / 1000) * 100) : 0;
+
+  // Voltage: panels in string (series) sum voltage
+  const voc_panel = 40; // V per panel
+  s.voltage = Math.round(s.strings * voc_panel);
+  s.cf = s.powerDC / Math.max(1, totalPanels * panelArea * 1000 / 1000) * 100;
+
+  // Battery simulation
+  const battCap = s.battModules * 100; // kWh
+  const demand = calcTotalDemand() * 1000; // kW
+  const available = s.powerAC;
+  const net = available - demand * 0.3; // simplification
+  if (s.battMode === 'auto') {
+    if (net > 0) { s.battFlow = Math.min(net, battCap * 0.1); s.battSOC = Math.min(100, s.battSOC + s.battFlow * 0.01); }
+    else { s.battFlow = Math.max(net, -battCap * 0.1); s.battSOC = Math.max(0, s.battSOC + s.battFlow * 0.01); }
+  } else if (s.battMode === 'charge') { s.battFlow = Math.min(available * 0.3, battCap * 0.1); s.battSOC = Math.min(100, s.battSOC + 0.05); }
+  else if (s.battMode === 'discharge') { s.battFlow = -battCap * 0.05; s.battSOC = Math.max(0, s.battSOC - 0.05); }
+  else { s.battFlow = 0; }
+}
+
+function calcWind() {
+  const w = state.wind;
+  if (!w.active) { w.powerOne = 0; w.powerTotal = 0; return; }
+
+  const v = w.speed;
+  const v_cut_in = 3, v_rated = 12, v_cut_out = 25;
+  const R = w.rotorD / 2;
+  const A = Math.PI * R * R;
+
+  // Betz limit adjusted Cp
+  const pitch_factor = Math.max(0, 1 - (w.pitch - 5) * 0.015);
+  let cp;
+  if (v < v_cut_in || v > v_cut_out) { cp = 0; }
+  else if (v <= v_rated) {
+    // TSR-based Cp model
+    w.tsr = (w.rotorD * Math.PI * (w.rpm || 12) / 60) / Math.max(0.1, v);
+    cp = Math.min(0.593, 0.22 * (116 / Math.max(0.1, w.tsr) - 0.4 * w.pitch - 5) * Math.exp(-12.5 / Math.max(0.1, w.tsr)) * pitch_factor);
+    cp = Math.max(0, cp);
+  } else { cp = 0.25 * pitch_factor; }
+
+  w.cp = Math.max(0, Math.min(0.59, cp));
+
+  const randomFactor = w.random ? (0.9 + Math.random() * 0.2) : 1;
+  const powerW = 0.5 * w.density * A * Math.pow(v * randomFactor, 3) * w.cp;
+  w.powerOne = Math.min(3000, powerW / 1000); // kW per turbine
+
+  // RPM from TSR
+  const omega = w.tsr * v / R; // rad/s
+  w.rpm = omega * 60 / (2 * Math.PI);
+  w.genRPM = Math.round(w.rpm * w.gearbox);
+
+  w.powerTotal = w.powerOne * w.nTurbines / 1000; // MW
+  const nomPowerOne = 0.5 * w.density * A * Math.pow(v_rated, 3) * 0.42 / 1000;
+  w.cf = w.powerOne / Math.max(1, nomPowerOne) * 100;
+}
+
+function calcTotalDemand() {
+  const c = state.city;
+  const peak = c.peak ? 1.3 : 1;
+  return (c.residential + c.industrial + c.commercial + c.pubLight + c.ev) * peak;
+}
+
+function calcConv() {
+  const c = state.conv;
+  c.ccgtOut = c.ccgtOn ? c.ccgtNom * c.ccgtDisp / 100 : 0;
+  c.coalOut = c.coalOn ? c.coalNom * c.coalDisp / 100 : 0;
+  c.nuclearOut = c.nuclearOn ? c.nuclearNom * c.nuclearDisp / 100 : 0;
+  c.hydroOut = c.hydroOn ? (c.hydroLevel / 100) * c.hydroGates / 100 * 80 * 0.9 : 0;
+  c.hydroFlow = c.hydroOn ? c.hydroGates / 100 * 120 : 0; // m³/s
+  c.totalConv = c.ccgtOut + c.coalOut + c.nuclearOut + c.hydroOut;
+  // Emissions kg CO2/h → t/h
+  c.ccgtCO2 = c.ccgtOut * 0.2; // tCO2/h
+  c.coalCO2 = c.coalOut * 1.0;
+  c.nuclearCO2 = 0;
+  c.hydroCO2 = 0;
+  c.totalCO2 = c.ccgtCO2 + c.coalCO2;
+}
+
+function calcGrid() {
+  calcGeo(); calcSolar(); calcWind(); calcConv();
+
+  const g = state.geo;
+  const s = state.solar;
+  const w = state.wind;
+  const cv = state.conv;
+  const c = state.city;
+  const gr = state.grid;
+
+  const geoFeed = g.power * (c.dispGeo / 100);
+  const solarFeed = s.powerAC / 1000 * (c.dispSolar / 100);
+  const windFeed = w.powerTotal * (c.dispWind / 100);
+  const battFeed = (c.battToGrid && s.battSOC > 20) ? Math.max(0, -s.battFlow / 1000) : 0;
+  const convFeed = cv.totalConv * (c.dispConv / 100);
+  const totalGen = geoFeed + solarFeed + windFeed + convFeed + battFeed;
+  const totalDem = calcTotalDemand();
+
+  const imbalance = totalGen - totalDem;
+  // Grid frequency: droop model (simplified)
+  // Δf = imbalance / (inertia * nominal_demand) * sensitivity
+  const inertiaMW = (g.active ? 50 : 0) + (cv.ccgtOn ? 80 : 0) + (cv.nuclearOn ? 120 : 0) + (cv.hydroOn ? 40 : 0) + 20;
+  const inertiaFactor = Math.max(1, inertiaMW / 50);
+  const freqDev = (imbalance / Math.max(5, totalDem)) * (8 / inertiaFactor);
+  gr.targetFreq = 60 + freqDev;
+  // Low-pass filter for frequency
+  gr.frequency = gr.frequency * 0.85 + gr.targetFreq * 0.15;
+  gr.frequency = Math.max(55, Math.min(65, gr.frequency));
+  gr.inertia = inertiaFactor;
+
+  // Costs
+  const totalCostUSD = geoFeed * state.costs.geo + solarFeed * state.costs.solar + windFeed * state.costs.wind + 
+                       (cv.ccgtOut * state.costs.ccgt + cv.coalOut * state.costs.coal + cv.nuclearOut * state.costs.nuclear + cv.hydroOut * state.costs.hydro) * (c.dispConv / 100);
+  const totalCostMXN = totalCostUSD * state.usdToMxn;
+  const priceMXN = totalDem > 0 ? (totalCostMXN / totalDem + 0.5) : 0; // +0.5 MXN/kWh margen
+
+  return { totalGen, totalDem, geoFeed, solarFeed, windFeed, convFeed, battFeed, imbalance, totalCostMXN, priceMXN };
+}
+
+// ==================== UI UPDATES ====================
+
+function updateGeo() {
+  const g = state.geo;
+  g.soilType = document.getElementById('geoSoilType').value;
+  g.depth = +document.getElementById('geoDepth').value;
+  g.grad = +document.getElementById('geoGrad').value;
+  g.magma = +document.getElementById('geoMagma').value;
+  g.aquifer = +document.getElementById('geoAquifer').value;
+  g.valve = +document.getElementById('geoValve').value;
+  g.cycle = document.getElementById('geoCycle').value;
+  g.active = document.getElementById('geoActive').checked;
+
+  document.getElementById('geoDepthVal').textContent = g.depth + ' m';
+  document.getElementById('geoGradVal').textContent = g.grad + ' °C/km';
+  document.getElementById('geoAquiferVal').textContent = g.aquifer + '%';
+  document.getElementById('geoValveVal').textContent = g.valve + '%';
+  document.getElementById('geoActiveLabel').textContent = g.active ? 'En operación' : 'Apagada';
+
+  calcGeo();
+  document.getElementById('geoTempVal').textContent = g.temp.toFixed(0) + ' °C';
+  document.getElementById('geoPressVal').textContent = g.press.toFixed(1) + ' bar';
+  document.getElementById('geoFlowVal').textContent = g.flow.toFixed(0) + ' kg/s';
+  document.getElementById('geoQualVal').textContent = g.quality.toFixed(2);
+  document.getElementById('geoRPM').textContent = g.rpm.toFixed(0);
+  document.getElementById('geoPower').textContent = g.power.toFixed(2) + ' MW';
+  document.getElementById('geoEfficiency').textContent = g.efficiency.toFixed(0) + '%';
+  const geoSt = document.getElementById('geoStatus');
+  if (!g.active) geoSt.innerHTML = '<span class="pill pill-off">APAGADA</span>';
+  else if (g.valve < 10) geoSt.innerHTML = '<span class="pill pill-warn">STANDBY</span>';
+  else geoSt.innerHTML = '<span class="pill pill-ok">ACTIVA</span>';
+
+  document.getElementById('geoStatusLine').textContent = `♨️ Temp. pozo: ${g.temp.toFixed(0)}°C · Presión: ${g.press.toFixed(1)} bar · Flujo: ${g.flow.toFixed(0)} kg/s · Potencia: ${g.power.toFixed(2)} MW · Ciclo: ${g.cycle}`;
+
+  drawSoilDiagram();
+  updateGridDisplay();
+}
+
+function updateSolar() {
+  const s = state.solar;
+  s.irrad = +document.getElementById('solarIrrad').value;
+  s.cloud = +document.getElementById('solarCloud').value;
+  s.ambTemp = +document.getElementById('solarTemp').value;
+  s.angle = +document.getElementById('solarAngle').value;
+  s.autoDay = document.getElementById('solarAutoDay').checked;
+  s.panelType = document.getElementById('solarPanelType').value;
+  s.strings = +document.getElementById('solarStrings').value;
+  s.parallel = +document.getElementById('solarParallel').value;
+  s.tilt = +document.getElementById('solarTilt').value;
+  s.tracker = document.getElementById('solarTracker').value;
+  s.active = document.getElementById('solarActive').checked;
+  s.battType = document.getElementById('battType').value;
+  s.battModules = +document.getElementById('battModules').value;
+  s.battSOC = +document.getElementById('battSOC').value;
+  s.battMode = document.getElementById('battMode').value;
+
+  document.getElementById('solarIrradVal').textContent = s.irrad + ' W/m²';
+  document.getElementById('solarCloudVal').textContent = s.cloud + '%';
+  document.getElementById('solarTempVal').textContent = s.ambTemp + '°C';
+  document.getElementById('solarAngleVal').textContent = s.angle + '°';
+  document.getElementById('solarStringsVal').textContent = s.strings;
+  document.getElementById('solarParallelVal').textContent = s.parallel;
+  document.getElementById('solarTiltVal').textContent = s.tilt + '°';
+  document.getElementById('battModulesVal').textContent = s.battModules + ' (' + (s.battModules * 100) + ' kWh)';
+  document.getElementById('battSOCVal').textContent = s.battSOC + '%';
+
+  calcSolar();
+  document.getElementById('solarEffIrrad').textContent = s.effIrrad.toFixed(0) + ' W/m²';
+  document.getElementById('solarUV').textContent = (s.effIrrad / 100).toFixed(1);
+  document.getElementById('solarPowerDC').textContent = s.powerDC.toFixed(1) + ' kW';
+  document.getElementById('solarPowerAC').textContent = s.powerAC.toFixed(1) + ' kW';
+  document.getElementById('solarSysEff').textContent = (s.sysEff || 0).toFixed(1) + '%';
+  document.getElementById('solarCellTemp').textContent = s.cellTemp.toFixed(1) + '°C';
+  document.getElementById('solarVoltage').textContent = s.voltage + ' V';
+  document.getElementById('solarCF').textContent = s.cf.toFixed(1) + '%';
+  document.getElementById('battSOCDisplay').textContent = s.battSOC.toFixed(0) + '%';
+  document.getElementById('battFlow').textContent = (s.battFlow >= 0 ? '+' : '') + s.battFlow.toFixed(1) + ' kW';
+  document.getElementById('battCapacity').textContent = (s.battModules * 100) + ' kWh';
+  document.getElementById('solarArrayInfo').textContent = `${s.strings * s.parallel} paneles · ${s.strings} strings × ${s.parallel} paneles`;
+
+  drawSolarArray();
+  drawBatteryBank();
+  drawSolarWeather();
+  updateGridDisplay();
+}
+
+function updateWind() {
+  const w = state.wind;
+  w.speed = +document.getElementById('windSpeed').value;
+  w.turbulence = +document.getElementById('windTurb').value;
+  w.shear = +document.getElementById('windShear').value;
+  w.density = +document.getElementById('windDensity').value;
+  w.nTurbines = +document.getElementById('windTurbines').value;
+  w.rotorD = +document.getElementById('windRotor').value;
+  w.pitch = +document.getElementById('windPitch').value;
+  w.gearbox = +document.getElementById('windGearbox').value;
+  w.genType = document.getElementById('windGenType').value;
+  w.control = document.getElementById('windControl').value;
+  w.active = document.getElementById('windActive').checked;
+  w.random = document.getElementById('windRandom').checked;
+
+  document.getElementById('windSpeedVal').textContent = w.speed + ' m/s';
+  document.getElementById('windTurbVal').textContent = w.turbulence + '%';
+  document.getElementById('windShearVal').textContent = w.shear;
+  document.getElementById('windDensityVal').textContent = w.density;
+  document.getElementById('windTurbinesVal').textContent = w.nTurbines + ' WTG';
+  document.getElementById('windRotorVal').textContent = w.rotorD + ' m';
+  document.getElementById('windPitchVal').textContent = w.pitch + '° (pitch)';
+  document.getElementById('windGearboxVal').textContent = '1:' + w.gearbox;
+
+  const beaufort = ['Calma','Ventolina','Brisa leve','Brisa débil','Brisa moderada','Brisa fresca','Brisa fuerte','Viento fuerte','Temporal','Temporal fuerte','Temporal duro','Temporal violento','Huracán'];
+  const bf = Math.min(12, Math.floor(w.speed / 2.5));
+  document.getElementById('windBeaufort').textContent = beaufort[bf];
+
+  calcWind();
+  document.getElementById('windRPM').textContent = (w.rpm || 0).toFixed(1);
+  document.getElementById('windGenRPM').textContent = (w.genRPM || 0).toFixed(0);
+  document.getElementById('windCp').textContent = (w.cp || 0).toFixed(3);
+  document.getElementById('windTSR').textContent = (w.tsr || 0).toFixed(1);
+  document.getElementById('windPowerOne').textContent = (w.powerOne || 0).toFixed(1) + ' kW';
+  document.getElementById('windPowerTotal').textContent = (w.powerTotal || 0).toFixed(3) + ' MW';
+  const nomCap = 0.5 * w.density * Math.PI * (w.rotorD/2)**2 * 12**3 * 0.42 / 1e6 * w.nTurbines;
+  document.getElementById('windCapacity').textContent = nomCap.toFixed(2) + ' MW';
+  document.getElementById('windCF').textContent = (w.cf || 0).toFixed(1) + '%';
+  document.getElementById('windVNom').textContent = '12 m/s';
+  const wst = document.getElementById('windStatus');
+  if (!w.active) wst.innerHTML = '<span class="pill pill-off">APAGADA</span>';
+  else if (w.speed < 3) wst.innerHTML = '<span class="pill pill-warn">VIENTO INSUF.</span>';
+  else if (w.speed > 25) wst.innerHTML = '<span class="pill pill-crit">PARADA SEGURIDAD</span>';
+  else wst.innerHTML = '<span class="pill pill-ok">OPERANDO</span>';
+
+  drawWindCurve();
+  updateGridDisplay();
+}
+
+function updateCity() {
+  const c = state.city;
+  c.residential = +document.getElementById('demResidential').value;
+  c.industrial = +document.getElementById('demIndustrial').value;
+  c.commercial = +document.getElementById('demCommercial').value;
+  c.pubLight = +document.getElementById('demPublic').value;
+  c.peak = document.getElementById('demPeak').checked;
+  c.ev = +document.getElementById('demEV').value;
+  c.dispGeo = +document.getElementById('dispGeo').value;
+  c.dispSolar = +document.getElementById('dispSolar').value;
+  c.dispWind = +document.getElementById('dispWind').value;
+  c.dispConv = +document.getElementById('dispConv').value;
+  c.battToGrid = document.getElementById('dispBatt').checked;
+
+  document.getElementById('demResidentialVal').textContent = c.residential + ' MW';
+  document.getElementById('demIndustrialVal').textContent = c.industrial + ' MW';
+  document.getElementById('demCommercialVal').textContent = c.commercial + ' MW';
+  document.getElementById('demPublicVal').textContent = c.pubLight + ' MW';
+  document.getElementById('demEVVal').textContent = c.ev + ' MW';
+  document.getElementById('dispGeoVal').textContent = c.dispGeo + '%';
+  document.getElementById('dispSolarVal').textContent = c.dispSolar + '%';
+  document.getElementById('dispWindVal').textContent = c.dispWind + '%';
+  document.getElementById('dispConvVal').textContent = c.dispConv + '%';
+
+  updateGridDisplay();
+}
+
+function updateConv() {
+  const c = state.conv;
+  c.ccgtNom = +document.getElementById('convCCGT').value;
+  c.ccgtDisp = +document.getElementById('convCCGTDisp').value;
+  c.ccgtOn = document.getElementById('convCCGTOn').checked;
+  c.coalNom = +document.getElementById('convCoal').value;
+  c.coalDisp = +document.getElementById('convCoalDisp').value;
+  c.coalOn = document.getElementById('convCoalOn').checked;
+  c.nuclearNom = +document.getElementById('convNuclear').value;
+  c.nuclearDisp = +document.getElementById('convNuclearDisp').value;
+  c.nuclearOn = document.getElementById('convNuclearOn').checked;
+  c.hydroLevel = +document.getElementById('convHydroLevel').value;
+  c.hydroGates = +document.getElementById('convHydroGates').value;
+  c.hydroOn = document.getElementById('convHydroOn').checked;
+
+  document.getElementById('convCCGTVal').textContent = c.ccgtNom + ' MW';
+  document.getElementById('convCCGTDispVal').textContent = c.ccgtDisp + '%';
+  document.getElementById('convCoalVal').textContent = c.coalNom + ' MW';
+  document.getElementById('convCoalDispVal').textContent = c.coalDisp + '%';
+  document.getElementById('convNuclearVal').textContent = c.nuclearNom + ' MW';
+  document.getElementById('convNuclearDispVal').textContent = c.nuclearDisp + '%';
+  document.getElementById('convHydroLevelVal').textContent = c.hydroLevel + '%';
+  document.getElementById('convHydroGatesVal').textContent = c.hydroGates + '%';
+
+  calcConv();
+  document.getElementById('convCCGTOut').textContent = c.ccgtOut.toFixed(1) + ' MW';
+  document.getElementById('convCCGTEff').textContent = '58%';
+  document.getElementById('convCCGTCO2').textContent = c.ccgtCO2.toFixed(1) + ' tCO₂/h';
+  document.getElementById('convCoalOut').textContent = c.coalOut.toFixed(1) + ' MW';
+  document.getElementById('convCoalEff').textContent = '35%';
+  document.getElementById('convCoalCO2').textContent = c.coalCO2.toFixed(1) + ' tCO₂/h';
+  document.getElementById('convNuclearOut').textContent = c.nuclearOut.toFixed(1) + ' MW';
+  document.getElementById('convHydroOut').textContent = c.hydroOut.toFixed(1) + ' MW';
+  document.getElementById('convHydroFlow').textContent = c.hydroFlow.toFixed(0) + ' m³/s';
+  document.getElementById('convCoalStatus').textContent = c.coalOn ? 'OPERANDO' : 'APAGADA';
+  document.getElementById('convCoalStatus').className = c.coalOn ? 'pill pill-crit' : 'pill pill-off';
+
+  updateGridDisplay();
+}
+
+function updateGridDisplay() {
+  const res = calcGrid();
+  const gr = state.grid;
+  const freq = gr.frequency;
+
+  // Frequency display
+  document.getElementById('freqDisplay').textContent = freq.toFixed(2);
+  document.getElementById('freqCurrent').textContent = freq.toFixed(3) + ' Hz';
+  document.getElementById('freqDev').textContent = (freq >= 60 ? '+' : '') + (freq - 60).toFixed(3) + ' Hz';
+  document.getElementById('kpiFreq').textContent = freq.toFixed(2) + ' Hz';
+
+  // Freq bar
+  const freqPct = ((freq - 55) / 10) * 100;
+  const bar = document.getElementById('freqBar');
+  bar.style.width = freqPct + '%';
+  const fv = document.getElementById('freqDisplay');
+  const fs = document.getElementById('freqStatus');
+  if (Math.abs(freq - 60) < 0.2) { bar.style.background = 'var(--freq-ok)'; fv.style.color='#fff'; fs.textContent='NOMINAL'; }
+  else if (Math.abs(freq - 60) < 0.5) { bar.style.background = 'var(--freq-warn)'; fv.style.color='#f39c12'; fs.textContent='VARIACIÓN'; }
+  else { bar.style.background = 'var(--freq-crit)'; fv.style.color='#e74c3c'; fs.textContent='CRÍTICO'; }
+
+  // Demand / balance
+  const demand = calcTotalDemand();
+  document.getElementById('demTotal').textContent = demand.toFixed(1) + ' MW';
+  const bal = res.totalGen - demand;
+  document.getElementById('gridBalance').textContent = (bal >= 0 ? '+' : '') + bal.toFixed(2) + ' MW';
+  document.getElementById('totalCost').textContent = res.totalCostMXN.toFixed(1) + ' MXN/h';
+  document.getElementById('priceToCitizens').textContent = res.priceMXN.toFixed(2) + ' MXN/kWh';
+  document.getElementById('kpiGen').textContent = res.totalGen.toFixed(1) + ' MW';
+  document.getElementById('kpiDem').textContent = demand.toFixed(1) + ' MW';
+  document.getElementById('kpiBalance').textContent = (bal >= 0 ? '+' : '') + bal.toFixed(1) + ' MW';
+
+  // Flows
+  document.getElementById('flowGeo').textContent = res.geoFeed.toFixed(2) + ' MW';
+  document.getElementById('flowSolar').textContent = res.solarFeed.toFixed(2) + ' MW';
+  document.getElementById('flowWind').textContent = res.windFeed.toFixed(3) + ' MW';
+  document.getElementById('flowConv').textContent = res.convFeed.toFixed(1) + ' MW';
+
+  // Renewable %
+  const renewPct = res.totalGen > 0 ? ((res.geoFeed + res.solarFeed + res.windFeed) / res.totalGen * 100) : 0;
+  document.getElementById('renewPercent').textContent = renewPct.toFixed(0) + '%';
+  document.getElementById('kpiRenew').textContent = renewPct.toFixed(0) + '%';
+  document.getElementById('renewMix').textContent = renewPct.toFixed(1) + '%';
+
+  // Inertia
+  document.getElementById('sysInertia').textContent = gr.inertia > 2 ? 'Alto' : gr.inertia > 1 ? 'Medio' : 'Bajo';
+  document.getElementById('totalGen').textContent = res.totalGen.toFixed(1) + ' MW';
+
+  // Grid state
+  const gsd = document.getElementById('gridStateDisplay');
+  if (Math.abs(freq - 60) < 0.2) gsd.innerHTML = '<span class="pill pill-ok">ESTABLE</span>';
+  else if (Math.abs(freq - 60) < 0.5) gsd.innerHTML = '<span class="pill pill-warn">VARIACIÓN</span>';
+  else gsd.innerHTML = '<span class="pill pill-crit">INESTABLE</span>';
+
+  // CO2
+  calcConv();
+  const cv = state.conv;
+  document.getElementById('totalCO2').textContent = cv.totalCO2.toFixed(2) + ' tCO₂/h';
+  const maxCO2 = res.totalGen * 1.0;
+  document.getElementById('avoidedCO2').textContent = (maxCO2 - cv.totalCO2).toFixed(1) + ' tCO₂/h';
+  document.getElementById('carbonIntensity').textContent = res.totalGen > 0 ? (cv.totalCO2 / res.totalGen * 1000).toFixed(0) + ' gCO₂/kWh' : '0 gCO₂/kWh';
+  document.getElementById('kpiCO2').textContent = cv.totalCO2.toFixed(1) + ' t';
+
+  // Alert
+  const alertBanner = document.getElementById('alertBanner');
+  if (freq < 58 || freq > 62) {
+    alertBanner.className = 'alert-banner show alert-crit';
+    alertBanner.textContent = `⚠️ FRECUENCIA CRÍTICA: ${freq.toFixed(2)} Hz — Balance: ${bal.toFixed(1)} MW. ¡Ajusta la generación inmediatamente!`;
+  } else if (freq < 59.3 || freq > 60.7) {
+    alertBanner.className = 'alert-banner show alert-warn';
+    alertBanner.textContent = `⚡ Variación de frecuencia: ${freq.toFixed(2)} Hz — Desbalance: ${bal.toFixed(1)} MW. Revisa el despacho de energía.`;
+  } else {
+    alertBanner.className = 'alert-banner';
+  }
+
+  drawCity();
+}
+
+// ==================== DRAWING ====================
+
+function drawSoilDiagram() {
+  const canvas = document.getElementById('soilCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const g = state.geo;
+  const layers = [
+    { name:'Suelo superficial', color:'#8B6914', h:0.1 },
+    { name:'Roca madre', color: g.soilType === 'basalt' ? '#4a4a4a' : g.soilType === 'granite' ? '#9a8a7a' : g.soilType === 'limestone' ? '#d4c9a0' : g.soilType === 'clay' ? '#a08060' : '#c4a870', h:0.25 },
+    { name: g.aquifer > 30 ? 'Acuífero' : 'Capa seca', color: g.aquifer > 30 ? '#4a90d9' : '#808060', h:0.2 },
+    { name:'Roca caliente', color:'#8B2500', h:0.25 },
+    { name: g.magma > 0 ? 'Canal magmático' : 'Núcleo profundo', color: g.magma > 0 ? '#ff4500' : '#6a3500', h:0.2 },
+  ];
+
+  let y = 0;
+  layers.forEach(l => {
+    const h = l.h * H;
+    ctx.fillStyle = l.color;
+    ctx.fillRect(0, y, W * 0.75, h);
+    ctx.fillStyle = '#fff';
+    ctx.font = '10px Nunito';
+    ctx.fillText(l.name, 6, y + h / 2 + 4);
+    y += h;
+  });
+
+  // Draw well
+  const wellX = W * 0.4;
+  const wellColor = '#88ddff';
+  ctx.strokeStyle = wellColor;
+  ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(wellX, 0); ctx.lineTo(wellX, H * 0.85); ctx.stroke();
+  ctx.strokeStyle = '#ff9900'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(wellX + 10, 0); ctx.lineTo(wellX + 10, H * 0.85); ctx.stroke();
+
+  // Temp indicator
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 11px Space Mono, monospace';
+  ctx.fillText(`${g.temp.toFixed(0)}°C`, W * 0.76, H * 0.55);
+  ctx.font = '9px Nunito';
+  ctx.fillStyle = '#88ddff';
+  ctx.fillText('← Pozo inyec.', W * 0.77, H * 0.42);
+  ctx.fillStyle = '#ff9900';
+  ctx.fillText('← Pozo extrac.', W * 0.77, H * 0.30);
+}
+
+function drawSolarArray() {
+  const s = state.solar;
+  const grid = document.getElementById('solarPanelGrid');
+  const cols = Math.min(s.strings, 12);
+  const rows = Math.min(s.parallel, 12);
+  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  grid.innerHTML = '';
+  const total = cols * rows;
+  const active = s.active ? total : 0;
+  for (let i = 0; i < total; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'panel-cell' + (i < active ? ' active' : '');
+    grid.appendChild(cell);
+  }
+}
+
+function drawBatteryBank() {
+  const s = state.solar;
+  const bank = document.getElementById('batteryBankVis');
+  bank.innerHTML = '';
+  const modules = Math.min(s.battModules, 16);
+  for (let i = 0; i < modules; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'battery-cell';
+    const fill = document.createElement('div');
+    fill.className = 'battery-fill';
+    fill.style.height = s.battSOC + '%';
+    const soc = s.battSOC;
+    fill.style.background = soc > 50 ? '#27ae60' : soc > 25 ? '#f39c12' : '#e74c3c';
+    cell.appendChild(fill);
+    bank.appendChild(cell);
+  }
+}
+
+function drawSolarWeather() {
+  const canvas = document.getElementById('solarWeatherCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const s = state.solar;
+  // Sky gradient
+  const skyColor = s.cloud > 70 ? '#b0b8c0' : s.cloud > 30 ? '#87a8c4' : '#5ba8e0';
+  const grad = ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0, skyColor);
+  grad.addColorStop(1, '#d0e8f0');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Sun
+  const sunX = W * (s.angle / 90);
+  const sunY = H * (1 - s.angle / 90) * 0.8 + 10;
+  const sunR = 22;
+  const sunAlpha = Math.max(0, 1 - s.cloud / 120);
+  ctx.globalAlpha = sunAlpha;
+  ctx.fillStyle = '#FFD700';
+  ctx.beginPath(); ctx.arc(sunX, sunY, sunR, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#FFF5A0';
+  ctx.beginPath(); ctx.arc(sunX, sunY, sunR * 0.6, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // Clouds
+  const cloudCount = Math.floor(s.cloud / 20);
+  ctx.fillStyle = `rgba(255,255,255,${0.4 + s.cloud / 200})`;
+  for (let i = 0; i < cloudCount; i++) {
+    const cx = 30 + (i / cloudCount) * (W - 60);
+    ctx.beginPath(); ctx.arc(cx, 20, 18, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx+14, 16, 14, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx-10, 22, 12, 0, Math.PI*2); ctx.fill();
+  }
+
+  // Ground with panels
+  ctx.fillStyle = '#8B7355';
+  ctx.fillRect(0, H * 0.75, W, H * 0.25);
+  const panelW = 22, panelH = 10;
+  ctx.fillStyle = '#3a5a8a';
+  ctx.strokeStyle = '#88aad0';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i < 8; i++) {
+    const px = 10 + i * (panelW + 4);
+    const py = H * 0.73 - panelH;
+    ctx.save();
+    ctx.translate(px + panelW/2, py + panelH/2);
+    ctx.rotate(-s.tilt * Math.PI / 180);
+    ctx.fillRect(-panelW/2, -panelH/2, panelW, panelH);
+    ctx.strokeRect(-panelW/2, -panelH/2, panelW, panelH);
+    ctx.restore();
+  }
+
+  // Irradiance text
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 11px Space Mono, monospace';
+  ctx.fillText(`${s.effIrrad.toFixed(0)} W/m²`, 6, H - 8);
+  ctx.font = '9px Nunito';
+  ctx.fillText(`Nubosidad: ${s.cloud}%`, W - 90, H - 8);
+}
+
+function drawWindCurve() {
+  const canvas = document.getElementById('windCurveCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const w = state.wind;
+  const maxV = 30, maxP = 3500;
+
+  ctx.fillStyle = '#f7faf5';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = '#e0e8d8';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 6; i++) {
+    const x = i / 6 * W;
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+
+  // Betz limit line
+  const betzY = H * (1 - 0.593 / 0.6);
+  ctx.strokeStyle = '#e74c3c33';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(0, betzY); ctx.lineTo(W, betzY); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Power curve
+  ctx.strokeStyle = '#55a8c4';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  for (let v = 0; v <= maxV; v += 0.5) {
+    const x = v / maxV * W;
+    const vci = 3, vr = 12, vco = 25;
+    let p = 0;
+    if (v >= vci && v <= vr) {
+      const t = (v - vci) / (vr - vci);
+      p = t * t * t * maxP * 0.9;
+    } else if (v > vr && v <= vco) {
+      p = maxP * 0.9;
+    }
+    const y = H - (p / maxP) * H * 0.85 - 5;
+    if (v === 0) ctx.moveTo(x, H); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Current operating point
+  const v = w.speed;
+  const p = w.powerOne;
+  const cx = v / maxV * W;
+  const cy = H - (p / maxP) * H * 0.85 - 5;
+  ctx.fillStyle = '#e05d2f';
+  ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI*2); ctx.fill();
+
+  // Labels
+  ctx.fillStyle = '#4a6e4a';
+  ctx.font = '9px Space Mono, monospace';
+  ctx.fillText('0', 2, H-2);
+  ctx.fillText(maxV+'m/s', W-32, H-2);
+  ctx.fillText(maxP+'kW', 2, 12);
+  ctx.fillStyle = '#e74c3c';
+  ctx.fillText('Límite Betz', W-70, betzY - 3);
+}
+
+function drawCity() {
+  const canvas = document.getElementById('cityCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const res = calcGrid();
+  const freq = state.grid.frequency;
+  const freqColor = Math.abs(freq-60) < 0.2 ? '#27ae60' : Math.abs(freq-60) < 0.5 ? '#f39c12' : '#e74c3c';
+
+  // Sky
+  const hr = state.sim.hour;
+  const dayFactor = Math.max(0, Math.sin((hr - 6) / 12 * Math.PI));
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, H * 0.5);
+  const nightBlue = `rgb(${20 + dayFactor*120},${30 + dayFactor*100},${60 + dayFactor*140})`;
+  const dayBlue = `rgb(${120 + dayFactor*15},${180 + dayFactor*30},${220 + dayFactor*20})`;
+  skyGrad.addColorStop(0, nightBlue);
+  skyGrad.addColorStop(1, dayBlue);
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, W, H * 0.6);
+
+  // Ground
+  ctx.fillStyle = '#3a5a30';
+  ctx.fillRect(0, H * 0.6, W, H * 0.4);
+
+  // Sun/Moon
+  if (dayFactor > 0.1) {
+    const sunX = W * dayFactor * 0.7 + W * 0.15;
+    const sunY = H * 0.08 + (1-dayFactor) * H * 0.15;
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath(); ctx.arc(sunX, sunY, 18, 0, Math.PI*2); ctx.fill();
+  }
+
+  // BUILDINGS (city silhouette)
+  const buildings = [
+    {x:0.08, w:0.06, h:0.22, color:'#2d4a6a', type:'commercial'},
+    {x:0.15, w:0.05, h:0.35, color:'#1e3a5a', type:'industrial'},
+    {x:0.21, w:0.07, h:0.18, color:'#3a5a2a', type:'residential'},
+    {x:0.29, w:0.04, h:0.28, color:'#2a4a4a', type:'commercial'},
+    {x:0.34, w:0.06, h:0.14, color:'#4a6a3a', type:'residential'},
+    {x:0.41, w:0.05, h:0.40, color:'#1a2a4a', type:'industrial'},
+    {x:0.47, w:0.06, h:0.20, color:'#2a3a5a', type:'commercial'},
+    {x:0.54, w:0.04, h:0.30, color:'#1e3a5a', type:'industrial'},
+    {x:0.59, w:0.07, h:0.16, color:'#3a5a2a', type:'residential'},
+    {x:0.67, w:0.05, h:0.25, color:'#2d4060', type:'commercial'},
+    {x:0.73, w:0.06, h:0.12, color:'#4a7030', type:'residential'},
+    {x:0.80, w:0.05, h:0.32, color:'#1a2a4a', type:'industrial'},
+    {x:0.86, w:0.06, h:0.18, color:'#3a5060', type:'commercial'},
+  ];
+
+  buildings.forEach(b => {
+    const bx = b.x * W, by = H * 0.6 - b.h * H;
+    const bw = b.w * W, bh = b.h * H;
+    ctx.fillStyle = b.color;
+    ctx.fillRect(bx, by, bw, bh);
+
+    // Windows
+    const wColor = dayFactor > 0.5 ? `rgba(255,230,100,0.3)` : `rgba(255,230,100,0.8)`;
+    const wCols = Math.max(2, Math.floor(bw / 10));
+    const wRows = Math.max(2, Math.floor(bh / 14));
+    for (let r = 0; r < wRows; r++) {
+      for (let c = 0; c < wCols; c++) {
+        if (Math.random() > (dayFactor > 0.3 ? 0.5 : 0.15)) {
+          ctx.fillStyle = wColor;
+          ctx.fillRect(bx + 3 + c * (bw/wCols), by + 4 + r * (bh/wRows), bw/wCols - 3, bh/wRows - 4);
+        }
+      }
+    }
+  });
+
+  // POWER PLANTS icons on right
+  const plants = [
+    { label:'⛰️ Geo', power: res.geoFeed, color:'#c0392b', x:0.02, y:0.65 },
+    { label:'☀️ Sol', power: res.solarFeed, color:'#f39c12', x:0.02, y:0.75 },
+    { label:'💨 Viento', power: res.windFeed, color:'#55a8c4', x:0.02, y:0.85 },
+    { label:'🏭 Conv', power: res.convFeed, color:'#7f8c8d', x:0.82, y:0.65 },
+  ];
+
+  plants.forEach(p => {
+    const px = p.x * W + 2, py = p.y * H;
+    const barW = Math.min(W * 0.18, (p.power / Math.max(1, calcTotalDemand())) * W * 0.22);
+    ctx.fillStyle = p.color + '44';
+    ctx.fillRect(px, py, W * 0.18, 14);
+    ctx.fillStyle = p.color;
+    ctx.fillRect(px, py, barW, 14);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 10px Nunito';
+    ctx.fillText(`${p.label}: ${p.power.toFixed(1)}MW`, px + 2, py + 10);
+  });
+
+  // TRANSMISSION LINES
+  const substX = W * 0.5, substY = H * 0.58;
+  ctx.strokeStyle = `rgba(255,220,50,${0.4 + (1-Math.abs(freq-60)/5)*0.5})`;
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6, 3]);
+  [W*0.1, W*0.25, W*0.75, W*0.9].forEach(ex => {
+    ctx.beginPath(); ctx.moveTo(substX, substY); ctx.lineTo(ex, H*0.62); ctx.stroke();
+  });
+  ctx.setLineDash([]);
+
+  // SUBSTATION
+  ctx.fillStyle = '#f39c12';
+  ctx.fillRect(substX - 18, substY - 10, 36, 20);
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 9px Space Mono, monospace';
+  ctx.fillText('⚡SUB', substX - 14, substY + 3);
+
+  // FREQUENCY INDICATOR
+  const fBarX = W * 0.35, fBarY = H * 0.04, fBarW = W * 0.3, fBarH = 16;
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.fillRect(fBarX, fBarY, fBarW, fBarH);
+  const fFrac = (freq - 55) / 10;
+  ctx.fillStyle = freqColor;
+  ctx.fillRect(fBarX, fBarY, fBarW * fFrac, fBarH);
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 10px Space Mono, monospace';
+  ctx.fillText(`⚡ ${freq.toFixed(2)} Hz`, fBarX + 4, fBarY + 11);
+
+  // DEMAND BAR
+  const totalDem = calcTotalDemand();
+  const totalGen = res.totalGen;
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.fillRect(W*0.35, H*0.07, W*0.3, 12);
+  const genFrac = Math.min(1, totalGen / Math.max(1, totalDem));
+  ctx.fillStyle = genFrac > 0.9 ? '#27ae60' : genFrac > 0.6 ? '#f39c12' : '#e74c3c';
+  ctx.fillRect(W*0.35, H*0.07, W*0.3*genFrac, 12);
+  ctx.fillStyle = '#fff';
+  ctx.font = '9px Nunito';
+  ctx.fillText(`Gen: ${totalGen.toFixed(1)} / Dem: ${totalDem.toFixed(1)} MW`, W*0.36, H*0.07+9);
+
+  // Wind turbines on hill
+  if (state.wind.active && state.wind.speed > 2) {
+    for (let i = 0; i < Math.min(state.wind.nTurbines, 5); i++) {
+      const tx = W * (0.65 + i * 0.06);
+      const ty = H * 0.58;
+      ctx.strokeStyle = '#d0d8c8';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(tx, ty - 35); ctx.stroke();
+      // Blades
+      const angle = (Date.now() / 1000 * state.wind.rpm * 0.05 * state.wind.active) % (Math.PI*2);
+      ctx.strokeStyle = '#a0b090';
+      ctx.lineWidth = 2;
+      for (let b = 0; b < 3; b++) {
+        const ba = angle + b * Math.PI * 2 / 3;
+        ctx.beginPath();
+        ctx.moveTo(tx, ty-35);
+        ctx.lineTo(tx + Math.cos(ba)*18, ty-35 + Math.sin(ba)*18);
+        ctx.stroke();
+      }
+    }
+  }
+
+  // Solar panels on ground
+  if (state.solar.active && state.solar.powerAC > 0) {
+    ctx.fillStyle = '#2a4a8a';
+    for (let i = 0; i < 6; i++) {
+      const px = W * (0.06 + i * 0.025);
+      ctx.fillRect(px, H * 0.62, 14, 7);
+    }
+  }
+}
+
+function drawChart(canvasId, data, color, label, maxVal) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.fillStyle = '#f7faf5';
+  ctx.fillRect(0, 0, W, H);
+
+  if (data.length < 2) return;
+  const max = maxVal || (Math.max(...data) * 1.2) || 1;
+
+  // Fill
+  ctx.beginPath();
+  ctx.moveTo(0, H);
+  data.forEach((v, i) => {
+    const x = (i / (data.length - 1)) * W;
+    const y = H - (v / max) * (H - 8) - 4;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+  ctx.fillStyle = color + '33';
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  data.forEach((v, i) => {
+    const x = (i / (data.length - 1)) * W;
+    const y = H - (v / max) * (H - 8) - 4;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Label
+  ctx.fillStyle = color;
+  ctx.font = 'bold 10px Space Mono, monospace';
+  const last = data[data.length - 1];
+  ctx.fillText(`${last.toFixed(2)}`, W - 50, 14);
+}
+
+function drawMixChart() {
+  const canvas = document.getElementById('mixChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const res = calcGrid();
+  const sources = [
+    { label: 'Geotérmica', value: res.geoFeed, color: '#c0392b' },
+    { label: 'Solar', value: res.solarFeed, color: '#f39c12' },
+    { label: 'Eólica', value: res.windFeed, color: '#55a8c4' },
+    { label: 'Convencional', value: res.convFeed, color: '#7f8c8d' },
+    { label: 'Baterías', value: Math.max(0, res.battFeed), color: '#27ae60' },
+  ];
+  const total = sources.reduce((a, s) => a + Math.max(0, s.value), 0) || 1;
+
+  let x = 0;
+  sources.forEach(s => {
+    const w = (s.value / total) * W;
+    ctx.fillStyle = s.color;
+    ctx.fillRect(x, 0, w, H * 0.5);
+    if (w > 40) {
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 10px Nunito';
+      ctx.fillText(s.label, x + 4, H * 0.3);
+      ctx.font = '9px Space Mono, monospace';
+      ctx.fillText(s.value.toFixed(1) + 'MW', x + 4, H * 0.44);
+    }
+    x += w;
+  });
+
+  // Demand bar
+  const demand = calcTotalDemand();
+  ctx.fillStyle = '#1e3a1e22';
+  ctx.fillRect(0, H * 0.55, W, H * 0.45);
+  ctx.fillStyle = '#e05d2f';
+  const demW = Math.min(W, (demand / Math.max(total, demand)) * W);
+  ctx.fillRect(0, H * 0.6, demW, H * 0.35);
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 10px Nunito';
+  ctx.fillText(`Demanda: ${demand.toFixed(1)} MW`, 6, H * 0.82);
+  ctx.fillText(`Generación: ${total.toFixed(1)} MW`, 6, H * 0.95);
+}
+
+function drawDashChart() {
+  const canvas = document.getElementById('dashChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#f7faf5'; ctx.fillRect(0,0,W,H);
+
+  const h = state.history;
+  const sets = [
+    { data: h.geo, color: '#c0392b' },
+    { data: h.solar, color: '#f39c12' },
+    { data: h.wind, color: '#55a8c4' },
+    { data: h.conv, color: '#7f8c8d' },
+    { data: h.demand, color: '#e05d2f' },
+  ];
+  const allVals = sets.flatMap(s => s.data);
+  const maxV = Math.max(10, ...allVals) * 1.15;
+  const n = h.geo.length;
+  if (n < 2) return;
+
+  sets.forEach(s => {
+    ctx.beginPath();
+    s.data.forEach((v, i) => {
+      const x = (i / (n-1)) * W;
+      const y = H - (v / maxV) * (H - 10) - 5;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = s.color; ctx.lineWidth = 2; ctx.stroke();
+  });
+
+  // Freq
+  if (h.freq.length > 1) {
+    ctx.beginPath();
+    h.freq.forEach((v, i) => {
+      const x = (i / (h.freq.length - 1)) * W;
+      const y = H - ((v - 58) / 4) * (H - 10) - 5;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = '#5d4e8c'; ctx.lineWidth = 1.5; ctx.setLineDash([4,2]); ctx.stroke(); ctx.setLineDash([]);
+  }
+}
+
+function drawFreqChart() {
+  const canvas = document.getElementById('freqChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#f7faf5'; ctx.fillRect(0,0,W,H);
+
+  // 60Hz line
+  ctx.strokeStyle = '#27ae60'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+  const nomY = H * 0.5;
+  ctx.beginPath(); ctx.moveTo(0, nomY); ctx.lineTo(W, nomY); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // ±0.5 bands
+  ctx.fillStyle = '#f39c1211';
+  ctx.fillRect(0, nomY - H*0.25, W, H*0.5);
+  ctx.fillStyle = '#e74c3c11';
+  ctx.fillRect(0, 0, W, H*0.12);
+  ctx.fillRect(0, H*0.88, W, H*0.12);
+
+  const h = state.history.freq;
+  if (h.length < 2) { ctx.fillStyle='#aaa';ctx.font='12px Nunito';ctx.fillText('Esperando datos...',W/2-50,H/2);return; }
+  const n = h.length;
+
+  ctx.beginPath();
+  h.forEach((v, i) => {
+    const x = (i/(n-1))*W;
+    const y = nomY - ((v-60)/3)*(H*0.45);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.strokeStyle='#5d4e8c'; ctx.lineWidth=2.5; ctx.stroke();
+
+  ctx.fillStyle='#4a6e4a'; ctx.font='9px Space Mono,monospace';
+  ctx.fillText('60 Hz', 2, nomY - 3);
+  ctx.fillText('59 Hz', 2, nomY + H*0.15);
+  ctx.fillText('61 Hz', 2, nomY - H*0.15);
+}
+
+function drawEmissionsChart() {
+  const h = state.history;
+  drawChart('emissionsChart', h.conv.map((v,i) => state.conv.ccgtCO2||0), '#e74c3c', 'CO2', 50);
+}
+
+// ==================== SIMULATION LOOP ====================
+let simRunning = true;
+let lastTick = Date.now();
+let frameId;
+
+function tick() {
+  const now = Date.now();
+  const dt = (now - lastTick) / 1000;
+  lastTick = now;
+
+  if (simRunning) {
+    const speed = +document.getElementById('simSpeed').value;
+    state.sim.hour = (state.sim.hour + dt * speed / 3600) % 24;
+    document.getElementById('simHour').value = Math.floor(state.sim.hour);
+    updateSimTime();
+
+    // Auto-day mode solar
+    if (state.solar.autoDay) {
+      const hr = state.sim.hour;
+      const dayI = Math.max(0, Math.sin((hr - 6) / 12 * Math.PI));
+      document.getElementById('solarIrrad').value = Math.round(dayI * 950);
+      document.getElementById('solarAngle').value = Math.round(dayI * 80 + 5);
+      document.getElementById('solarCloud').value = Math.round(10 + Math.random() * 20);
+      state.solar.irrad = +document.getElementById('solarIrrad').value;
+      state.solar.angle = +document.getElementById('solarAngle').value;
+      state.solar.cloud = +document.getElementById('solarCloud').value;
+      document.getElementById('solarIrradVal').textContent = state.solar.irrad + ' W/m²';
+      document.getElementById('solarAngleVal').textContent = state.solar.angle + '°';
+      document.getElementById('solarCloudVal').textContent = state.solar.cloud + '%';
+    }
+
+    // Wind random variation
+    if (state.wind.random) {
+      state.wind.speed = Math.max(0, Math.min(30, state.wind.speed + (Math.random()-0.5)*0.3));
+      document.getElementById('windSpeed').value = state.wind.speed;
+      document.getElementById('windSpeedVal').textContent = state.wind.speed.toFixed(1) + ' m/s';
+    }
+
+    // Record history
+    calcGeo(); calcSolar(); calcWind(); calcConv();
+    const res = calcGrid();
+    push(state.history.geo, res.geoFeed);
+    push(state.history.solar, res.solarFeed);
+    push(state.history.wind, res.windFeed);
+    push(state.history.conv, res.convFeed);
+    push(state.history.demand, calcTotalDemand());
+    push(state.history.freq, state.grid.frequency);
+
+    document.getElementById('simStatus').textContent = `Simulación corriendo · Hora: ${formatHour(state.sim.hour)}`;
+  }
+
+  // Draw animated elements
+  const activeTab = document.querySelector('.panel.active');
+  if (activeTab) {
+    const id = activeTab.id;
+    if (id === 'panel-geo') { drawGeoTurbine(); updateGeoDisplay(); }
+    else if (id === 'panel-solar') { drawSolarWeather(); }
+    else if (id === 'panel-wind') { drawWindTurbine(); }
+    else if (id === 'panel-city') { drawCity(); }
+    else if (id === 'panel-dash') { drawDashChart(); drawMixChart(); updateKPIs(); }
+    else if (id === 'panel-conv') { drawEmissionsChart(); }
+  }
+
+  // Always update charts
+  drawChart('geoChart', state.history.geo, '#c0392b', 'Geo', 30);
+  drawChart('solarChart', state.history.solar, '#f39c12', 'Solar', 5);
+  drawChart('windChart', state.history.wind, '#55a8c4', 'Viento', 10);
+  drawFreqChart();
+  updateGridDisplay();
+
+  frameId = requestAnimationFrame(tick);
+}
+
+function push(arr, val) {
+  arr.push(val);
+  if (arr.length > MAX_HIST) arr.shift();
+}
+
+function formatHour(h) {
+  const hh = Math.floor(h);
+  const mm = Math.floor((h - hh) * 60);
+  return `${hh.toString().padStart(2,'0')}:${mm.toString().padStart(2,'0')}`;
+}
+
+function updateSimTime() {
+  const h = state.sim.hour;
+  const label = formatHour(h);
+  const isDay = h >= 6 && h < 18;
+  const emoji = isDay ? '☀️' : '🌙';
+  document.getElementById('simHourVal').textContent = label;
+  document.getElementById('simTimeBadge').textContent = emoji + ' ' + label;
+}
+
+function updateGeoDisplay() {
+  calcGeo();
+  const g = state.geo;
+  document.getElementById('geoRPM').textContent = g.rpm.toFixed(0);
+  document.getElementById('geoPower').textContent = g.power.toFixed(2) + ' MW';
+}
+
+function drawGeoTurbine() {
+  const canvas = document.getElementById('geoTurbineCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+  const cx = W/2, cy = H/2, r = 30;
+  const g = state.geo;
+  const speed = g.active && g.valve > 0 ? g.rpm / 3600 : 0;
+  const angle = (Date.now() / 1000 * speed * Math.PI * 2) % (Math.PI*2);
+
+  // Turbine circle
+  ctx.strokeStyle = '#c0392b';
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.stroke();
+
+  // Blades
+  for (let i = 0; i < 6; i++) {
+    const a = angle + i * Math.PI/3;
+    ctx.strokeStyle = `rgba(192,57,43,${0.5 + 0.5*Math.sin(i)})`;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(a)*8, cy + Math.sin(a)*8);
+    ctx.lineTo(cx + Math.cos(a)*r, cy + Math.sin(a)*r);
+    ctx.stroke();
+  }
+
+  // Steam particles
+  if (g.active && g.valve > 20) {
+    for (let i = 0; i < 5; i++) {
+      const t = (Date.now()/1000*2 + i*0.4) % 1;
+      const px = cx - 35 + t * 5;
+      const py = cy - r - 5 - t * 20;
+      ctx.fillStyle = `rgba(200,220,255,${0.8-t})`;
+      ctx.beginPath(); ctx.arc(px, py, 3+t*5, 0, Math.PI*2); ctx.fill();
+    }
+  }
+
+  // Hub
+  ctx.fillStyle = '#e74c3c';
+  ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI*2); ctx.fill();
+}
+
+function drawWindTurbine() {
+  const canvas = document.getElementById('windTurbineCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+  const w = state.wind;
+
+  // Tower
+  ctx.fillStyle = '#c0c8d0';
+  ctx.beginPath();
+  ctx.moveTo(W/2-6, H); ctx.lineTo(W/2+6, H);
+  ctx.lineTo(W/2+3, H*0.2); ctx.lineTo(W/2-3, H*0.2); ctx.closePath();
+  ctx.fill();
+
+  // Nacelle
+  ctx.fillStyle = '#9aa0a8';
+  ctx.fillRect(W/2-10, H*0.18, 20, 10);
+
+  // Blades
+  const cx = W/2, cy = H*0.18 + 5;
+  const speed = w.active && w.speed > 2 ? w.rpm / 12 : 0;
+  const angle = (Date.now()/1000 * speed * Math.PI * 2) % (Math.PI*2);
+  const bladeR = 38;
+
+  for (let i = 0; i < 3; i++) {
+    const a = angle + i * Math.PI*2/3;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(a);
+
+    // Blade shape
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.bezierCurveTo(4, -bladeR*0.3, 6, -bladeR*0.6, 3, -bladeR);
+    ctx.bezierCurveTo(-2, -bladeR, -5, -bladeR*0.5, 0, 0);
+    ctx.fillStyle = '#e8eef5';
+    ctx.fill();
+    ctx.strokeStyle = '#b0bac8'; ctx.lineWidth = 0.5; ctx.stroke();
+    ctx.restore();
+  }
+
+  // Hub
+  ctx.fillStyle = '#70808a';
+  ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI*2); ctx.fill();
+}
+
+function updateKPIs() {
+  const res = calcGrid();
+  const demand = calcTotalDemand();
+  const bal = res.totalGen - demand;
+  const renew = res.totalGen > 0 ? (res.geoFeed+res.solarFeed+res.windFeed)/res.totalGen*100 : 0;
+  document.getElementById('kpiGen').textContent = res.totalGen.toFixed(1) + ' MW';
+  document.getElementById('kpiDem').textContent = demand.toFixed(1) + ' MW';
+  document.getElementById('kpiBalance').textContent = (bal>=0?'+':'') + bal.toFixed(1) + ' MW';
+  document.getElementById('kpiRenew').textContent = renew.toFixed(0) + '%';
+  document.getElementById('kpiFreq').textContent = state.grid.frequency.toFixed(2) + ' Hz';
+  calcConv();
+  document.getElementById('kpiCO2').textContent = state.conv.totalCO2.toFixed(1) + ' t';
+}
+
+// ==================== TAB / UI ====================
+function showTab(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+function setWindDir(dir) {
+  state.wind.dir = dir;
+  const names = {N:'Norte',S:'Sur',E:'Este',W:'Oeste',NE:'Noreste',NW:'Noroeste',SE:'Sureste',SW:'Suroeste'};
+  document.getElementById('windDirDisplay').textContent = names[dir] || dir;
+  document.querySelectorAll('.wind-dir-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.dir === dir);
+  });
+}
+
+function toggleSimulation() {
+  simRunning = !simRunning;
+  document.getElementById('simStatus').textContent = simRunning ? 'Simulación corriendo · Hora: ' + formatHour(state.sim.hour) : '⏸ Simulación pausada';
+}
+
+function resetSim() {
+  state.sim.hour = 6;
+  state.history.geo = []; state.history.solar = []; state.history.wind = [];
+  state.history.conv = []; state.history.demand = []; state.history.freq = [];
+  state.grid.frequency = 60;
+  document.getElementById('simStatus').textContent = 'Simulación reiniciada.';
+}
+
+function updateSimTime() {
+  const label = formatHour(state.sim.hour);
+  const isDay = state.sim.hour >= 6 && state.sim.hour < 18;
+  const emoji = isDay ? '☀️' : '🌙';
+  document.getElementById('simHourVal').textContent = label;
+  document.getElementById('simTimeBadge').textContent = emoji + ' ' + label;
+}
+
+// ==================== INIT ====================
+window.addEventListener('load', () => {
+  updateGeo();
+  updateSolar();
+  updateWind();
+  updateCity();
+  updateConv();
+  tick();
+});
+</script>
+</body>
+</html>

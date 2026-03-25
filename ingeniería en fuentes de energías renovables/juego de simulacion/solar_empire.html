@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>☀️ SOLAR EMPIRE — El Juego de la Energía del Futuro</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600;800&display=swap');
+
+  :root {
+    --sun: #FFD700;
+    --sun-hot: #FF8C00;
+    --solar: #FFA500;
+    --glow: #FFE066;
+    --sky: #0a1628;
+    --sky-mid: #0d2045;
+    --sky-light: #1a3a6b;
+    --green: #00FF88;
+    --green-dark: #00cc6a;
+    --red: #FF4455;
+    --red-dark: #cc2233;
+    --blue: #00BFFF;
+    --purple: #8B5CF6;
+    --teal: #00E5CC;
+    --white: #F0F8FF;
+    --panel-bg: rgba(10,22,50,0.88);
+    --border: rgba(255,215,0,0.25);
+    --text-dim: #8899BB;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Exo 2', sans-serif;
+    background: var(--sky);
+    color: var(--white);
+    min-height: 100vh;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* =========== SKY BACKGROUND =========== */
+  #sky-bg {
+    position: fixed; inset: 0; z-index: 0;
+    background: radial-gradient(ellipse at 50% -20%, #1a3a6b 0%, #0a1628 60%);
+    overflow: hidden;
+  }
+
+  .star { position: absolute; border-radius: 50%; background: white; animation: twinkle 3s infinite alternate; }
+  @keyframes twinkle { 0%{opacity:.2} 100%{opacity:1} }
+
+  .cloud-bg {
+    position: absolute; background: rgba(255,200,50,0.04);
+    border-radius: 50%; filter: blur(40px);
+    animation: driftcloud 20s linear infinite;
+  }
+  @keyframes driftcloud { 0%{transform:translateX(-200px)} 100%{transform:translateX(calc(100vw + 200px))} }
+
+  /* =========== SCREENS =========== */
+  .screen { position: fixed; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+  .screen.hidden { display: none; }
+
+  /* =========== TITLE SCREEN =========== */
+  #title-screen {
+    background: radial-gradient(ellipse at 50% 30%, rgba(255,165,0,0.15) 0%, transparent 60%);
+  }
+
+  .sun-logo {
+    width: 140px; height: 140px; position: relative; margin-bottom: 30px;
+    animation: sunPulse 2.5s ease-in-out infinite;
+  }
+  .sun-core {
+    width: 100%; height: 100%; border-radius: 50%;
+    background: radial-gradient(circle, #fff7aa 0%, #FFD700 40%, #FF8C00 80%);
+    box-shadow: 0 0 40px #FFD700, 0 0 80px #FF8C00, 0 0 120px rgba(255,165,0,0.4);
+    position: absolute; inset: 0;
+  }
+  .sun-ray {
+    position: absolute; left: 50%; top: 50%;
+    width: 6px; height: 55px;
+    background: linear-gradient(to top, transparent, #FFD700);
+    border-radius: 3px;
+    transform-origin: bottom center;
+    transform: translateX(-50%) translateY(-100%);
+    opacity: 0.7;
+  }
+  @keyframes sunPulse {
+    0%,100% { transform: scale(1); filter: drop-shadow(0 0 20px #FFD700); }
+    50% { transform: scale(1.08); filter: drop-shadow(0 0 40px #FF8C00); }
+  }
+
+  .game-title {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 900;
+    text-align: center;
+    line-height: 1;
+    background: linear-gradient(135deg, #FFE066 0%, #FFD700 40%, #FF8C00 80%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    text-shadow: none;
+    filter: drop-shadow(0 0 20px rgba(255,215,0,0.6));
+    letter-spacing: 4px;
+    margin-bottom: 8px;
+  }
+  .game-subtitle {
+    font-size: 1rem; color: var(--teal); letter-spacing: 6px; text-transform: uppercase;
+    margin-bottom: 50px; opacity: 0.85;
+    font-weight: 300;
+  }
+
+  .btn-primary {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.1rem; font-weight: 700;
+    padding: 18px 55px; border: none; border-radius: 50px; cursor: pointer;
+    background: linear-gradient(135deg, #FFD700, #FF8C00);
+    color: #0a1628;
+    box-shadow: 0 0 30px rgba(255,165,0,0.5), 0 4px 20px rgba(0,0,0,0.3);
+    transition: all 0.2s;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    position: relative; overflow: hidden;
+  }
+  .btn-primary::after {
+    content:''; position:absolute; inset:0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.3), transparent);
+  }
+  .btn-primary:hover {
+    transform: scale(1.06) translateY(-2px);
+    box-shadow: 0 0 50px rgba(255,165,0,0.8), 0 8px 30px rgba(0,0,0,0.4);
+  }
+  .btn-primary:active { transform: scale(0.97); }
+
+  .btn-secondary {
+    font-family: 'Exo 2', sans-serif;
+    font-size: 0.9rem; padding: 12px 35px; border: 1px solid var(--border);
+    border-radius: 50px; cursor: pointer; background: rgba(255,215,0,0.08);
+    color: var(--sun); margin-top: 14px;
+    transition: all 0.2s; letter-spacing: 1px;
+  }
+  .btn-secondary:hover { background: rgba(255,215,0,0.18); border-color: var(--sun); }
+
+  /* =========== GAME HUD =========== */
+  #game-screen { z-index: 5; display: flex; flex-direction: column; }
+
+  #hud-top {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 20;
+    background: linear-gradient(to bottom, rgba(5,12,30,0.97), rgba(5,12,30,0.85));
+    border-bottom: 1px solid var(--border);
+    padding: 10px 20px;
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    backdrop-filter: blur(10px);
+  }
+
+  .hud-block {
+    display: flex; flex-direction: column; align-items: center;
+    background: var(--panel-bg); border: 1px solid var(--border);
+    border-radius: 12px; padding: 6px 14px; min-width: 80px;
+    position: relative;
+  }
+  .hud-label { font-size: 0.6rem; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; }
+  .hud-value { font-family: 'Orbitron', monospace; font-size: 1rem; font-weight: 700; }
+  .hud-value.gold { color: var(--sun); }
+  .hud-value.green { color: var(--green); }
+  .hud-value.blue { color: var(--blue); }
+  .hud-value.red { color: var(--red); }
+  .hud-value.purple { color: var(--purple); }
+
+  .hud-day {
+    font-family: 'Orbitron', monospace; font-size: 0.85rem; color: var(--glow);
+    margin-left: auto; display: flex; align-items: center; gap: 8px;
+  }
+
+  /* =========== MAIN GAME AREA =========== */
+  #game-area {
+    position: fixed; inset: 0; top: 70px; bottom: 0;
+    display: flex; gap: 0;
+  }
+
+  /* =========== LEFT PANEL =========== */
+  #left-panel {
+    width: 260px; min-width: 220px;
+    background: linear-gradient(to right, rgba(5,12,30,0.98), rgba(5,12,30,0.85));
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    overflow-y: auto; padding: 12px;
+    gap: 10px;
+  }
+
+  .panel-title {
+    font-family: 'Orbitron', monospace; font-size: 0.65rem;
+    color: var(--sun); letter-spacing: 3px; text-transform: uppercase;
+    padding: 4px 0 8px; border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+  }
+
+  .invest-card {
+    background: rgba(255,215,0,0.04); border: 1px solid var(--border);
+    border-radius: 12px; padding: 10px 12px; cursor: pointer;
+    transition: all 0.2s; position: relative; overflow: hidden;
+  }
+  .invest-card:hover { background: rgba(255,215,0,0.1); border-color: rgba(255,215,0,0.5); transform: translateX(3px); }
+  .invest-card.disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+  .invest-card.locked { opacity: 0.3; cursor: not-allowed; }
+
+  .card-icon { font-size: 1.6rem; margin-bottom: 4px; }
+  .card-name { font-size: 0.85rem; font-weight: 600; color: var(--white); }
+  .card-desc { font-size: 0.68rem; color: var(--text-dim); margin: 2px 0 6px; line-height: 1.3; }
+  .card-cost { font-family: 'Orbitron', monospace; font-size: 0.8rem; color: var(--sun); }
+  .card-effect { font-size: 0.68rem; color: var(--green); }
+  .card-level { position: absolute; top: 8px; right: 10px; font-size: 0.65rem; color: var(--teal); font-family: 'Orbitron', monospace; }
+  .card-badge { position: absolute; top: 8px; right: 10px; font-size: 0.6rem; background: var(--red); color: white; padding: 1px 6px; border-radius: 10px; }
+
+  /* =========== CENTER GAME WORLD =========== */
+  #game-world {
+    flex: 1; position: relative; overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+
+  #world-canvas {
+    width: 100%; height: 100%; position: absolute;
+    top: 0; left: 0;
+  }
+
+  /* =========== CITY SCENE =========== */
+  #city-scene {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+  }
+
+  #sky-zone {
+    flex: 2; position: relative; overflow: hidden;
+    background: linear-gradient(to bottom, #071230 0%, #0d2045 60%, #1a3a6b 100%);
+  }
+
+  #ground-zone {
+    flex: 1; position: relative; overflow: hidden;
+    background: linear-gradient(to bottom, #1a2a3a 0%, #0d1a28 100%);
+    border-top: 2px solid rgba(0,200,100,0.2);
+  }
+
+  /* Sun in sky */
+  #game-sun {
+    position: absolute; top: 15px; left: 50%;
+    transform: translateX(-50%);
+    width: 70px; height: 70px;
+    transition: left 8s linear;
+  }
+  .game-sun-core {
+    width: 100%; height: 100%; border-radius: 50%;
+    background: radial-gradient(circle, #fff5cc 0%, #FFD700 50%, #FF8C00 100%);
+    box-shadow: 0 0 30px #FFD700, 0 0 60px #FF8C00, 0 0 100px rgba(255,165,0,0.3);
+    animation: gameSunPulse 3s ease-in-out infinite;
+  }
+  @keyframes gameSunPulse {
+    0%,100%{box-shadow:0 0 30px #FFD700,0 0 60px #FF8C00}
+    50%{box-shadow:0 0 50px #FFD700,0 0 90px #FF8C00,0 0 130px rgba(255,165,0,0.4)}
+  }
+
+  /* Buildings */
+  .building {
+    position: absolute; bottom: 0;
+    border-radius: 4px 4px 0 0;
+    transition: background 0.5s;
+  }
+  .building-window {
+    position: absolute; width: 6px; height: 8px;
+    border-radius: 1px; background: rgba(255,255,150,0.6);
+    animation: windowBlink 4s infinite;
+  }
+  @keyframes windowBlink { 0%,90%,100%{opacity:1} 95%{opacity:0.3} }
+
+  /* Solar panels on buildings */
+  .rooftop-panel {
+    position: absolute; top: -8px; left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #1a3a6b, #2a5a9b);
+    border: 1px solid rgba(0,180,255,0.5);
+    border-radius: 2px;
+    box-shadow: 0 0 10px rgba(0,150,255,0.3);
+  }
+
+  /* Energy flow particles */
+  .energy-particle {
+    position: absolute; border-radius: 50%;
+    pointer-events: none; animation: floatUp 2s ease-out forwards;
+  }
+  @keyframes floatUp {
+    0%{opacity:1;transform:translateY(0) scale(1)}
+    100%{opacity:0;transform:translateY(-80px) scale(0.3)}
+  }
+
+  /* Grid lines */
+  .grid-line {
+    position: absolute; background: rgba(0,200,100,0.15);
+    animation: gridFlow 2s linear infinite;
+  }
+  @keyframes gridFlow {
+    0%{opacity:0.15} 50%{opacity:0.4} 100%{opacity:0.15}
+  }
+
+  /* Weather effects */
+  .cloud-sprite {
+    position: absolute; border-radius: 50px;
+    background: rgba(150,180,220,0.25);
+    filter: blur(8px);
+    animation: cloudMove 15s linear infinite;
+  }
+  @keyframes cloudMove {
+    0%{transform:translateX(-250px)} 100%{transform:translateX(calc(100vw + 250px))}
+  }
+
+  /* Rain */
+  .raindrop {
+    position: absolute; width: 1px; height: 12px;
+    background: rgba(120,180,255,0.6);
+    animation: rainFall 0.8s linear infinite;
+  }
+  @keyframes rainFall { 0%{transform:translateY(-20px)} 100%{transform:translateY(200px);opacity:0} }
+
+  /* =========== METERS =========== */
+  #meters-overlay {
+    position: absolute; right: 10px; top: 10px;
+    display: flex; flex-direction: column; gap: 8px; width: 170px;
+  }
+
+  .meter-box {
+    background: rgba(5,12,30,0.85); border: 1px solid var(--border);
+    border-radius: 10px; padding: 8px 12px;
+    backdrop-filter: blur(5px);
+  }
+  .meter-label { font-size: 0.6rem; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+  .meter-bar-bg { background: rgba(255,255,255,0.08); border-radius: 10px; height: 8px; overflow: hidden; }
+  .meter-bar { height: 100%; border-radius: 10px; transition: width 0.5s; }
+  .meter-bar.solar { background: linear-gradient(to right, #FFD700, #FF8C00); }
+  .meter-bar.storage { background: linear-gradient(to right, #00BFFF, #8B5CF6); }
+  .meter-bar.demand { background: linear-gradient(to right, #00FF88, #00cc6a); }
+  .meter-bar.satisfaction { background: linear-gradient(to right, #FF6B6B, #FFD700, #00FF88); }
+  .meter-value { font-family: 'Orbitron', monospace; font-size: 0.75rem; text-align: right; margin-top: 2px; }
+
+  /* =========== RIGHT PANEL =========== */
+  #right-panel {
+    width: 240px; min-width: 200px;
+    background: linear-gradient(to left, rgba(5,12,30,0.98), rgba(5,12,30,0.85));
+    border-left: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    padding: 12px; gap: 10px; overflow-y: auto;
+  }
+
+  /* Events log */
+  #event-log {
+    flex: 1; overflow-y: auto; display: flex; flex-direction: column-reverse; gap: 4px;
+  }
+  .event-item {
+    font-size: 0.7rem; padding: 5px 8px;
+    border-radius: 6px; line-height: 1.3;
+    animation: fadeInEvent 0.4s ease;
+    border-left: 2px solid transparent;
+  }
+  @keyframes fadeInEvent { 0%{opacity:0;transform:translateX(10px)} 100%{opacity:1;transform:translateX(0)} }
+  .event-item.info { background: rgba(0,191,255,0.08); border-color: var(--blue); color: #aaccff; }
+  .event-item.warn { background: rgba(255,165,0,0.08); border-color: var(--solar); color: #ffcc88; }
+  .event-item.danger { background: rgba(255,68,85,0.1); border-color: var(--red); color: #ff9999; }
+  .event-item.success { background: rgba(0,255,136,0.08); border-color: var(--green); color: #88ffcc; }
+
+  /* Challenge card */
+  #challenge-box {
+    background: rgba(255,50,80,0.08); border: 1px solid rgba(255,50,80,0.3);
+    border-radius: 12px; padding: 10px 12px;
+  }
+  #challenge-box.hidden { display: none; }
+  .challenge-title { font-size: 0.65rem; color: var(--red); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+  .challenge-text { font-size: 0.78rem; color: var(--white); line-height: 1.4; }
+  .challenge-timer { font-family: 'Orbitron', monospace; font-size: 1rem; color: var(--red); margin-top: 4px; }
+
+  /* Stats quick */
+  .stat-row {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.72rem; padding: 3px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .stat-row .lbl { color: var(--text-dim); }
+  .stat-row .val { font-family: 'Orbitron', monospace; font-weight: 600; }
+
+  /* =========== BOTTOM BAR =========== */
+  #bottom-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
+    background: linear-gradient(to top, rgba(5,12,30,0.97), rgba(5,12,30,0.85));
+    border-top: 1px solid var(--border);
+    padding: 8px 20px;
+    display: flex; align-items: center; gap: 16px;
+    backdrop-filter: blur(10px);
+    height: 55px;
+  }
+
+  .speed-btn {
+    font-family: 'Orbitron', monospace; font-size: 0.75rem;
+    padding: 5px 12px; border-radius: 20px; cursor: pointer;
+    border: 1px solid var(--border); background: transparent; color: var(--text-dim);
+    transition: all 0.2s;
+  }
+  .speed-btn.active { background: rgba(255,215,0,0.15); border-color: var(--sun); color: var(--sun); }
+
+  .bottom-info { font-size: 0.75rem; color: var(--text-dim); margin-left: auto; }
+  .bottom-info span { color: var(--sun); font-family: 'Orbitron', monospace; }
+
+  /* =========== TOAST NOTIFICATIONS =========== */
+  #toast-container { position: fixed; top: 85px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+
+  .toast {
+    background: rgba(5,12,30,0.95); border: 1px solid var(--border);
+    border-radius: 50px; padding: 10px 24px; font-size: 0.85rem;
+    backdrop-filter: blur(10px);
+    animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
+    display: flex; align-items: center; gap: 8px;
+    max-width: 420px; text-align: center;
+    box-shadow: 0 4px 30px rgba(0,0,0,0.4);
+  }
+  .toast.success { border-color: var(--green); color: var(--green); }
+  .toast.warning { border-color: var(--solar); color: var(--solar); }
+  .toast.danger { border-color: var(--red); color: var(--red); }
+  .toast.info { border-color: var(--blue); color: var(--blue); }
+  @keyframes toastIn { 0%{opacity:0;transform:translateY(-20px) scale(0.9)} 100%{opacity:1;transform:translateY(0) scale(1)} }
+  @keyframes toastOut { 0%{opacity:1} 100%{opacity:0;transform:translateY(-10px)} }
+
+  /* =========== MODAL =========== */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 50;
+    background: rgba(0,5,15,0.85); backdrop-filter: blur(5px);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .modal-overlay.hidden { display: none; }
+  .modal-box {
+    background: linear-gradient(135deg, #071230, #0d2045);
+    border: 1px solid rgba(255,215,0,0.3); border-radius: 20px;
+    padding: 40px; max-width: 500px; width: 90%;
+    box-shadow: 0 0 80px rgba(255,165,0,0.15), 0 20px 60px rgba(0,0,0,0.5);
+    text-align: center;
+    animation: modalIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  @keyframes modalIn { 0%{opacity:0;transform:scale(0.8) translateY(30px)} 100%{opacity:1;transform:scale(1) translateY(0)} }
+  .modal-title { font-family: 'Orbitron', monospace; font-size: 1.8rem; color: var(--sun); margin-bottom: 12px; }
+  .modal-body { color: var(--text-dim); line-height: 1.7; margin-bottom: 24px; font-size: 0.9rem; }
+  .modal-score { font-family: 'Orbitron', monospace; font-size: 2.5rem; color: var(--green); margin: 16px 0; }
+
+  /* =========== LEVEL UP ANIMATION =========== */
+  #levelup-flash {
+    position: fixed; inset: 0; z-index: 90; pointer-events: none;
+    background: radial-gradient(ellipse at center, rgba(255,215,0,0.3) 0%, transparent 70%);
+    opacity: 0; transition: opacity 0.3s;
+  }
+  #levelup-flash.active { opacity: 1; }
+
+  /* =========== PROGRESS BAR NEXT LEVEL =========== */
+  #xp-bar-bg {
+    height: 4px; background: rgba(255,255,255,0.08);
+    border-radius: 2px; overflow: hidden; flex: 1; max-width: 200px;
+  }
+  #xp-bar { height: 100%; background: linear-gradient(to right, var(--sun), var(--solar)); border-radius: 2px; transition: width 0.5s; }
+
+  /* =========== SCROLLBAR =========== */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,215,0,0.2); border-radius: 2px; }
+
+  /* =========== RESPONSIVE =========== */
+  @media (max-width: 768px) {
+    #left-panel { width: 180px; }
+    #right-panel { width: 160px; }
+    .game-title { font-size: 2rem; }
+  }
+
+  /* Floating number animation */
+  .float-num {
+    position: fixed; pointer-events: none; z-index: 200;
+    font-family: 'Orbitron', monospace; font-weight: 700; font-size: 1rem;
+    animation: floatNum 1.5s ease-out forwards;
+  }
+  @keyframes floatNum {
+    0%{opacity:1;transform:translateY(0)}
+    100%{opacity:0;transform:translateY(-60px)}
+  }
+
+  /* Difficulty badge */
+  .diff-badge {
+    font-family: 'Orbitron', monospace; font-size: 0.7rem;
+    padding: 4px 12px; border-radius: 20px; display: inline-block;
+    margin: 8px 0 24px;
+  }
+  .diff-badge.easy { background: rgba(0,255,136,0.15); color: var(--green); border: 1px solid var(--green); }
+  .diff-badge.medium { background: rgba(255,165,0,0.15); color: var(--solar); border: 1px solid var(--solar); }
+  .diff-badge.hard { background: rgba(255,50,80,0.15); color: var(--red); border: 1px solid var(--red); }
+
+  /* Tutorial highlight */
+  .tutorial-tip {
+    position: fixed; z-index: 80; background: rgba(5,12,30,0.95);
+    border: 1px solid var(--teal); border-radius: 12px; padding: 12px 16px;
+    font-size: 0.8rem; color: var(--teal); max-width: 260px;
+    box-shadow: 0 0 20px rgba(0,229,204,0.2);
+    animation: tipPop 0.4s ease;
+    line-height: 1.5;
+  }
+  @keyframes tipPop { 0%{opacity:0;transform:scale(0.9)} 100%{opacity:1;transform:scale(1)} }
+
+  .sun-time-indicator {
+    position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+    font-size: 0.65rem; color: rgba(255,215,0,0.7); letter-spacing: 2px;
+    font-family: 'Orbitron', monospace;
+  }
+</style>
+</head>
+<body>
+
+<!-- Sky Background -->
+<div id="sky-bg"></div>
+
+<!-- Level Up Flash -->
+<div id="levelup-flash"></div>
+
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+<!-- ============ TITLE SCREEN ============ -->
+<div class="screen" id="title-screen">
+  <div class="sun-logo">
+    <div class="sun-core"></div>
+    <!-- rays generated by JS -->
+  </div>
+  <div class="game-title">☀️ SOLAR EMPIRE</div>
+  <div class="game-subtitle">Construye el Futuro Energético</div>
+  <button class="btn-primary" onclick="startGame()">⚡ INICIAR MISIÓN</button>
+  <button class="btn-secondary" onclick="showHowToPlay()">📖 Cómo Jugar</button>
+  <div style="position:absolute;bottom:20px;font-size:0.65rem;color:rgba(255,255,255,0.25);letter-spacing:2px">
+    CREADO POR OMAR DANIEL ORTIZ PERALTA
+  </div>
+</div>
+
+<!-- ============ HOW TO PLAY MODAL ============ -->
+<div class="modal-overlay hidden" id="howto-modal">
+  <div class="modal-box">
+    <div class="modal-title">📋 CÓMO JUGAR</div>
+    <div class="modal-body" style="text-align:left">
+      <p style="margin-bottom:10px">🌞 <strong style="color:var(--sun)">Objetivo:</strong> Construir la red eléctrica solar más poderosa y satisfacer la demanda energética de tu ciudad.</p>
+      <p style="margin-bottom:8px">⚡ <strong style="color:var(--green)">Producción:</strong> Invierte en paneles solares para generar energía.</p>
+      <p style="margin-bottom:8px">🔋 <strong style="color:var(--blue)">Almacenamiento:</strong> Las baterías guardan energía para la noche y eventos climáticos.</p>
+      <p style="margin-bottom:8px">🌐 <strong style="color:var(--teal)">Red:</strong> Mejora la red para distribuir energía eficientemente.</p>
+      <p style="margin-bottom:8px">🏙️ <strong style="color:var(--purple)">Demanda:</strong> La ciudad crece y necesita más energía cada día.</p>
+      <p style="margin-bottom:8px">☁️ <strong style="color:var(--red)">Retos:</strong> Tormentas, olas de calor y fallas reducen tu producción.</p>
+      <p style="margin-bottom:8px">💰 <strong style="color:var(--sun)">Monedas:</strong> Vende el exceso de energía para ganar dinero e invertir más.</p>
+    </div>
+    <button class="btn-primary" onclick="document.getElementById('howto-modal').classList.add('hidden')">✓ ENTENDIDO</button>
+  </div>
+</div>
+
+<!-- ============ GAME OVER MODAL ============ -->
+<div class="modal-overlay hidden" id="gameover-modal">
+  <div class="modal-box">
+    <div style="font-size:3rem">⚡</div>
+    <div class="modal-title" id="go-title">APAGÓN TOTAL</div>
+    <div class="modal-body" id="go-body">Tu ciudad se quedó sin energía. ¡La red colapsó!</div>
+    <div class="modal-score" id="go-score">0 PTS</div>
+    <div style="margin-bottom:20px;font-size:0.8rem;color:var(--text-dim)" id="go-stats"></div>
+    <button class="btn-primary" onclick="restartGame()">🔄 JUGAR DE NUEVO</button>
+    <br>
+    <button class="btn-secondary" onclick="backToTitle()">🏠 Menú Principal</button>
+  </div>
+</div>
+
+<!-- ============ WIN MODAL ============ -->
+<div class="modal-overlay hidden" id="win-modal">
+  <div class="modal-box">
+    <div style="font-size:3rem">🏆</div>
+    <div class="modal-title" style="color:var(--green)">¡VICTORIA SOLAR!</div>
+    <div class="modal-body" id="win-body"></div>
+    <div class="modal-score" id="win-score"></div>
+    <button class="btn-primary" onclick="nextLevel()">➡ SIGUIENTE NIVEL</button>
+    <br>
+    <button class="btn-secondary" onclick="backToTitle()">🏠 Menú Principal</button>
+  </div>
+</div>
+
+<!-- ============ GAME SCREEN ============ -->
+<div class="screen hidden" id="game-screen" style="position:fixed;inset:0;flex-direction:column;background:transparent;">
+
+  <!-- HUD TOP -->
+  <div id="hud-top">
+    <div class="hud-block">
+      <div class="hud-label">💰 Fondos</div>
+      <div class="hud-value gold" id="hud-money">$500</div>
+    </div>
+    <div class="hud-block">
+      <div class="hud-label">⚡ Producción</div>
+      <div class="hud-value green" id="hud-prod">0 MW</div>
+    </div>
+    <div class="hud-block">
+      <div class="hud-label">🔋 Batería</div>
+      <div class="hud-value blue" id="hud-storage">0%</div>
+    </div>
+    <div class="hud-block">
+      <div class="hud-label">🏙️ Demanda</div>
+      <div class="hud-value red" id="hud-demand">10 MW</div>
+    </div>
+    <div class="hud-block">
+      <div class="hud-label">😊 Ciudad</div>
+      <div class="hud-value purple" id="hud-satis">100%</div>
+    </div>
+    <div class="hud-block" style="min-width:100px">
+      <div class="hud-label">🏅 Nivel</div>
+      <div class="hud-value gold" id="hud-level">1</div>
+    </div>
+    <div style="flex:1;display:flex;align-items:center;gap:8px;max-width:200px">
+      <div style="font-size:0.6rem;color:var(--text-dim);letter-spacing:1px">XP</div>
+      <div id="xp-bar-bg"><div id="xp-bar" style="width:0%"></div></div>
+    </div>
+    <div class="hud-day">
+      <span id="weather-icon">☀️</span>
+      <span id="hud-day">Día 1</span>
+      <span id="hud-time" style="color:var(--text-dim)">06:00</span>
+    </div>
+  </div>
+
+  <!-- GAME AREA -->
+  <div id="game-area">
+
+    <!-- LEFT PANEL: INVESTMENTS -->
+    <div id="left-panel">
+      <div class="panel-title">⚡ Inversiones</div>
+      <div id="invest-list"></div>
+    </div>
+
+    <!-- CENTER: GAME WORLD -->
+    <div id="game-world">
+      <div id="city-scene">
+        <div id="sky-zone">
+          <div class="sun-time-indicator" id="time-label">🌅 Amanecer</div>
+          <div id="game-sun"><div class="game-sun-core"></div></div>
+          <div id="weather-layer"></div>
+        </div>
+        <div id="ground-zone">
+          <div id="buildings-container"></div>
+          <div id="grid-lines"></div>
+          <div id="particles-layer"></div>
+        </div>
+      </div>
+      <div id="meters-overlay">
+        <div class="meter-box">
+          <div class="meter-label">☀️ Energía Solar</div>
+          <div class="meter-bar-bg"><div class="meter-bar solar" id="meter-solar" style="width:0%"></div></div>
+          <div class="meter-value" id="meter-solar-val" style="color:var(--sun)">0%</div>
+        </div>
+        <div class="meter-box">
+          <div class="meter-label">🔋 Almacenamiento</div>
+          <div class="meter-bar-bg"><div class="meter-bar storage" id="meter-storage" style="width:0%"></div></div>
+          <div class="meter-value" id="meter-storage-val" style="color:var(--blue)">0%</div>
+        </div>
+        <div class="meter-box">
+          <div class="meter-label">🏙️ Demanda</div>
+          <div class="meter-bar-bg"><div class="meter-bar demand" id="meter-demand" style="width:0%"></div></div>
+          <div class="meter-value" id="meter-demand-val" style="color:var(--green)">0%</div>
+        </div>
+        <div class="meter-box">
+          <div class="meter-label">😊 Satisfacción</div>
+          <div class="meter-bar-bg"><div class="meter-bar satisfaction" id="meter-satis" style="width:0%"></div></div>
+          <div class="meter-value" id="meter-satis-val" style="color:#aaa">0%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div id="right-panel">
+      <div class="panel-title">⚠️ Reto Activo</div>
+      <div id="challenge-box" class="hidden">
+        <div class="challenge-title">🚨 ALERTA</div>
+        <div class="challenge-text" id="challenge-text"></div>
+        <div class="challenge-timer" id="challenge-timer"></div>
+      </div>
+      <div id="no-challenge" style="font-size:0.72rem;color:var(--text-dim);text-align:center;padding:10px">
+        ✅ Sin alertas activas
+      </div>
+
+      <div class="panel-title" style="margin-top:8px">📊 Estadísticas</div>
+      <div id="stats-panel"></div>
+
+      <div class="panel-title" style="margin-top:8px">📋 Registro</div>
+      <div id="event-log"></div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM BAR -->
+  <div id="bottom-bar">
+    <div style="font-size:0.7rem;color:var(--text-dim)">Velocidad:</div>
+    <button class="speed-btn active" id="spd1" onclick="setSpeed(1,this)">1x</button>
+    <button class="speed-btn" id="spd2" onclick="setSpeed(2,this)">2x</button>
+    <button class="speed-btn" id="spd3" onclick="setSpeed(3,this)">3x</button>
+    <button class="speed-btn" id="spd4" onclick="setSpeed(0,this)" style="color:var(--red)">⏸</button>
+    <div class="bottom-info">
+      Score: <span id="bot-score">0</span> &nbsp;|&nbsp; Días: <span id="bot-days">0</span> &nbsp;|&nbsp; Energía vendida: <span id="bot-sold">0 MWh</span>
+    </div>
+    <button style="margin-left:auto;font-family:'Orbitron',monospace;font-size:0.7rem;padding:6px 14px;border:1px solid rgba(255,50,80,0.4);border-radius:20px;background:transparent;color:rgba(255,80,100,0.7);cursor:pointer" onclick="confirmQuit()">✕ Salir</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  SOLAR EMPIRE — GAME ENGINE
+// ============================================================
+
+// ---- GLOBALS ----
+let G = {}; // game state
+let gameLoop = null;
+let speed = 1;
+let paused = false;
+let tutShown = false;
+
+const TICK_MS = 1200; // base tick = 1200ms = 1 game hour
+const HOURS_PER_DAY = 24;
+const DAYS_PER_LEVEL = [0, 15, 12, 10, 8, 7]; // days needed per level
+const LEVEL_GOALS = [
+  null,
+  { satisfaction: 70, money: 2000, desc: "Mantén 70% satisfacción y ahorra $2,000" },
+  { satisfaction: 75, money: 4000, desc: "Mantén 75% satisfacción y ahorra $4,000" },
+  { satisfaction: 80, money: 7000, desc: "Mantén 80% satisfacción y ahorra $7,000" },
+  { satisfaction: 85, money: 12000, desc: "Mantén 85% satisfacción y ahorra $12,000" },
+  { satisfaction: 90, money: 20000, desc: "¡Domina al 90% de satisfacción y $20,000!" }
+];
+
+// Investment cards definition
+const INVESTMENTS = [
+  {
+    id: 'panel_basic',
+    name: 'Panel Solar Básico',
+    icon: '🔆',
+    desc: 'Pequeños paneles en tejados residenciales.',
+    baseCost: 80, costMult: 1.4,
+    effect: '+2 MW producción',
+    prodBonus: 2,
+    maxLevel: 10,
+    unlockLevel: 1,
+    category: 'prod'
+  },
+  {
+    id: 'panel_advanced',
+    name: 'Panel de Alta Eficiencia',
+    icon: '⚡',
+    desc: 'Tecnología monocristalina de última generación.',
+    baseCost: 250, costMult: 1.5,
+    effect: '+6 MW producción',
+    prodBonus: 6,
+    maxLevel: 8,
+    unlockLevel: 1,
+    category: 'prod'
+  },
+  {
+    id: 'battery_small',
+    name: 'Batería Litio',
+    icon: '🔋',
+    desc: 'Almacena energía para la noche y nublados.',
+    baseCost: 120, costMult: 1.35,
+    effect: '+15% capacidad',
+    storageBonus: 15,
+    maxLevel: 8,
+    unlockLevel: 1,
+    category: 'storage'
+  },
+  {
+    id: 'grid_upgrade',
+    name: 'Red Inteligente',
+    icon: '🌐',
+    desc: 'Optimiza la distribución reduciendo pérdidas.',
+    baseCost: 200, costMult: 1.6,
+    effect: '+10% eficiencia red',
+    efficiencyBonus: 0.10,
+    maxLevel: 5,
+    unlockLevel: 1,
+    category: 'grid'
+  },
+  {
+    id: 'farm_solar',
+    name: 'Granja Solar',
+    icon: '🌾',
+    desc: 'Gran planta solar en las afueras de la ciudad.',
+    baseCost: 600, costMult: 1.7,
+    effect: '+20 MW producción',
+    prodBonus: 20,
+    maxLevel: 6,
+    unlockLevel: 2,
+    category: 'prod'
+  },
+  {
+    id: 'battery_large',
+    name: 'Megabatería',
+    icon: '⚡🔋',
+    desc: 'Sistema industrial de almacenamiento masivo.',
+    baseCost: 500, costMult: 1.8,
+    effect: '+40% capacidad',
+    storageBonus: 40,
+    maxLevel: 5,
+    unlockLevel: 2,
+    category: 'storage'
+  },
+  {
+    id: 'ai_optimizer',
+    name: 'IA Optimizadora',
+    icon: '🤖',
+    desc: 'Inteligencia artificial que predice la demanda.',
+    baseCost: 800, costMult: 2.0,
+    effect: '-15% demanda pico',
+    demandReduction: 0.15,
+    maxLevel: 3,
+    unlockLevel: 3,
+    category: 'tech'
+  },
+  {
+    id: 'satellite_panel',
+    name: 'Panel Orbital',
+    icon: '🛸',
+    desc: 'Colector de energía solar en órbita baja.',
+    baseCost: 2000, costMult: 3.0,
+    effect: '+50 MW producción continua',
+    prodBonus: 50,
+    alwaysProduces: true,
+    maxLevel: 3,
+    unlockLevel: 4,
+    category: 'prod'
+  },
+  {
+    id: 'subsidy',
+    name: 'Subsidio Gubernamental',
+    icon: '🏛️',
+    desc: 'Obtén apoyo financiero del gobierno. Uso único.',
+    baseCost: 0, costMult: 1,
+    effect: '+$1500 fondos',
+    moneyBonus: 1500,
+    maxLevel: 1,
+    unlockLevel: 1,
+    oneTime: true,
+    category: 'finance'
+  },
+  {
+    id: 'community',
+    name: 'Energía Comunitaria',
+    icon: '🏘️',
+    desc: 'Los vecinos participan en la red distribuida.',
+    baseCost: 350, costMult: 1.5,
+    effect: '+8 MW + satisfacción +5%',
+    prodBonus: 8,
+    satBonus: 5,
+    maxLevel: 4,
+    unlockLevel: 2,
+    category: 'prod'
+  }
+];
+
+// Weather types
+const WEATHERS = [
+  { id: 'sunny', label: '☀️ Soleado', icon: '☀️', prodMult: 1.0, prob: 45 },
+  { id: 'cloudy', label: '⛅ Nublado', icon: '⛅', prodMult: 0.55, prob: 20 },
+  { id: 'storm', label: '⛈️ Tormenta', icon: '⛈️', prodMult: 0.15, prob: 10 },
+  { id: 'hot', label: '🔥 Ola de calor', icon: '🌡️', prodMult: 0.85, demandMult: 1.3, prob: 12 },
+  { id: 'fog', label: '🌫️ Niebla', icon: '🌫️', prodMult: 0.45, prob: 8 },
+  { id: 'clear_night', label: '🌙 Noche Despejada', icon: '🌙', prodMult: 0, prob: 5 },
+];
+
+// Random events / challenges
+const RANDOM_CHALLENGES = [
+  { id: 'blackout', text: '🚨 Sobrecarga en la red! La ciudad necesita +30% de energía en los próximos 3 días.', demandSpike: 0.3, duration: 3, type:'demand' },
+  { id: 'solar_flare', text: '☀️ Llamarada solar! +50% de producción por 2 días pero las baterías se dañan (-20% capacidad).', prodBoost: 0.5, storageDmg: 0.2, duration: 2, type:'boost' },
+  { id: 'drought', text: '🏜️ Sequía prolongada. Sin alternativa hídrica, la demanda sube +20% por 4 días.', demandSpike: 0.2, duration: 4, type:'demand' },
+  { id: 'festival', text: '🎉 Festival Municipal! La ciudad celebra y el consumo sube +40% por 2 días. ¡El doble de ingresos también!', demandSpike: 0.4, incomeBoost: 2.0, duration: 2, type:'event' },
+  { id: 'sandstorm', text: '🌪️ Tormenta de arena! Los paneles solares reducen eficiencia -30% por 3 días.', prodReduction: 0.3, duration: 3, type:'damage' },
+  { id: 'tech_failure', text: '⚠️ Fallo técnico en la red de distribución. Pierdes 20% de tu producción por 2 días.', prodReduction: 0.2, duration: 2, type:'damage' },
+  { id: 'investor', text: '💼 ¡Inversor interesado! Si mantienes 80%+ de satisfacción por 3 días, recibes $2000.', satGoal: 80, reward: 2000, duration: 3, type:'opportunity' },
+  { id: 'cold_wave', text: '🥶 Ola de frío. La demanda de calefacción eléctrica sube +35% por 3 días.', demandSpike: 0.35, duration: 3, type:'demand' },
+];
+
+// ---- INIT BACKGROUND ----
+function initBackground() {
+  const bg = document.getElementById('sky-bg');
+  for (let i = 0; i < 120; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2.5 + 0.5;
+    s.style.cssText = `width:${size}px;height:${size}px;top:${Math.random()*100}%;left:${Math.random()*100}%;animation-delay:${Math.random()*3}s;animation-duration:${2+Math.random()*4}s;opacity:${Math.random()*0.8+0.2}`;
+    bg.appendChild(s);
+  }
+  for (let i = 0; i < 4; i++) {
+    const c = document.createElement('div');
+    c.className = 'cloud-bg';
+    c.style.cssText = `width:${200+Math.random()*300}px;height:${80+Math.random()*120}px;top:${Math.random()*60}%;animation-delay:${-Math.random()*20}s;animation-duration:${15+Math.random()*20}s`;
+    bg.appendChild(c);
+  }
+  // Sun rays on title
+  const logo = document.querySelector('.sun-logo');
+  if (logo) {
+    for (let i = 0; i < 12; i++) {
+      const r = document.createElement('div');
+      r.className = 'sun-ray';
+      r.style.transform = `translateX(-50%) translateY(-100%) rotate(${i*30}deg)`;
+      r.style.transformOrigin = 'bottom center';
+      r.style.top = '50%';
+      logo.appendChild(r);
+    }
+  }
+}
+
+// ---- START GAME ----
+function startGame(level = 1) {
+  G = {
+    money: 500 + (level - 1) * 200,
+    level: level,
+    day: 1,
+    hour: 6,
+    score: 0,
+    xp: 0,
+    xpNeeded: 100,
+    prod: 0,          // MW solar production base
+    gridEfficiency: 0.7,  // 70% base efficiency
+    storageCapacity: 30,  // MWh base
+    storageCurrent: 15,
+    demand: 10 + (level - 1) * 3,
+    baseDemand: 10 + (level - 1) * 3,
+    satisfaction: 100,
+    weather: WEATHERS[0],
+    challenge: null,
+    challengeDaysLeft: 0,
+    challengeSatTrack: 0,
+    investments: {},    // id -> level
+    totalEnergySold: 0,
+    totalMwhProduced: 0,
+    weatherTimer: 0,
+    dayGoalMet: 0,
+    alwaysProdBonus: 0,
+    satBonus: 0,
+    demandReduction: 0,
+    weatherMult: 1,
+    demandMult: 1,
+    challengeProdReduction: 0,
+    challengeProdBoost: 0,
+    challengeDemandSpike: 0,
+    challengeIncomeBoost: 1,
+    subsidyUsed: false,
+    tickCount: 0,
+    lastWeatherChange: 0,
+    sunX: 50,
+    daysCompleted: 0,
+    goalDays: DAYS_PER_LEVEL[level] || 15,
+    previousSat: 100,
+  };
+
+  // Init investments
+  INVESTMENTS.forEach(inv => { G.investments[inv.id] = 0; });
+
+  // Random starting grid
+  const randPanels = Math.floor(Math.random() * 4) + 1; // 1-4 basic panels
+  for (let i = 0; i < randPanels; i++) buyInvestment('panel_basic', true);
+
+  document.getElementById('title-screen').classList.add('hidden');
+  document.getElementById('game-screen').classList.remove('hidden');
+
+  buildCity();
+  renderInvestList();
+  updateStats();
+  addEvent(`🌟 Nivel ${level} iniciado. Red aleatoria con ${G.prod} MW. ¡Objetivo: ${LEVEL_GOALS[level].desc}`, 'info');
+  addEvent(`💰 Fondos iniciales: $${G.money}`, 'info');
+
+  startLoop();
+  scheduleWeatherChange();
+  setTimeout(() => showTutorial(), 1000);
+}
+
+// ---- CITY BUILDINGS ----
+function buildCity() {
+  const cont = document.getElementById('buildings-container');
+  cont.innerHTML = '';
+  const gZone = document.getElementById('ground-zone');
+  const w = window.innerWidth - 500;
+  const colors = ['#1a2540','#1e2d4d','#162038','#1a2a44','#152035'];
+  const cnt = Math.min(8 + G.level * 2, 18);
+  for (let i = 0; i < cnt; i++) {
+    const bw = 40 + Math.random() * 60;
+    const bh = 60 + Math.random() * 120;
+    const bx = (w / cnt) * i + Math.random() * 20;
+    const col = colors[Math.floor(Math.random() * colors.length)];
+    const b = document.createElement('div');
+    b.className = 'building';
+    b.id = 'bld' + i;
+    b.style.cssText = `left:${bx}px;width:${bw}px;height:${bh}px;background:${col};border-top:2px solid rgba(255,255,255,0.06)`;
+
+    // Windows
+    const wCols = Math.floor(bw / 14);
+    const wRows = Math.floor(bh / 16);
+    for (let r = 0; r < wRows; r++) {
+      for (let c = 0; c < wCols; c++) {
+        const win = document.createElement('div');
+        win.className = 'building-window';
+        win.style.left = `${4 + c * 14}px`;
+        win.style.bottom = `${8 + r * 16}px`;
+        win.style.animationDelay = `${Math.random() * 4}s`;
+        win.style.background = Math.random() > 0.3 ? 'rgba(255,245,150,0.7)' : 'rgba(100,180,255,0.5)';
+        b.appendChild(win);
+      }
+    }
+    cont.appendChild(b);
+  }
+  updateBuildingPanels();
+  createGridLines();
+}
+
+function updateBuildingPanels() {
+  const cont = document.getElementById('buildings-container');
+  const panels = cont.querySelectorAll('.rooftop-panel');
+  panels.forEach(p => p.remove());
+
+  const buildings = cont.querySelectorAll('.building');
+  const panelCount = Math.floor(G.prod / 5);
+  buildings.forEach((b, i) => {
+    if (i < panelCount) {
+      const p = document.createElement('div');
+      p.className = 'rooftop-panel';
+      const bw = parseInt(b.style.width);
+      p.style.cssText = `width:${bw - 10}px;height:7px;`;
+      b.appendChild(p);
+    }
+  });
+}
+
+function createGridLines() {
+  const gl = document.getElementById('grid-lines');
+  gl.innerHTML = '';
+  for (let i = 0; i < 5; i++) {
+    const l = document.createElement('div');
+    l.className = 'grid-line';
+    const isH = i % 2 === 0;
+    if (isH) {
+      l.style.cssText = `left:0;right:0;height:1px;top:${20 + i*15}%;animation-delay:${i*0.4}s`;
+    } else {
+      l.style.cssText = `top:0;bottom:0;width:1px;left:${10 + i*20}%;animation-delay:${i*0.4}s`;
+    }
+    gl.appendChild(l);
+  }
+}
+
+// ---- GAME LOOP ----
+function startLoop() {
+  if (gameLoop) clearInterval(gameLoop);
+  gameLoop = setInterval(tick, TICK_MS / speed);
+}
+
+function setSpeed(s, btn) {
+  document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (s === 0) { paused = true; clearInterval(gameLoop); return; }
+  paused = false;
+  speed = s;
+  startLoop();
+}
+
+function tick() {
+  G.tickCount++;
+  G.hour++;
+  if (G.hour >= 24) {
+    G.hour = 0;
+    endOfDay();
+  }
+  updateSunPosition();
+  calcEnergy();
+  updateStats();
+  emitParticle();
+
+  // Challenge tick
+  if (G.challenge) {
+    G.challengeSatTrack += G.satisfaction;
+  }
+}
+
+function endOfDay() {
+  G.day++;
+  G.daysCompleted++;
+  G.weatherTimer++;
+
+  // Daily demand growth
+  G.baseDemand = (10 + (G.level - 1) * 3) + Math.floor(G.daysCompleted * (0.5 + G.level * 0.3));
+
+  // Income from surplus energy
+  const surplus = Math.max(0, (G.prod * G.gridEfficiency) - G.baseDemand);
+  const income = Math.floor(surplus * 12 * G.challengeIncomeBoost);
+  if (income > 0) {
+    G.money += income;
+    G.totalEnergySold += surplus;
+    showFloat(`+$${income}`, '#FFD700');
+    addEvent(`💵 Vendiste ${surplus.toFixed(1)} MW. Ingresos: $${income}`, 'success');
+  }
+
+  // Challenge resolution
+  if (G.challenge) {
+    G.challengeDaysLeft--;
+    if (G.challengeDaysLeft <= 0) {
+      resolveChallenge();
+    }
+  }
+
+  // Random challenge
+  if (!G.challenge && Math.random() < 0.15 + G.level * 0.05) {
+    triggerChallenge();
+  }
+
+  // Weather change every 2-4 days
+  if (G.weatherTimer >= 2 + Math.floor(Math.random() * 3)) {
+    changeWeather();
+    G.weatherTimer = 0;
+  }
+
+  // Score + XP
+  G.score += Math.floor(G.satisfaction * 0.5 + G.prod * 2 + surplus * 5);
+  G.xp += Math.floor(G.satisfaction * 0.3 + 15);
+  if (G.xp >= G.xpNeeded) {
+    G.xp -= G.xpNeeded;
+    G.xpNeeded = Math.floor(G.xpNeeded * 1.4);
+    flashLevelUp();
+    addEvent(`🎉 ¡Subiste de rango! Mayor prestigio.`, 'success');
+  }
+
+  // Check goals
+  checkLevelGoal();
+
+  // Game over condition: satisfaction too low
+  if (G.satisfaction < 10) {
+    gameOver();
+    return;
+  }
+
+  addEvent(`📅 Día ${G.day} — Satisfacción: ${Math.round(G.satisfaction)}%`, G.satisfaction > 60 ? 'info' : 'warn');
+  updateBuildingPanels();
+}
+
+function calcEnergy() {
+  const hour = G.hour;
+  // Solar curve: 0 at night, peak at noon
+  let solarFactor = 0;
+  if (hour >= 6 && hour <= 18) {
+    solarFactor = Math.sin(((hour - 6) / 12) * Math.PI);
+  }
+
+  // Weather modifier
+  const wm = G.weather.prodMult;
+  // Challenge modifiers
+  const cr = G.challengeProdReduction || 0;
+  const cb = G.challengeProdBoost || 0;
+
+  const effectiveProd = G.prod * solarFactor * wm * (1 - cr) * (1 + cb) * G.gridEfficiency + G.alwaysProdBonus;
+
+  // Storage charge/discharge
+  const demand = G.baseDemand * (G.weather.demandMult || 1) * (G.demandMult) * (1 + G.challengeDemandSpike) * (1 - G.demandReduction) + G.baseDemand * (G.level - 1) * 0.05;
+
+  G.currentDemand = demand;
+  G.currentProd = effectiveProd;
+
+  let net = effectiveProd - demand;
+  if (net > 0) {
+    // Charge battery
+    const charge = Math.min(net * 0.5, G.storageCapacity - G.storageCurrent);
+    G.storageCurrent = Math.min(G.storageCapacity, G.storageCurrent + charge);
+  } else {
+    // Discharge battery
+    const needed = Math.min(-net, G.storageCurrent);
+    G.storageCurrent = Math.max(0, G.storageCurrent - needed);
+    net += needed;
+  }
+
+  // Satisfaction
+  const coverage = Math.min(1, (effectiveProd + G.storageCurrent * 0.1) / Math.max(1, demand));
+  const targetSat = coverage * 100;
+  const satBonusAll = G.satBonus || 0;
+  G.satisfaction = G.satisfaction * 0.92 + (targetSat + satBonusAll) * 0.08;
+  G.satisfaction = Math.max(0, Math.min(100, G.satisfaction));
+
+  // Totals
+  G.totalMwhProduced += effectiveProd / 24;
+
+  // Update meters
+  const solarPct = Math.min(100, solarFactor * (wm) * 100);
+  document.getElementById('meter-solar').style.width = solarPct + '%';
+  document.getElementById('meter-solar-val').textContent = solarPct.toFixed(0) + '%';
+
+  const storagePct = (G.storageCurrent / G.storageCapacity) * 100;
+  document.getElementById('meter-storage').style.width = storagePct + '%';
+  document.getElementById('meter-storage-val').textContent = storagePct.toFixed(0) + '%';
+
+  const demandPct = Math.min(100, (demand / (G.prod * 1.5 + 5)) * 100);
+  document.getElementById('meter-demand').style.width = demandPct + '%';
+  document.getElementById('meter-demand-val').textContent = demand.toFixed(0) + ' MW';
+
+  document.getElementById('meter-satis').style.width = G.satisfaction + '%';
+  document.getElementById('meter-satis-val').textContent = G.satisfaction.toFixed(0) + '%';
+
+  // Time label
+  const labels = ['🌙 Noche','🌙 Noche','🌙 Noche','🌙 Noche','🌙 Noche','🌙 Noche',
+    '🌅 Amanecer','🌄 Mañana','☀️ Mañana','🌤️ Media Mañana','☀️ Mediodía','🔆 Mediodía',
+    '☀️ Tarde','🌤️ Tarde','⛅ Tarde','🌆 Atardecer','🌆 Atardecer','🌇 Crepúsculo',
+    '🌃 Noche','🌙 Noche','🌙 Noche','🌙 Noche','🌙 Noche','🌙 Noche'];
+  document.getElementById('time-label').textContent = labels[hour] || '🌙 Noche';
+}
+
+function updateSunPosition() {
+  const sun = document.getElementById('game-sun');
+  const hour = G.hour;
+  if (hour >= 6 && hour <= 18) {
+    const pct = ((hour - 6) / 12) * 100;
+    sun.style.left = pct + '%';
+    sun.style.top = (15 + 25 * Math.sin(((hour-6)/12)*Math.PI)) + 'px';
+    sun.style.opacity = '1';
+  } else {
+    sun.style.opacity = '0.1';
+  }
+}
+
+// ---- WEATHER ----
+function changeWeather() {
+  const rand = Math.random() * 100;
+  let cum = 0;
+  for (const w of WEATHERS) {
+    cum += w.prob;
+    if (rand < cum) {
+      G.weather = w;
+      break;
+    }
+  }
+  document.getElementById('weather-icon').textContent = G.weather.icon;
+  updateWeatherVisual();
+  addEvent(`🌤️ Clima cambia: ${G.weather.label}`, 'info');
+  showToast(G.weather.label, G.weather.prodMult < 0.4 ? 'warning' : 'info');
+}
+
+function scheduleWeatherChange() {
+  // initial random weather
+  changeWeather();
+}
+
+function updateWeatherVisual() {
+  const wl = document.getElementById('weather-layer');
+  wl.innerHTML = '';
+  if (G.weather.id === 'storm' || G.weather.id === 'cloudy' || G.weather.id === 'fog') {
+    for (let i = 0; i < 4; i++) {
+      const c = document.createElement('div');
+      c.className = 'cloud-sprite';
+      c.style.cssText = `width:${150+Math.random()*100}px;height:${50+Math.random()*40}px;top:${Math.random()*50}%;animation-delay:${-Math.random()*15}s;animation-duration:${10+Math.random()*10}s;opacity:${G.weather.id==='fog'?0.6:0.35}`;
+      wl.appendChild(c);
+    }
+  }
+  if (G.weather.id === 'storm') {
+    for (let i = 0; i < 30; i++) {
+      const r = document.createElement('div');
+      r.className = 'raindrop';
+      r.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;animation-delay:${Math.random()*0.8}s;animation-duration:${0.5+Math.random()*0.4}s`;
+      wl.appendChild(r);
+    }
+  }
+  if (G.weather.id === 'hot') {
+    document.getElementById('sky-zone').style.background = 'linear-gradient(to bottom, #2a1500 0%, #4a2a00 40%, #7a3a00 100%)';
+  } else {
+    document.getElementById('sky-zone').style.background = 'linear-gradient(to bottom, #071230 0%, #0d2045 60%, #1a3a6b 100%)';
+  }
+}
+
+// ---- CHALLENGES ----
+function triggerChallenge() {
+  const ch = RANDOM_CHALLENGES[Math.floor(Math.random() * RANDOM_CHALLENGES.length)];
+  G.challenge = ch;
+  G.challengeDaysLeft = ch.duration;
+  G.challengeSatTrack = 0;
+  G.challengeProdReduction = ch.prodReduction || 0;
+  G.challengeProdBoost = ch.prodBoost || 0;
+  G.challengeDemandSpike = ch.demandSpike || 0;
+  G.challengeIncomeBoost = ch.incomeBoost || 1;
+  if (ch.storageDmg) {
+    G.storageCurrent = Math.max(0, G.storageCurrent * (1 - ch.storageDmg));
+    addEvent(`🔋 ¡Baterías dañadas! -${Math.floor(ch.storageDmg*100)}%`, 'danger');
+  }
+
+  document.getElementById('challenge-box').classList.remove('hidden');
+  document.getElementById('no-challenge').style.display = 'none';
+  document.getElementById('challenge-text').textContent = ch.text;
+  document.getElementById('challenge-timer').textContent = `⏱ ${ch.duration} días restantes`;
+
+  showToast(`⚠️ ¡Nuevo reto! ${ch.text.slice(0, 60)}...`, 'warning');
+  addEvent(`🚨 RETO: ${ch.text}`, 'danger');
+}
+
+function resolveChallenge() {
+  const ch = G.challenge;
+  if (ch.type === 'opportunity') {
+    const avgSat = G.challengeSatTrack / (ch.duration * 24);
+    if (avgSat >= ch.satGoal) {
+      G.money += ch.reward;
+      showToast(`💼 ¡Inversor satisfecho! +$${ch.reward}`, 'success');
+      addEvent(`💰 ¡Reto cumplido! Ganaste $${ch.reward}`, 'success');
+      showFloat(`+$${ch.reward}`, '#00FF88');
+    } else {
+      addEvent(`😞 Reto fallido. La satisfacción fue insuficiente.`, 'warn');
+    }
+  } else {
+    addEvent(`✅ Reto "${ch.text.slice(0,30)}..." terminado.`, 'success');
+    showToast('✅ ¡Reto superado!', 'success');
+  }
+
+  G.challenge = null;
+  G.challengeProdReduction = 0;
+  G.challengeProdBoost = 0;
+  G.challengeDemandSpike = 0;
+  G.challengeIncomeBoost = 1;
+  document.getElementById('challenge-box').classList.add('hidden');
+  document.getElementById('no-challenge').style.display = 'block';
+}
+
+// ---- LEVEL GOAL ----
+function checkLevelGoal() {
+  const goal = LEVEL_GOALS[G.level];
+  if (!goal) return;
+  if (G.daysCompleted >= G.goalDays) {
+    if (G.satisfaction >= goal.satisfaction && G.money >= goal.money) {
+      levelWin();
+    } else {
+      const reasons = [];
+      if (G.satisfaction < goal.satisfaction) reasons.push(`satisfacción mínima ${goal.satisfaction}%`);
+      if (G.money < goal.money) reasons.push(`fondos mínimos $${goal.money}`);
+      addEvent(`⚠️ Días completados pero faltan: ${reasons.join(', ')}`, 'warn');
+    }
+  }
+}
+
+function levelWin() {
+  clearInterval(gameLoop);
+  const nextL = G.level + 1;
+  document.getElementById('win-body').textContent = `Completaste el Nivel ${G.level} con ${Math.round(G.satisfaction)}% de satisfacción ciudadana y $${G.money} en fondos. ¡Impresionante gestión solar!`;
+  document.getElementById('win-score').textContent = `${G.score} PTS`;
+  document.getElementById('win-modal').classList.remove('hidden');
+  if (nextL > 5) {
+    document.querySelector('#win-modal .btn-primary').textContent = '🏆 FIN DEL JUEGO';
+    document.querySelector('#win-modal .btn-primary').onclick = () => {
+      document.getElementById('win-modal').classList.add('hidden');
+      backToTitle();
+    };
+  }
+}
+
+function nextLevel() {
+  document.getElementById('win-modal').classList.add('hidden');
+  if (G.level < 5) {
+    startGame(G.level + 1);
+  } else {
+    backToTitle();
+  }
+}
+
+// ---- INVESTMENTS ----
+function buyInvestment(id, silent = false) {
+  const inv = INVESTMENTS.find(i => i.id === id);
+  if (!inv) return;
+  const currentLevel = G.investments[id] || 0;
+  if (currentLevel >= inv.maxLevel) return;
+  if (inv.unlockLevel > G.level) return;
+  const cost = calcCost(inv, currentLevel);
+  if (!silent && G.money < cost) {
+    showToast('💸 Fondos insuficientes', 'warning');
+    return;
+  }
+  if (!silent) G.money -= cost;
+  G.investments[id] = currentLevel + 1;
+
+  // Apply bonuses
+  if (inv.prodBonus) G.prod += inv.prodBonus;
+  if (inv.storageBonus) { G.storageCapacity += inv.storageBonus; G.storageCurrent = Math.min(G.storageCurrent, G.storageCapacity); }
+  if (inv.efficiencyBonus) G.gridEfficiency = Math.min(1, G.gridEfficiency + inv.efficiencyBonus);
+  if (inv.demandReduction) G.demandReduction = Math.min(0.5, G.demandReduction + inv.demandReduction);
+  if (inv.alwaysProduces) G.alwaysProdBonus += inv.prodBonus;
+  if (inv.satBonus) G.satBonus = (G.satBonus || 0) + inv.satBonus;
+  if (inv.moneyBonus) { G.money += inv.moneyBonus; showFloat(`+$${inv.moneyBonus}`, '#FFD700'); G.subsidyUsed = true; }
+
+  if (!silent) {
+    addEvent(`✅ ${inv.icon} ${inv.name} - Nivel ${G.investments[id]}`, 'success');
+    showToast(`${inv.icon} ${inv.name} instalado! ${inv.effect}`, 'success');
+    showFloat(`${inv.effect}`, '#00FF88');
+    updateBuildingPanels();
+  }
+
+  renderInvestList();
+  calcEnergy();
+}
+
+function calcCost(inv, level) {
+  return Math.floor(inv.baseCost * Math.pow(inv.costMult, level));
+}
+
+function renderInvestList() {
+  const list = document.getElementById('invest-list');
+  list.innerHTML = '';
+
+  INVESTMENTS.forEach(inv => {
+    const lvl = G.investments[inv.id] || 0;
+    const maxed = lvl >= inv.maxLevel;
+    const cost = maxed ? 0 : calcCost(inv, lvl);
+    const locked = inv.unlockLevel > G.level;
+    const cantAfford = G.money < cost;
+    const isOneTime = inv.oneTime && lvl > 0;
+
+    const card = document.createElement('div');
+    card.className = 'invest-card' + (maxed || locked || isOneTime ? ' disabled' : (cantAfford ? ' disabled' : ''));
+    if (locked) card.classList.add('locked');
+
+    card.innerHTML = `
+      <div class="card-icon">${inv.icon}</div>
+      <div class="card-name">${inv.name}</div>
+      <div class="card-desc">${locked ? `🔒 Desbloquea en Nivel ${inv.unlockLevel}` : inv.desc}</div>
+      ${!locked ? `<div class="card-cost">${maxed ? '✅ Máx' : isOneTime ? '✅ Usado' : `$${cost}`}</div>` : ''}
+      ${!locked ? `<div class="card-effect">${inv.effect}</div>` : ''}
+      ${lvl > 0 && !maxed ? `<div class="card-level">Nv.${lvl}</div>` : ''}
+      ${maxed ? `<div class="card-level" style="color:var(--sun)">MAX</div>` : ''}
+      ${locked ? `<div class="card-badge">Nv.${inv.unlockLevel}</div>` : ''}
+    `;
+
+    if (!locked && !maxed && !isOneTime) {
+      card.addEventListener('click', () => buyInvestment(inv.id));
+    }
+    list.appendChild(card);
+  });
+}
+
+// ---- UPDATE STATS ----
+function updateStats() {
+  document.getElementById('hud-money').textContent = '$' + Math.floor(G.money);
+  document.getElementById('hud-prod').textContent = G.prod.toFixed(0) + ' MW';
+  document.getElementById('hud-storage').textContent = Math.round((G.storageCurrent/G.storageCapacity)*100) + '%';
+  document.getElementById('hud-demand').textContent = (G.currentDemand || G.baseDemand).toFixed(0) + ' MW';
+  document.getElementById('hud-satis').textContent = Math.round(G.satisfaction) + '%';
+  document.getElementById('hud-level').textContent = G.level;
+  document.getElementById('hud-day').textContent = `Día ${G.day}`;
+  document.getElementById('hud-time').textContent = `${String(G.hour).padStart(2,'0')}:00`;
+  document.getElementById('xp-bar').style.width = Math.min(100, (G.xp / G.xpNeeded) * 100) + '%';
+
+  document.getElementById('bot-score').textContent = G.score;
+  document.getElementById('bot-days').textContent = G.daysCompleted;
+  document.getElementById('bot-sold').textContent = G.totalEnergySold.toFixed(0) + ' MWh';
+
+  // Challenge timer
+  if (G.challenge && G.challengeDaysLeft > 0) {
+    document.getElementById('challenge-timer').textContent = `⏱ ${G.challengeDaysLeft} días restantes`;
+  }
+
+  // Stats panel
+  const sp = document.getElementById('stats-panel');
+  sp.innerHTML = `
+    <div class="stat-row"><span class="lbl">🌞 Producción</span><span class="val" style="color:var(--sun)">${G.prod} MW</span></div>
+    <div class="stat-row"><span class="lbl">⚡ Eficiencia</span><span class="val" style="color:var(--green)">${Math.round(G.gridEfficiency*100)}%</span></div>
+    <div class="stat-row"><span class="lbl">🔋 Capacidad</span><span class="val" style="color:var(--blue)">${G.storageCapacity} MWh</span></div>
+    <div class="stat-row"><span class="lbl">📉 Reducción dem.</span><span class="val" style="color:var(--teal)">${Math.round(G.demandReduction*100)}%</span></div>
+    <div class="stat-row"><span class="lbl">🏙️ Demanda base</span><span class="val" style="color:var(--red)">${G.baseDemand.toFixed(0)} MW</span></div>
+    <div class="stat-row"><span class="lbl">📅 Meta: ${G.goalDays} días</span><span class="val">${G.daysCompleted}/${G.goalDays}</span></div>
+    <div class="stat-row"><span class="lbl">🎯 Meta satisf.</span><span class="val" style="color:var(--purple)">${LEVEL_GOALS[G.level]?.satisfaction}%</span></div>
+    <div class="stat-row"><span class="lbl">💵 Meta fondos</span><span class="val" style="color:var(--sun)">$${LEVEL_GOALS[G.level]?.money}</span></div>
+  `;
+}
+
+// ---- GAME OVER ----
+function gameOver() {
+  clearInterval(gameLoop);
+  document.getElementById('go-score').textContent = G.score + ' PTS';
+  document.getElementById('go-stats').innerHTML = `
+    Días sobrevividos: ${G.daysCompleted} &nbsp;|&nbsp; 
+    Producción máx: ${G.prod} MW &nbsp;|&nbsp; 
+    Energía vendida: ${G.totalEnergySold.toFixed(0)} MWh
+  `;
+  document.getElementById('gameover-modal').classList.remove('hidden');
+}
+
+function restartGame() {
+  document.getElementById('gameover-modal').classList.add('hidden');
+  startGame(G.level);
+}
+
+function backToTitle() {
+  clearInterval(gameLoop);
+  document.getElementById('gameover-modal').classList.add('hidden');
+  document.getElementById('win-modal').classList.add('hidden');
+  document.getElementById('game-screen').classList.add('hidden');
+  document.getElementById('title-screen').classList.remove('hidden');
+}
+
+function confirmQuit() {
+  if (confirm('¿Salir al menú? Se perderá el progreso actual.')) backToTitle();
+}
+
+// ---- UI HELPERS ----
+function addEvent(text, type = 'info') {
+  const log = document.getElementById('event-log');
+  const item = document.createElement('div');
+  item.className = 'event-item ' + type;
+  item.textContent = text;
+  log.appendChild(item);
+  // Keep max 25 events
+  while (log.children.length > 25) log.removeChild(log.firstChild);
+  log.scrollTop = log.scrollHeight;
+}
+
+function showToast(msg, type = 'info') {
+  const tc = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  tc.appendChild(t);
+  setTimeout(() => { if (t.parentNode) t.parentNode.removeChild(t); }, 3100);
+}
+
+function showFloat(text, color) {
+  const f = document.createElement('div');
+  f.className = 'float-num';
+  f.textContent = text;
+  f.style.color = color;
+  f.style.left = (window.innerWidth / 2 + (Math.random() - 0.5) * 200) + 'px';
+  f.style.top = (window.innerHeight / 2) + 'px';
+  document.body.appendChild(f);
+  setTimeout(() => { if (f.parentNode) f.parentNode.removeChild(f); }, 1600);
+}
+
+function flashLevelUp() {
+  const el = document.getElementById('levelup-flash');
+  el.classList.add('active');
+  setTimeout(() => el.classList.remove('active'), 600);
+  showToast('🏅 ¡Subiste de rango!', 'success');
+}
+
+function emitParticle() {
+  if (G.prod <= 0) return;
+  if (Math.random() > 0.3) return;
+  const pl = document.getElementById('particles-layer');
+  const p = document.createElement('div');
+  p.className = 'energy-particle';
+  const x = Math.random() * (window.innerWidth - 500);
+  p.style.cssText = `width:5px;height:5px;background:rgba(255,215,0,0.8);left:${x}px;bottom:${20+Math.random()*40}px;box-shadow:0 0 6px #FFD700;animation-duration:${1.5+Math.random()}s`;
+  pl.appendChild(p);
+  setTimeout(() => { if (p.parentNode) p.parentNode.removeChild(p); }, 2000);
+}
+
+function showTutorial() {
+  if (tutShown) return;
+  tutShown = true;
+  const tip = document.createElement('div');
+  tip.className = 'tutorial-tip';
+  tip.style.cssText = 'left:270px;top:90px;';
+  tip.innerHTML = `💡 <strong>¡Bienvenido!</strong><br>Invierte en paneles solares para generar energía. Tu red ya tiene algo de producción aleatoria.<br><br>🎯 Objetivo: <span style="color:var(--sun)">${LEVEL_GOALS[G.level]?.desc}</span>`;
+  document.body.appendChild(tip);
+  setTimeout(() => { if (tip.parentNode) tip.parentNode.removeChild(tip); }, 7000);
+}
+
+function showHowToPlay() {
+  document.getElementById('howto-modal').classList.remove('hidden');
+}
+
+// ---- INIT ----
+initBackground();
+
+// Dynamic star animation variety
+document.querySelectorAll('.star').forEach((s, i) => {
+  s.style.animationDuration = (1.5 + Math.random() * 4) + 's';
+});
+</script>
+
+</body>
+</html>

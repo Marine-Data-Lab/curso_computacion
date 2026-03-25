@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Incendios Forestales en México — F.J. Martínez Higuera</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,300&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ember: #FF4500;
+    --flame: #FF8C00;
+    --ash: #C8B8A2;
+    --smoke: #2A2420;
+    --char: #1A1210;
+    --pale: #F5EDE0;
+    --green: #2D4A1E;
+    --forest: #3A5C28;
+    --gold: #D4A017;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: var(--char);
+    color: var(--pale);
+    font-family: 'Source Serif 4', Georgia, serif;
+    overflow-x: hidden;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 4rem 5vw 5rem;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 120% 60% at 70% 80%, rgba(255,69,0,.55) 0%, transparent 55%),
+      radial-gradient(ellipse 80% 50% at 90% 100%, rgba(255,140,0,.35) 0%, transparent 50%),
+      radial-gradient(ellipse 60% 80% at 20% 60%, rgba(26,18,16,.9) 0%, transparent 70%),
+      linear-gradient(180deg, #0a0705 0%, #1a1210 40%, #2a1a0a 100%);
+    z-index: 0;
+  }
+
+  /* animated ember particles */
+  .embers { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+  .ember {
+    position: absolute;
+    border-radius: 50%;
+    background: var(--ember);
+    box-shadow: 0 0 8px 2px var(--flame);
+    animation: floatUp linear infinite;
+    opacity: 0;
+  }
+  @keyframes floatUp {
+    0%   { transform: translateY(0) translateX(0) scale(1);   opacity: .9; }
+    50%  { transform: translateY(-40vh) translateX(20px) scale(.7); opacity: .6; }
+    100% { transform: translateY(-90vh) translateX(-10px) scale(.2); opacity: 0; }
+  }
+
+  .hero-content { position: relative; z-index: 2; max-width: 900px; }
+
+  .hero-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .75rem;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--flame);
+    margin-bottom: 1.2rem;
+  }
+
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(4rem, 12vw, 10rem);
+    line-height: .9;
+    color: var(--pale);
+    text-shadow: 0 0 80px rgba(255,69,0,.4);
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-title span { color: var(--ember); }
+
+  .hero-subtitle {
+    font-size: clamp(1rem, 2vw, 1.35rem);
+    font-weight: 300;
+    font-style: italic;
+    color: var(--ash);
+    max-width: 560px;
+    line-height: 1.7;
+    margin-bottom: 2.5rem;
+  }
+
+  .author-card {
+    display: inline-flex;
+    flex-direction: column;
+    gap: .3rem;
+    border-left: 3px solid var(--ember);
+    padding-left: 1.2rem;
+  }
+  .author-card strong {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: .05em;
+    color: var(--gold);
+  }
+  .author-card span {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .72rem;
+    color: var(--ash);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+
+  .scroll-cue {
+    position: absolute;
+    bottom: 2rem;
+    right: 5vw;
+    z-index: 2;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .65rem;
+    letter-spacing: .15em;
+    color: var(--ash);
+    writing-mode: vertical-rl;
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    opacity: .6;
+  }
+  .scroll-cue::before {
+    content: '';
+    display: block;
+    width: 1px;
+    height: 50px;
+    background: linear-gradient(to bottom, transparent, var(--ember));
+    animation: pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:.3} 50%{opacity:1} }
+
+  /* ── STATS BAND ── */
+  .stats-band {
+    background: var(--smoke);
+    border-top: 1px solid rgba(255,69,0,.2);
+    border-bottom: 1px solid rgba(255,69,0,.2);
+    padding: 3rem 5vw;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 2rem;
+  }
+
+  .stat-item { text-align: center; }
+  .stat-number {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    color: var(--ember);
+    line-height: 1;
+    display: block;
+  }
+  .stat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .7rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ash);
+    margin-top: .4rem;
+    display: block;
+  }
+
+  /* ── SECTIONS ── */
+  section { padding: 5rem 5vw; }
+
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+  }
+  .section-number {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 5rem;
+    color: rgba(255,69,0,.15);
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    color: var(--pale);
+    letter-spacing: .02em;
+    line-height: 1.1;
+  }
+  .section-title em { color: var(--ember); font-style: normal; }
+
+  /* ── CAUSES CHART ── */
+  #causas { background: var(--smoke); }
+
+  .bar-chart { width: 100%; }
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.1rem;
+    opacity: 0;
+    transform: translateX(-20px);
+    transition: opacity .5s, transform .5s;
+  }
+  .bar-row.visible { opacity: 1; transform: translateX(0); }
+  .bar-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .75rem;
+    color: var(--ash);
+    width: 220px;
+    flex-shrink: 0;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+  .bar-track {
+    flex: 1;
+    height: 28px;
+    background: rgba(255,255,255,.05);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+  }
+  .bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--ember), var(--flame));
+    border-radius: 2px;
+    width: 0;
+    transition: width 1s cubic-bezier(.25,.46,.45,.94);
+  }
+  .bar-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .75rem;
+    color: var(--gold);
+    width: 60px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* ── ESTADOS MAP TABLE ── */
+  #estados { background: var(--char); }
+
+  .states-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.2rem;
+  }
+
+  .state-card {
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,69,0,.12);
+    border-radius: 4px;
+    padding: 1.2rem 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color .3s, background .3s;
+  }
+  .state-card:hover {
+    border-color: var(--ember);
+    background: rgba(255,69,0,.06);
+  }
+  .state-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, var(--ember), var(--flame));
+  }
+  .state-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    color: var(--pale);
+    letter-spacing: .03em;
+    margin-bottom: .5rem;
+  }
+  .state-incidents {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .75rem;
+    color: var(--ash);
+  }
+  .state-incidents strong { color: var(--ember); font-size: 1rem; }
+  .state-area {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .72rem;
+    color: var(--ash);
+    margin-top: .3rem;
+  }
+  .heat-bar {
+    margin-top: .8rem;
+    height: 4px;
+    background: rgba(255,255,255,.05);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .heat-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green), var(--ember));
+    border-radius: 2px;
+  }
+
+  /* ── VEGETATION ── */
+  #vegetacion { background: linear-gradient(180deg, var(--char) 0%, #0d1a09 100%); }
+
+  .veg-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1rem;
+  }
+  .veg-card {
+    background: rgba(45,74,30,.25);
+    border: 1px solid rgba(58,92,40,.4);
+    border-radius: 4px;
+    padding: 1.2rem;
+    transition: background .3s;
+  }
+  .veg-card:hover { background: rgba(45,74,30,.45); }
+  .veg-icon { font-size: 2rem; margin-bottom: .6rem; }
+  .veg-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    color: var(--pale);
+    letter-spacing: .03em;
+    margin-bottom: .4rem;
+  }
+  .veg-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .72rem;
+    color: #8ac06a;
+  }
+
+  /* ── SEMANAS ── */
+  #semanas { background: var(--smoke); }
+
+  .week-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 200px;
+    padding: 0 0 2rem;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    overflow-x: auto;
+  }
+  .week-bar {
+    flex: 1;
+    min-width: 20px;
+    background: linear-gradient(to top, var(--ember), rgba(255,140,0,.4));
+    border-radius: 2px 2px 0 0;
+    position: relative;
+    transition: opacity .3s;
+    cursor: pointer;
+  }
+  .week-bar:hover { opacity: .8; }
+  .week-bar::after {
+    content: attr(data-semana);
+    position: absolute;
+    bottom: -1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .6rem;
+    color: var(--ash);
+    white-space: nowrap;
+  }
+  .week-bar-tooltip {
+    position: absolute;
+    top: -2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--char);
+    border: 1px solid var(--ember);
+    padding: .2rem .5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .65rem;
+    color: var(--pale);
+    white-space: nowrap;
+    border-radius: 2px;
+    display: none;
+  }
+  .week-bar:hover .week-bar-tooltip { display: block; }
+
+  /* ── CLASIFICACION ── */
+  #clasificacion { background: var(--char); }
+
+  .impact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+  }
+  .impact-card {
+    padding: 2rem;
+    border-radius: 4px;
+    text-align: center;
+  }
+  .impact-card.minimo {
+    background: rgba(45,74,30,.3);
+    border: 1px solid rgba(58,92,40,.5);
+  }
+  .impact-card.moderado {
+    background: rgba(212,160,23,.12);
+    border: 1px solid rgba(212,160,23,.3);
+  }
+  .impact-card.severo {
+    background: rgba(255,69,0,.15);
+    border: 1px solid rgba(255,69,0,.4);
+  }
+  .impact-icon { font-size: 3rem; margin-bottom: 1rem; }
+  .impact-count {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3.5rem;
+    line-height: 1;
+    display: block;
+  }
+  .impact-card.minimo .impact-count { color: #8ac06a; }
+  .impact-card.moderado .impact-count { color: var(--gold); }
+  .impact-card.severo .impact-count { color: var(--ember); }
+  .impact-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .72rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ash);
+    margin-top: .5rem;
+    display: block;
+  }
+
+  /* ── ANP TABLE ── */
+  #anp { background: linear-gradient(180deg, var(--char) 0%, var(--smoke) 100%); }
+
+  .anp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .85rem;
+  }
+  .anp-table th {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .68rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ember);
+    padding: .7rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid rgba(255,69,0,.3);
+    background: rgba(255,69,0,.05);
+  }
+  .anp-table td {
+    padding: .7rem 1rem;
+    border-bottom: 1px solid rgba(255,255,255,.05);
+    color: var(--ash);
+    font-weight: 300;
+  }
+  .anp-table tr:hover td { background: rgba(255,69,0,.05); color: var(--pale); }
+  .anp-table td:first-child { color: var(--pale); font-weight: 400; }
+  .anp-table td:last-child {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .75rem;
+    color: var(--gold);
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    background: #0a0705;
+    border-top: 1px solid rgba(255,69,0,.15);
+    padding: 3rem 5vw;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 2rem;
+  }
+  .footer-left { max-width: 500px; }
+  .footer-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    color: var(--pale);
+    margin-bottom: .5rem;
+  }
+  .footer-desc {
+    font-size: .85rem;
+    font-weight: 300;
+    color: var(--ash);
+    line-height: 1.7;
+  }
+  .footer-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .65rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: rgba(200,184,162,.4);
+    text-align: right;
+    line-height: 2;
+  }
+
+  /* Intersection Observer animation helper */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity .6s ease, transform .6s ease;
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- ═══ HERO ═══ -->
+<header class="hero">
+  <div class="hero-bg"></div>
+  <div class="embers" id="embers"></div>
+  <div class="hero-content">
+    <p class="hero-eyebrow">🔥 Análisis de datos — México · 2025</p>
+    <h1 class="hero-title">
+      INCENDIOS<br><span>FORESTALES</span>
+    </h1>
+    <p class="hero-subtitle">
+      Un análisis integral de los incendios forestales registrados en México,
+      explorando causas, distribución geográfica, tipos de vegetación afectada
+      y clasificación de impacto ambiental.
+    </p>
+    <div class="author-card">
+      <strong>Francisco Javier Martínez Higuera</strong>
+      <span>Prevención de Desastres y Protección Civil</span>
+      <span>2do Semestre · Trabajo de Análisis Estadístico</span>
+    </div>
+  </div>
+  <div class="scroll-cue">Desplazar</div>
+</header>
+
+<!-- ═══ STATS BAND ═══ -->
+<div class="stats-band" id="statsBand">
+  <div class="stat-item">
+    <span class="stat-number" id="statTotal">0</span>
+    <span class="stat-label">Incendios registrados</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-number" id="statHa">0</span>
+    <span class="stat-label">Hectáreas afectadas</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-number" id="statEstados">0</span>
+    <span class="stat-label">Estados involucrados</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-number" id="statPersonas">0</span>
+    <span class="stat-label">Días/persona empleados</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-number" id="statSemanas">0</span>
+    <span class="stat-label">Semanas de datos</span>
+  </div>
+</div>
+
+<!-- ═══ CAUSAS ═══ -->
+<section id="causas">
+  <div class="section-header reveal">
+    <span class="section-number">01</span>
+    <h2 class="section-title">CAUSAS DE<br><em>INCENDIOS</em></h2>
+  </div>
+  <div class="bar-chart" id="causasChart"></div>
+</section>
+
+<!-- ═══ ESTADOS ═══ -->
+<section id="estados">
+  <div class="section-header reveal">
+    <span class="section-number">02</span>
+    <h2 class="section-title">DISTRIBUCIÓN<br><em>POR ESTADO</em></h2>
+  </div>
+  <div class="states-grid" id="statesGrid"></div>
+</section>
+
+<!-- ═══ VEGETACIÓN ═══ -->
+<section id="vegetacion">
+  <div class="section-header reveal">
+    <span class="section-number">03</span>
+    <h2 class="section-title">TIPOS DE<br><em>VEGETACIÓN</em></h2>
+  </div>
+  <div class="veg-grid" id="vegGrid"></div>
+</section>
+
+<!-- ═══ SEMANAS ═══ -->
+<section id="semanas">
+  <div class="section-header reveal">
+    <span class="section-number">04</span>
+    <h2 class="section-title">INCENDIOS POR<br><em>SEMANA</em></h2>
+  </div>
+  <div class="week-chart" id="weekChart"></div>
+</section>
+
+<!-- ═══ CLASIFICACIÓN ═══ -->
+<section id="clasificacion">
+  <div class="section-header reveal">
+    <span class="section-number">05</span>
+    <h2 class="section-title">CLASIFICACIÓN<br><em>DE IMPACTO</em></h2>
+  </div>
+  <div class="impact-grid" id="impactGrid"></div>
+</section>
+
+<!-- ═══ ANP ═══ -->
+<section id="anp">
+  <div class="section-header reveal">
+    <span class="section-number">06</span>
+    <h2 class="section-title">ÁREAS NATURALES<br><em>PROTEGIDAS</em></h2>
+  </div>
+  <p class="reveal" style="color:var(--ash);font-weight:300;margin-bottom:2rem;max-width:600px;line-height:1.8;">
+    Los incendios que ocurrieron dentro de Áreas Naturales Protegidas representan
+    una amenaza crítica para la biodiversidad y los ecosistemas prioritarios del país.
+  </p>
+  <div style="overflow-x:auto;" class="reveal">
+    <table class="anp-table" id="anpTable">
+      <thead>
+        <tr>
+          <th>Área Natural Protegida</th>
+          <th>Estado</th>
+          <th>N° Incendios</th>
+          <th>Ha. afectadas</th>
+        </tr>
+      </thead>
+      <tbody id="anpBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <div class="footer-left">
+    <p class="footer-title">Incendios Forestales en México</p>
+    <p class="footer-desc">
+      Este análisis fue elaborado con base en datos oficiales de incendios forestales
+      registrados en el territorio mexicano. La información incluye causas, tipos de
+      vegetación, estados afectados, áreas naturales protegidas y clasificación de impacto.
+    </p>
+  </div>
+  <div class="footer-meta">
+    <p>Elaborado por:</p>
+    <p>Francisco Javier Martínez Higuera</p>
+    <p>Prevención de Desastres y Protección Civil</p>
+    <p>2do Semestre</p>
+    <p>© 2025</p>
+  </div>
+</footer>
+
+<script>
+// ══════════════════════════════
+//  RAW CSV DATA (embedded)
+// ══════════════════════════════
+const csvRaw = `11,Zacatecas,Ojocaliente,Actividades agrícolas,Matorral Crasicaule,,Impacto Mínimo,268.31,5,Combate
+11,Veracruz,Ixhuatlán del café,Fogatas,Bosque Mesófilo de Montaña,,Impacto Mínimo,2,92,Combate
+11,Tlaxcala,Chiautempan,Actividades agrícolas,Bosque de Pino,La Montaña Malinche o Matlalcuéyatl,Impacto Mínimo,6.8949,11,Combate
+11,Tlaxcala,Chiautempan,Intencional,Bosque de Pino,La Montaña Malinche o Matlalcuéyatl,Impacto Mínimo,5.8044,8,Combate
+11,Tlaxcala,Huamantla,Intencional,Bosque de Pino,La Montaña Malinche o Matlalcuéyatl,Impacto Mínimo,2.1296,15,Combate
+11,Tabasco,Centla,Actividades pecuarias,Popal,,Impacto Mínimo,90,23,Monitoreo
+11,Tabasco,Jonuta,Desconocidas,Tular,Pantanos de Centla,Impacto Mínimo,82.71,24,Monitoreo
+11,Tabasco,Centla,Actividades agrícolas,Tular,Pantanos de Centla,Impacto Mínimo,116.68,24,Monitoreo
+11,Puebla,San pedro cholula,Actividades agrícolas,Bosque de Pino-Encino,Cerro Zapotecas,Impacto Mínimo,8,8,Combate
+11,Puebla,Chalchicomula de sesma,Actividades pecuarias,Bosque de Pino,,Impacto Mínimo,2,9,Combate
+11,Puebla,Puebla,Actividades agrícolas,Bosque de Pino,La Montaña Malinche o Matlalcuéyatl,Impacto Mínimo,2,13,Combate
+11,Puebla,Chilchotla,Actividades pecuarias,Bosque de Pino-Encino,,Impacto Mínimo,1,12,Combate
+11,Puebla,Puebla,Intencional,Bosque de Pino,La Montaña Malinche o Matlalcuéyatl,Impacto Mínimo,1,8,Combate
+11,Nuevo León,General zaragoza,Naturales,Bosque de Pino-Encino,Zona de Restauración Ecológica del Lobo Mexicano La Encantada,Impacto Mínimo,7.5562,31,Combate
+11,Nayarit,La yesca,Desconocidas,Bosque de Encino-Pino,,Impacto Mínimo,115,38,Combate
+11,México,Zinacantepec,Intencional,Bosque de Pino,,Impacto Mínimo,2.5,35,Combate
+11,México,Zinacantepec,Intencional,Bosque de Pino,,Impacto Mínimo,4,28,Combate
+11,México,Ixtapaluca,Actividades pecuarias,Bosque de Pino,Iztaccíhuatl-Popocatépetl,Impacto Mínimo,30.7,16,Combate
+11,México,Ocuilan,Intencional,Bosque de Encino-Pino,,Impacto Mínimo,3,16,Combate
+11,México,Tenancingo,Intencional,Bosque de Encino-Pino,,Impacto Mínimo,3,5,Combate
+11,México,Texcaltitlán,Intencional,Bosque de Pino,,Impacto Mínimo,2.5,17,Combate
+11,México,Tianguistenco,Actividades agrícolas,Bosque de Pino,,Impacto Mínimo,2.5,10,Combate
+11,México,Donato guerra,Otras actividades productivas,Bosque de Pino,,Impacto Mínimo,2.41,12,Combate
+11,México,Ocuilan,Actividades agrícolas,Bosque de Pino,,Impacto Mínimo,2,22,Combate
+11,México,Naucalpan de juárez,Intencional,Bosque de Encino,,Impacto Mínimo,2,10,Combate
+11,México,Acambay de ruíz castañeda,Actividades agrícolas,Bosque de Encino-Pino,,Impacto Mínimo,2,67,Combate
+11,México,Naucalpan de juárez,Intencional,Bosque de Pino,,Impacto Mínimo,2,10,Combate
+11,México,Morelos,Actividades agrícolas,Bosque de Encino,,Impacto Mínimo,1.5,18,Combate
+11,México,Tenango del valle,Intencional,Bosque de Pino,,Impacto Mínimo,1.5,35,Combate
+11,México,Donato guerra,Fumadores,Bosque de Pino,Z.P.F.T.C.C. de los ríos Valle de Bravo,Impacto Mínimo,12,44,Combate
+11,México,Tlalmanalco,Actividades pecuarias,Bosque de Pino,Iztaccíhuatl-Popocatépetl,Impacto Mínimo,110,76,Combate
+11,México,Acambay de ruíz castañeda,Intencional,Bosque de Encino,,Impacto Mínimo,1,14,Combate
+11,México,Ixtapaluca,Intencional,Bosque de Pino,,Impacto Mínimo,1,7,Combate
+11,México,Villa del carbón,Actividades agrícolas,Bosque de Pino,,Impacto Mínimo,1,20,Combate
+11,México,Isidro fabela,Actividades agrícolas,Bosque de Pino-Encino,,Impacto Mínimo,1,6,Combate
+11,México,Acambay de ruíz castañeda,Actividades agrícolas,Bosque de Encino-Pino,,Impacto Mínimo,1,16,Combate
+11,México,Jilotepec,Actividades pecuarias,Bosque de Pino,,Impacto Mínimo,1,10,Combate
+11,México,Ocuilan,Intencional,Bosque de Pino,,Impacto Mínimo,1,20,Combate
+11,México,Donato guerra,Otras actividades productivas,Bosque de Pino,,Impacto Mínimo,1,12,Combate
+11,México,Tianguistenco,Actividades pecuarias,Bosque de Pino,,Impacto Mínimo,1,10,Combate
+11,México,Donato guerra,Actividades agrícolas,Bosque de Pino-Encino,,Impacto Mínimo,0.6,16,Combate
+11,México,Valle de bravo,Intencional,Bosque de Pino,,Impacto Mínimo,0.5,18,Combate
+11,México,Valle de bravo,Intencional,Bosque de Pino,,Impacto Mínimo,0.5,22,Combate
+11,México,Temascalcingo,Fogatas,Bosque de Encino,,Impacto Mínimo,0.5,25,Combate
+11,México,Tlalmanalco,Intencional,Bosque de Pino,,Impacto Mínimo,7,11,Combate
+11,México,Tenango del valle,Intencional,Bosque de Pino,,Impacto Mínimo,7,15,Combate
+11,México,Tlalmanalco,Actividades agrícolas,Bosque de Pino-Encino,,Impacto Mínimo,5,10,Combate
+11,México,Tenango del valle,Actividades agrícolas,Bosque de Pino,,Impacto Mínimo,4,40,Combate
+11,México,Temoaya,Fogatas,Bosque de Pino,,Impacto Mínimo,4,9,Combate
+11,Morelos,Huitzilac,Desconocidas,Bosque de Encino-Pino,Corredor Biológico Chichinautzin,Impacto Mínimo,0.3122,16,Combate
+11,Michoacán,Erongarícuaro,Desconocidas,Bosque de Pino-Encino,,Impacto Mínimo,3,10,Combate
+11,Michoacán,Tangamandapio,Actividades agrícolas,Bosque de Pino,,Impacto Mínimo,7,22,Combate
+11,Michoacán,Ziracuaretiro,Desconocidas,Bosque de Pino-Encino,,Impacto Mínimo,4,40,Combate
+11,Michoacán,Hidalgo,Actividades agrícolas,Bosque de Pino-Encino,,Impacto Mínimo,3.5,24,Combate
+11,Michoacán,Morelia,Desconocidas,Bosque de Encino,,Impacto Mínimo,3,19,Combate
+11,Michoacán,Uruapan,Desconocidas,Bosque de Pino,,Impacto Mínimo,3,17,Combate
+11,Michoacán,Paracho,Actividades agrícolas,Bosque de Pino,,Impacto Mínimo,2,28,Combate
+11,Michoacán,Morelia,Actividades pecuarias,Bosque de Encino,,Impacto Mínimo,2,5,Combate
+11,Michoacán,Tzintzuntzan,Actividades pecuarias,Bosque de Encino,,Impacto Mínimo,1.5,9,Combate
+11,Michoacán,Morelia,Actividades agrícolas,Bosque de Encino,,Impacto Mínimo,1.5,12,Combate
+11,Michoacán,Morelia,Intencional,Bosque de Encino,,Impacto Mínimo,1,16,Combate
+11,Jalisco,Talpa de allende,Desconocidas,Bosque de Pino,,Impacto Mínimo,100,32,Combate
+11,Jalisco,Mezquitic,Naturales,Bosque de Encino,,Impacto Mínimo,30,19,Combate
+11,Jalisco,Jilotlán de los dolores,Actividades pecuarias,Bosque de Encino,,Impacto Mínimo,12,30,Combate
+11,Jalisco,Tecalitlán,Actividades pecuarias,Bosque de Encino,,Impacto Mínimo,6.5,15,Combate
+11,Jalisco,Puerto vallarta,Desconocidas,Bosque de Encino,,Impacto Mínimo,4,23,Combate
+11,Jalisco,Puerto vallarta,Desconocidas,Bosque de Encino,,Impacto Mínimo,3,20,Combate
+11,Jalisco,Tapalpa,Actividades agrícolas,Bosque de Pino,,Impacto Mínimo,3,21,Combate
+11,Jalisco,Atengo,Actividades agrícolas,Bosque de Encino,,Impacto Mínimo,2,7,Combate
+11,Jalisco,Jilotlán de los dolores,Actividades pecuarias,Bosque de Encino,,Impacto Mínimo,2,13,Combate
+11,Jalisco,Tamazula de gordiano,Actividades pecuarias,Bosque de Encino,,Impacto Mínimo,2,13,Combate
+11,Jalisco,Zapotiltic,Actividades pecuarias,Bosque de Encino,,Impacto Mínimo,2,15,Combate
+11,Hidalgo,Cardonal,Actividades agrícolas,Matorral Desértico Rosetófilo,,Impacto Mínimo,6,20,Combate
+11,Hidalgo,Ixmiquilpan,Actividades agrícolas,Matorral Desértico Rosetófilo,,Impacto Mínimo,5,16,Combate
+11,Guerrero,Atoyac de álvarez,Actividades pecuarias,Bosque de Encino,,Impacto Mínimo,12,22,Combate
+11,Guerrero,Tecpan de galeana,Actividades pecuarias,Bosque de Encino,,Impacto Mínimo,5,20,Combate
+11,Guerrero,Chilpancingo de los bravo,Actividades agrícolas,Bosque de Encino,,Impacto Mínimo,3,14,Combate
+11,Guerrero,General heliodoro castillo,Actividades pecuarias,Bosque de Pino-Encino,,Impacto Mínimo,3,30,Combate
+11,Guerrero,Coyuca de benítez,Actividades pecuarias,Bosque de Encino,,Impacto Mínimo,2,14,Combate
+11,Guerrero,Ometepec,Actividades agrícolas,Selva Baja Caducifolia,,Impacto Mínimo,2,7,Combate
+11,Guerrero,Taxco de alarcón,Actividades pecuarias,Bosque de Encino,,Impacto Mínimo,2,12,Combate
+11,Guerrero,Ajuchitlán del progreso,Actividades pecuarias,Bosque de Encino,,Impacto Mínimo,1.5,8,Combate
+11,Guerrero,Mochitlán,Intencional,Bosque de Encino,,Impacto Mínimo,1.5,11,Combate
+11,Guerrero,Tepecoacuilco de trujano,Actividades pecuarias,Bosque de Encino,,Impacto Mínimo,1,14,Combate
+11,Guerrero,Ahuacuotzingo,Actividades agrícolas,Bosque de Pino,,Impacto Mínimo,1,10,Combate
+11,Guerrero,Huitzuco de los figueroa,Intencional,Bosque de Encino,,Impacto Mínimo,1,12,Combate
+11,Guerrero,Tixtla de guerrero,Intencional,Bosque de Encino,,Impacto Mínimo,1,15,Combate
+11,Guerrero,Copanatoyac,Actividades pecuarias,Bosque de Pino-Encino,,Impacto Mínimo,1,8,Combate
+11,Durango,Durango,Actividades agrícolas,Pastizal Natural,,Impacto Mínimo,15,9,Combate
+11,Coahuila,Saltillo,Intencional,Matorral Desértico Micrófilo,,Impacto Mínimo,10,16,Combate
+11,Chiapas,San cristóbal de las casas,Actividades agrícolas,Bosque de Pino,,Impacto Mínimo,3,18,Combate
+11,Chiapas,Bochil,Actividades agrícolas,Bosque de Pino,,Impacto Mínimo,2,10,Combate
+11,Chiapas,San cristóbal de las casas,Actividades agrícolas,Bosque de Pino,,Impacto Mínimo,1,8,Combate
+11,Baja california sur,Los cabos,Intencional,Matorral Sarcocaule,,Impacto Mínimo,5,12,Combate
+3,Zacatecas,Valparaíso,Actividades agrícolas,Pastizal Natural,,Impacto Mínimo,30,14,Combate
+3,Veracruz,Coatepec,Actividades agrícolas,Bosque Mesófilo de Montaña,,Impacto Mínimo,4,15,Combate
+3,Tlaxcala,Chiautempan,Actividades agrícolas,Bosque de Pino,La Montaña Malinche o Matlalcuéyatl,Impacto Mínimo,5,10,Combate
+3,Tabasco,Centla,Actividades agrícolas,Tular,Pantanos de Centla,Impacto Mínimo,200,48,Monitoreo
+3,Oaxaca,Miahuatlán de porfirio díaz,Actividades agrícolas,Bosque de Pino-Encino,,Impacto Mínimo,4,20,Combate
+3,Morelos,Tepoztlán,Intencional,Selva Baja Caducifolia,El Tepozteco,Impacto Mínimo,8,18,Combate
+3,México,Valle de bravo,Intencional,Bosque de Pino,,Impacto Mínimo,3,22,Combate
+3,México,Temascaltepec,Actividades agrícolas,Bosque de Pino-Encino,,Impacto Mínimo,2,15,Combate
+3,Michoacán,Morelia,Intencional,Bosque de Encino,,Impacto Mínimo,5,20,Combate
+3,Jalisco,Guadalajara,Intencional,Bosque de Encino,,Impacto Mínimo,3,10,Combate
+3,Hidalgo,Pachuca de soto,Intencional,Matorral Desértico Rosetófilo,,Impacto Mínimo,2,15,Combate
+3,Guerrero,Chilpancingo de los bravo,Actividades pecuarias,Bosque de Encino,,Impacto Mínimo,4,18,Combate
+3,Durango,Durango,Fogatas,Matorral Crasicaule,,Impacto Moderado,50,25,Combate
+3,Chihuahua,Chihuahua,Actividades agrícolas,Bosque de Encino-Pino,,Impacto Mínimo,10,20,Combate
+3,Baja california sur,La paz,Desconocidas,Matorral Sarcocaule,,Impacto Mínimo,3,14,Combate
+2,México,Tlalnepantla de baz,Intencional,Matorral Crasicaule,Sierra de Guadalupe,Impacto Mínimo,4.5,4,Combate
+2,México,Chalco,Intencional,Bosque de Encino,,Impacto Mínimo,4.1737,10,Combate
+2,Morelos,Tepoztlán,Intencional,Selva Baja Caducifolia,El Tepozteco,Impacto Mínimo,6.5187,0,Monitoreo
+2,Morelos,Tepoztlán,Intencional,Selva Baja Caducifolia,El Tepozteco,Impacto Mínimo,5.2643,14,Combate
+2,Michoacán,Morelia,Intencional,Selva Baja Caducifolia,,Impacto Mínimo,3.6,23,Combate
+2,Michoacán,Morelia,Quema de basureros,Selva Baja Caducifolia,,Impacto Mínimo,34.06,18,Combate
+2,Jalisco,San miguel el alto,Actividades agrícolas,Selva Baja Caducifolia,,Impacto Mínimo,49.58,17,Combate
+2,Jalisco,Zapotlán el grande,Desconocidas,Bosque de Pino,,Impacto Mínimo,25,14,Combate
+2,Hidalgo,Pachuca de soto,Intencional,Matorral Desértico Rosetófilo,,Impacto Mínimo,3,118,Combate
+2,Guanajuato,San miguel de allende,Actividades agrícolas,Pastizal Natural,,Impacto Mínimo,41.0561,5,Combate
+2,Guanajuato,Celaya,Intencional,Selva Baja Caducifolia,,Impacto Mínimo,28.8856,4,Combate
+2,Durango,Durango,Fogatas,Matorral Crasicaule,,Impacto Mínimo,434.0842,69,Combate
+2,Durango,Durango,Intencional,Pastizal Natural,,Impacto Mínimo,216.9026,20,Combate
+2,Coahuila,Progreso,Intencional,Matorral Desértico Micrófilo,,Impacto Mínimo,88.619,40,Combate
+2,Aguascalientes,Aguascalientes,Desconocidas,Pastizal Natural,,Impacto Mínimo,159.4222,13,Combate
+1,México,Villa de allende,Fumadores,Bosque de Pino-Encino,Z.P.F.T.C.C. de los ríos Valle de Bravo,Impacto Mínimo,1.6119,15,Combate
+1,México,Tlalnepantla de baz,Intencional,Matorral Crasicaule,Sierra de Guadalupe,Impacto Mínimo,9.1733,8,Combate
+1,México,Tultitlán,Intencional,Matorral Crasicaule,Sierra de Guadalupe,Impacto Mínimo,5.0254,18,Combate
+1,Morelos,Tepoztlán,Intencional,Selva Baja Caducifolia,El Tepozteco,Impacto Mínimo,14.6583,10,Combate
+1,Michoacán,Tingüindín,Actividades agrícolas,Bosque de Pino,,Impacto Mínimo,6,31,Combate
+1,Hidalgo,Pachuca de soto,Intencional,Matorral Desértico Rosetófilo,,Impacto Mínimo,1.0919,18,Combate
+1,Baja california sur,La paz,Desconocidas,Matorral Sarcocaule,,Impacto Moderado,2.072,37,Combate
+1,Aguascalientes,Pabellón de arteaga,Desconocidas,Matorral Crasicaule,Barranca de Santiago y Garabato,Impacto Severo,22.744,17,Combate`;
+
+// Parse data
+const records = csvRaw.trim().split('\n').map(line => {
+  const p = line.split(',');
+  return {
+    semana: parseInt(p[0]),
+    estado: (p[1]||'').trim(),
+    municipio: (p[2]||'').trim(),
+    causa: (p[3]||'').trim(),
+    vegetacion: (p[4]||'').trim(),
+    anp: (p[5]||'').trim(),
+    clasificacion: (p[6]||'').trim(),
+    superficie: parseFloat(p[7]) || 0,
+    diasPersona: parseInt(p[8]) || 0,
+    atencion: (p[9]||'').trim()
+  };
+});
+
+// ── AGGREGATIONS ──
+const totalIncendios = records.length;
+const totalHa = records.reduce((s,r) => s+r.superficie, 0);
+const estados = [...new Set(records.map(r=>r.estado))];
+const totalPersonas = records.reduce((s,r) => s+r.diasPersona, 0);
+const semanas = [...new Set(records.map(r=>r.semana))];
+
+// Causas
+const causaCount = {};
+records.forEach(r => { causaCount[r.causa] = (causaCount[r.causa]||0)+1; });
+const causasSorted = Object.entries(causaCount).sort((a,b)=>b[1]-a[1]);
+
+// Estados
+const estadoData = {};
+records.forEach(r => {
+  if(!estadoData[r.estado]) estadoData[r.estado] = {count:0, ha:0};
+  estadoData[r.estado].count++;
+  estadoData[r.estado].ha += r.superficie;
+});
+const estadosSorted = Object.entries(estadoData).sort((a,b)=>b[1].count-a[1].count);
+
+// Vegetacion
+const vegCount = {};
+records.forEach(r => { vegCount[r.vegetacion] = (vegCount[r.vegetacion]||0)+1; });
+const vegSorted = Object.entries(vegCount).sort((a,b)=>b[1]-a[1]);
+
+// Semanas
+const semanaCount = {};
+records.forEach(r => { semanaCount[r.semana] = (semanaCount[r.semana]||0)+1; });
+
+// Clasificación
+const clasifCount = {};
+records.forEach(r => { clasifCount[r.clasificacion] = (clasifCount[r.clasificacion]||0)+1; });
+
+// ANP
+const anpData = {};
+records.forEach(r => {
+  if(!r.anp) return;
+  if(!anpData[r.anp]) anpData[r.anp] = {estados:new Set(), count:0, ha:0};
+  anpData[r.anp].estados.add(r.estado);
+  anpData[r.anp].count++;
+  anpData[r.anp].ha += r.superficie;
+});
+const anpSorted = Object.entries(anpData).sort((a,b)=>b[1].count-a[1].count);
+
+// ── COUNTERS ──
+function animateCounter(el, target, isFloat=false, suffix='') {
+  const duration = 1800;
+  const start = performance.now();
+  function update(now) {
+    const progress = Math.min((now-start)/duration, 1);
+    const ease = 1 - Math.pow(1-progress, 3);
+    const val = target * ease;
+    el.textContent = isFloat
+      ? val.toLocaleString('es-MX', {maximumFractionDigits:0}) + suffix
+      : Math.round(val).toLocaleString('es-MX') + suffix;
+    if(progress < 1) requestAnimationFrame(update);
+  }
+  requestAnimationFrame(update);
+}
+
+const statsObs = new IntersectionObserver((entries) => {
+  if(entries[0].isIntersecting) {
+    animateCounter(document.getElementById('statTotal'), totalIncendios);
+    animateCounter(document.getElementById('statHa'), totalHa, true, ' ha');
+    animateCounter(document.getElementById('statEstados'), estados.length);
+    animateCounter(document.getElementById('statPersonas'), totalPersonas);
+    animateCounter(document.getElementById('statSemanas'), semanas.length);
+    statsObs.disconnect();
+  }
+}, {threshold:.3});
+statsObs.observe(document.getElementById('statsBand'));
+
+// ── CAUSAS CHART ──
+const causasChart = document.getElementById('causasChart');
+const maxCausa = causasSorted[0][1];
+causasSorted.forEach(([causa, count], i) => {
+  const row = document.createElement('div');
+  row.className = 'bar-row';
+  row.innerHTML = `
+    <span class="bar-label">${causa}</span>
+    <div class="bar-track"><div class="bar-fill" data-w="${(count/maxCausa*100).toFixed(1)}%"></div></div>
+    <span class="bar-value">${count}</span>`;
+  causasChart.appendChild(row);
+});
+
+const causasObs = new IntersectionObserver((entries) => {
+  if(entries[0].isIntersecting) {
+    document.querySelectorAll('.bar-row').forEach((row, i) => {
+      setTimeout(() => {
+        row.classList.add('visible');
+        const fill = row.querySelector('.bar-fill');
+        setTimeout(() => fill.style.width = fill.dataset.w, 100);
+      }, i*70);
+    });
+    causasObs.disconnect();
+  }
+}, {threshold:.1});
+causasObs.observe(causasChart);
+
+// ── STATES GRID ──
+const statesGrid = document.getElementById('statesGrid');
+const maxCount = estadosSorted[0][1].count;
+estadosSorted.forEach(([estado, data]) => {
+  const card = document.createElement('div');
+  card.className = 'state-card reveal';
+  card.innerHTML = `
+    <div class="state-name">${estado.toUpperCase()}</div>
+    <div class="state-incidents"><strong>${data.count}</strong> incendios registrados</div>
+    <div class="state-area">Superficie total: <strong>${data.ha.toLocaleString('es-MX', {maximumFractionDigits:1})} ha</strong></div>
+    <div class="heat-bar"><div class="heat-fill" style="width:${(data.count/maxCount*100).toFixed(1)}%"></div></div>`;
+  statesGrid.appendChild(card);
+});
+
+// ── VEG GRID ──
+const vegIcons = {
+  'Bosque de Pino': '🌲',
+  'Bosque de Encino': '🌳',
+  'Bosque de Pino-Encino': '🌲',
+  'Bosque de Encino-Pino': '🌳',
+  'Selva Baja Caducifolia': '🌿',
+  'Matorral Crasicaule': '🌵',
+  'Matorral Desértico Rosetófilo': '🌵',
+  'Matorral Desértico Micrófilo': '🌵',
+  'Matorral Sarcocaule': '🌵',
+  'Pastizal Natural': '🌾',
+  'Tular': '🌾',
+  'Popal': '🌿',
+  'Bosque Mesófilo de Montaña': '🌲',
+  'Bosque Cultivado': '🌳',
+};
+const vegGrid = document.getElementById('vegGrid');
+vegSorted.forEach(([veg, count]) => {
+  const card = document.createElement('div');
+  card.className = 'veg-card reveal';
+  card.innerHTML = `
+    <div class="veg-icon">${vegIcons[veg] || '🌿'}</div>
+    <div class="veg-name">${veg}</div>
+    <div class="veg-count">${count} incendios registrados</div>`;
+  vegGrid.appendChild(card);
+});
+
+// ── WEEK CHART ──
+const weekChart = document.getElementById('weekChart');
+const weekKeys = Object.keys(semanaCount).map(Number).sort((a,b)=>a-b);
+const maxWeek = Math.max(...Object.values(semanaCount));
+weekKeys.forEach(semana => {
+  const count = semanaCount[semana];
+  const bar = document.createElement('div');
+  bar.className = 'week-bar';
+  bar.style.height = `${(count/maxWeek*90).toFixed(1)}%`;
+  bar.dataset.semana = `S${semana}`;
+  bar.innerHTML = `<div class="week-bar-tooltip">${count} incendios</div>`;
+  weekChart.appendChild(bar);
+});
+
+// ── IMPACT GRID ──
+const impactGrid = document.getElementById('impactGrid');
+const impactConfig = [
+  { key: 'Impacto Mínimo', cls: 'minimo', icon: '🟢', label: 'Impacto Mínimo' },
+  { key: 'Impacto Moderado', cls: 'moderado', icon: '🟡', label: 'Impacto Moderado' },
+  { key: 'Impacto Severo', cls: 'severo', icon: '🔴', label: 'Impacto Severo' },
+];
+impactConfig.forEach(cfg => {
+  const count = clasifCount[cfg.key] || 0;
+  const card = document.createElement('div');
+  card.className = `impact-card ${cfg.cls} reveal`;
+  card.innerHTML = `
+    <div class="impact-icon">${cfg.icon}</div>
+    <span class="impact-count">${count}</span>
+    <span class="impact-label">${cfg.label}</span>`;
+  impactGrid.appendChild(card);
+});
+
+// ── ANP TABLE ──
+const anpBody = document.getElementById('anpBody');
+anpSorted.forEach(([anp, data]) => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${anp}</td>
+    <td>${[...data.estados].join(', ')}</td>
+    <td>${data.count}</td>
+    <td>${data.ha.toLocaleString('es-MX', {maximumFractionDigits:1})} ha</td>`;
+  anpBody.appendChild(tr);
+});
+
+// ── EMBER PARTICLES ──
+const embersContainer = document.getElementById('embers');
+for(let i = 0; i < 30; i++) {
+  const e = document.createElement('div');
+  e.className = 'ember';
+  const size = Math.random()*6 + 2;
+  e.style.cssText = `
+    width:${size}px; height:${size}px;
+    left:${Math.random()*100}%;
+    bottom:${Math.random()*30}%;
+    animation-duration:${Math.random()*6+4}s;
+    animation-delay:${Math.random()*6}s;`;
+  embersContainer.appendChild(e);
+}
+
+// ── INTERSECTION OBSERVER for reveals ──
+const revObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+}, {threshold:.1});
+document.querySelectorAll('.reveal').forEach(el => revObs.observe(el));
+</script>
+</body>
+</html>

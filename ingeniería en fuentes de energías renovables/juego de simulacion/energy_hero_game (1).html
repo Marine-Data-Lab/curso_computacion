@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EcoHero - Guardián del Planeta</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap');
+
+  :root {
+    --green: #00ff88;
+    --blue: #00cfff;
+    --yellow: #ffe100;
+    --red: #ff4444;
+    --dark: #060d1a;
+    --dark2: #0a1628;
+    --panel: #0d1f3c;
+    --glow-green: 0 0 20px #00ff88, 0 0 40px #00ff8866;
+    --glow-blue: 0 0 20px #00cfff, 0 0 40px #00cfff66;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--dark);
+    color: #fff;
+    font-family: 'Exo 2', sans-serif;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+  }
+
+  #gameWrapper {
+    position: relative;
+    width: 900px;
+    height: 560px;
+  }
+
+  /* SCREENS */
+  .screen {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--dark);
+    z-index: 100;
+  }
+  .screen.hidden { display: none; }
+
+  /* TITLE SCREEN */
+  #titleScreen {
+    background: radial-gradient(ellipse at center, #0a1e3a 0%, #060d1a 70%);
+  }
+  #titleScreen h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 52px;
+    font-weight: 900;
+    color: var(--green);
+    text-shadow: var(--glow-green);
+    letter-spacing: 4px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  #titleScreen h2 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
+    color: var(--blue);
+    letter-spacing: 8px;
+    margin-bottom: 40px;
+    text-shadow: var(--glow-blue);
+  }
+  .planet-anim {
+    position: absolute;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #1a6b3a, #0a3020);
+    box-shadow: 0 0 60px #00ff8844, 0 0 120px #00cfff22;
+    top: 60px;
+    animation: floatPlanet 4s ease-in-out infinite;
+    overflow: hidden;
+  }
+  .planet-anim::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: repeating-linear-gradient(120deg, transparent 0%, #00ff8811 10%, transparent 20%);
+  }
+  .pollution-cloud {
+    position: absolute;
+    width: 60px; height: 30px;
+    background: #555;
+    border-radius: 50%;
+    opacity: 0.6;
+    animation: cloudMove 6s linear infinite;
+  }
+  @keyframes floatPlanet { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+  @keyframes cloudMove { 0%{left:-60px;top:60px} 100%{left:200px;top:50px} }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
+
+  .btn {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    padding: 14px 40px;
+    border: 2px solid var(--green);
+    background: transparent;
+    color: var(--green);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--green);
+    transform: translateX(-100%);
+    transition: transform 0.2s;
+    z-index: -1;
+  }
+  .btn:hover::before { transform: translateX(0); }
+  .btn:hover { color: var(--dark); box-shadow: var(--glow-green); }
+  .btn-blue { border-color: var(--blue); color: var(--blue); }
+  .btn-blue::before { background: var(--blue); }
+  .btn-blue:hover { color: var(--dark); box-shadow: var(--glow-blue); }
+
+  /* HUD */
+  #hud {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 56px;
+    background: linear-gradient(180deg, #060d1acc 0%, transparent 100%);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 20px;
+    z-index: 10;
+    pointer-events: none;
+  }
+  .hud-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    color: #aaa;
+    letter-spacing: 2px;
+  }
+  .hud-val {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--green);
+    text-shadow: 0 0 8px #00ff8877;
+  }
+  .bar-wrap { display: flex; flex-direction: column; gap: 2px; }
+  .bar-bg {
+    width: 110px; height: 8px;
+    background: #1a2a3a;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s;
+  }
+  .hp-fill { background: linear-gradient(90deg, #ff4444, #ff8888); }
+  .en-fill { background: linear-gradient(90deg, #00cfff, #88eeff); }
+  .planet-fill { background: linear-gradient(90deg, #00ff88, #88ffcc); }
+
+  .hud-sep { width: 1px; height: 36px; background: #1a3050; }
+  .hud-spacer { flex: 1; }
+
+  .power-icons {
+    display: flex;
+    gap: 6px;
+  }
+  .power-icon {
+    width: 34px; height: 34px;
+    border: 2px solid #1a3050;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    background: #0a1628;
+    position: relative;
+    transition: border-color 0.2s;
+  }
+  .power-icon.active { border-color: var(--yellow); box-shadow: 0 0 10px #ffe10066; }
+  .power-icon .cd {
+    position: absolute;
+    inset: 0;
+    background: #000a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-family: 'Orbitron', sans-serif;
+    border-radius: 4px;
+    color: #aaa;
+  }
+
+  /* CANVAS */
+  #gameCanvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 900px;
+    height: 560px;
+    image-rendering: pixelated;
+  }
+
+  /* LEVEL BANNER */
+  #levelBanner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    background: linear-gradient(135deg, #0a1628ee, #0d1f3cee);
+    border: 2px solid var(--green);
+    padding: 20px 60px;
+    text-align: center;
+    z-index: 50;
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    box-shadow: var(--glow-green);
+  }
+  #levelBanner.show { transform: translate(-50%,-50%) scale(1); }
+  #levelBanner h3 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 28px;
+    color: var(--green);
+  }
+  #levelBanner p { font-size: 14px; color: #aaa; margin-top: 6px; letter-spacing: 2px; }
+
+  /* POWER UNLOCK */
+  #powerUnlock {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%) scale(0);
+    background: linear-gradient(135deg, #1a0a2eee, #0d1f3cee);
+    border: 2px solid var(--yellow);
+    padding: 30px 50px;
+    text-align: center;
+    z-index: 60;
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    box-shadow: 0 0 40px #ffe10066;
+  }
+  #powerUnlock.show { transform: translate(-50%,-50%) scale(1); }
+  #powerUnlock h3 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 22px;
+    color: var(--yellow);
+    margin-bottom: 8px;
+  }
+  #powerUnlock .power-big { font-size: 60px; margin: 10px 0; }
+  #powerUnlock p { font-size: 13px; color: #ccc; max-width: 260px; }
+
+  /* GAME OVER / WIN */
+  #gameOver, #gameWin {
+    background: radial-gradient(ellipse at center, #1a0606 0%, var(--dark) 70%);
+  }
+  #gameWin { background: radial-gradient(ellipse at center, #061a10 0%, var(--dark) 70%); }
+  #gameOver h1, #gameWin h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 48px;
+    font-weight: 900;
+    margin-bottom: 20px;
+  }
+  #gameOver h1 { color: var(--red); text-shadow: 0 0 30px #ff4444; }
+  #gameWin h1 { color: var(--green); text-shadow: var(--glow-green); }
+  #finalScore {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 20px;
+    color: var(--yellow);
+    margin-bottom: 30px;
+  }
+
+  /* BOSS WARNING */
+  #bossWarning {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ff000022;
+    border-bottom: 2px solid #ff4444;
+    z-index: 20;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  #bossWarning.show { opacity: 1; animation: bossFlash 0.5s ease-in-out infinite; }
+  @keyframes bossFlash { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  #bossWarning span {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 16px;
+    color: #ff4444;
+    letter-spacing: 6px;
+  }
+  #bossHPBar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 8px;
+    background: #1a0808;
+    z-index: 10;
+    display: none;
+  }
+  #bossHPFill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff4444, #ff8800);
+    transition: width 0.2s;
+    box-shadow: 0 0 10px #ff4444;
+  }
+
+  .controls-hint {
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    color: #445;
+    letter-spacing: 2px;
+    font-family: 'Orbitron', sans-serif;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<div id="gameWrapper">
+  <canvas id="gameCanvas" width="900" height="560"></canvas>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="bar-wrap">
+      <div class="hud-label">VIDA</div>
+      <div class="bar-bg"><div class="bar-fill hp-fill" id="hpBar" style="width:100%"></div></div>
+    </div>
+    <div class="bar-wrap">
+      <div class="hud-label">ENERGÍA</div>
+      <div class="bar-bg"><div class="bar-fill en-fill" id="enBar" style="width:100%"></div></div>
+    </div>
+    <div class="hud-sep"></div>
+    <div class="bar-wrap">
+      <div class="hud-label">SALUD PLANET.</div>
+      <div class="bar-bg"><div class="bar-fill planet-fill" id="planetBar" style="width:30%"></div></div>
+    </div>
+    <div class="hud-sep"></div>
+    <div class="bar-wrap" style="gap:0">
+      <div class="hud-label">NIVEL</div>
+      <div class="hud-val" id="lvlDisp">1</div>
+    </div>
+    <div class="bar-wrap" style="gap:0">
+      <div class="hud-label">PUNTOS</div>
+      <div class="hud-val" id="scoreDisp">0</div>
+    </div>
+    <div class="hud-spacer"></div>
+    <div class="power-icons" id="powerIcons"></div>
+  </div>
+
+  <!-- BOSS WARNING -->
+  <div id="bossWarning"><span>⚠ JEFE ENEMIGO ⚠</span></div>
+  <div id="bossHPBar"><div id="bossHPFill" style="width:100%"></div></div>
+
+  <!-- LEVEL BANNER -->
+  <div id="levelBanner">
+    <h3 id="bannerTitle">NIVEL 1</h3>
+    <p id="bannerSub">¡Elimina las fuentes de contaminación!</p>
+  </div>
+
+  <!-- POWER UNLOCK -->
+  <div id="powerUnlock">
+    <h3>¡NUEVO PODER!</h3>
+    <div class="power-big" id="powerEmoji">⚡</div>
+    <p id="powerDesc"></p>
+  </div>
+
+  <!-- TITLE SCREEN -->
+  <div class="screen" id="titleScreen">
+    <div class="planet-anim">
+      <div class="pollution-cloud"></div>
+    </div>
+    <div style="height:200px"></div>
+    <h2>GUARDIÁN DEL PLANETA</h2>
+    <h1>ECOHERO</h1>
+    <p style="color:#667;margin-bottom:30px;letter-spacing:3px;font-size:13px">SALVA LA TIERRA · 15 NIVELES · 3 JEFES</p>
+    <button class="btn" onclick="startGame()">INICIAR JUEGO</button>
+    <div style="margin-top:16px;font-size:12px;color:#445;letter-spacing:2px">
+      ← → MOVER &nbsp;|&nbsp; ESPACIO DISPARAR &nbsp;|&nbsp; 1-4 PODERES
+    </div>
+  </div>
+
+  <!-- GAME OVER -->
+  <div class="screen hidden" id="gameOver">
+    <h1>GAME OVER</h1>
+    <div id="finalScore"></div>
+    <button class="btn" style="margin-bottom:14px" onclick="startGame()">REINTENTAR</button>
+    <button class="btn btn-blue" onclick="showTitle()">MENÚ</button>
+  </div>
+
+  <!-- WIN SCREEN -->
+  <div class="screen hidden" id="gameWin">
+    <h1>¡VICTORIA!</h1>
+    <p style="color:#00ff88;font-size:16px;margin-bottom:12px;letter-spacing:3px">¡EL PLANETA ESTÁ SALVADO!</p>
+    <div id="finalScore"></div>
+    <button class="btn" onclick="startGame()">JUGAR DE NUEVO</button>
+  </div>
+
+  <div class="controls-hint">← → MOVER | ESPACIO DISPARAR | 1-4 PODERES ESPECIALES</div>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const W = 900, H = 560;
+
+// ─── GAME STATE ─────────────────────────────────────────────────────────────
+let gs = {};
+let keys = {};
+let animId;
+let gameRunning = false;
+
+// ─── LEVEL DEFINITIONS ──────────────────────────────────────────────────────
+const LEVELS = [
+  // 1
+  { name:"FÁBRICA CONTAMINANTE", sub:"Destruye las chimeneas", bg:'factory', enemies:['smoke','smoke','coal'], bossLevel:false, planetGain:4 },
+  // 2
+  { name:"VERTEDERO TÓXICO", sub:"Elimina los desechos industriales", bg:'dump', enemies:['waste','waste','smoke','coal'], bossLevel:false, planetGain:5 },
+  // 3
+  { name:"MAREAS NEGRAS", sub:"Limpia el derrame de petróleo", bg:'ocean', enemies:['oil','oil','smoke','waste'], bossLevel:false, planetGain:5 },
+  // 4
+  { name:"SMOG URBANO", sub:"Purifica el aire de la ciudad", bg:'city', enemies:['smoke','smoke','smoke','coal','waste'], bossLevel:false, planetGain:5 },
+  // 5 - BOSS 1
+  { name:"JEFE: REACTOR OSCURO", sub:"¡Destruye el reactor contaminante!", bg:'factory', enemies:[], bossLevel:true, bossType:'reactor', planetGain:12 },
+  // 6
+  { name:"MINAS DE CARBÓN", sub:"Cierra las minas ilegales", bg:'mine', enemies:['coal','coal','coal','smoke','waste'], bossLevel:false, planetGain:5 },
+  // 7
+  { name:"CENTRAL NUCLEAR", sub:"Neutraliza la radiación", bg:'nuclear', enemies:['radio','radio','coal','waste'], bossLevel:false, planetGain:6 },
+  // 8
+  { name:"DESIERTO ÁRIDO", sub:"Reforestación urgente", bg:'desert', enemies:['heat','heat','smoke','radio','coal'], bossLevel:false, planetGain:6 },
+  // 9
+  { name:"GLACIARES EN PELIGRO", sub:"Detén el calentamiento", bg:'glacier', enemies:['heat','heat','heat','smoke','radio'], bossLevel:false, planetGain:6 },
+  // 10 - BOSS 2
+  { name:"JEFE: TORMENTA TÓXICA", sub:"¡La tormenta envenena el cielo!", bg:'storm', enemies:[], bossLevel:true, bossType:'storm', planetGain:14 },
+  // 11
+  { name:"PLATAFORMA PETROLÍFERA", sub:"Sella los pozos ilegales", bg:'ocean', enemies:['oil','oil','oil','waste','heat'], bossLevel:false, planetGain:7 },
+  // 12
+  { name:"SMOG EXTREMO", sub:"Elimina la nube tóxica global", bg:'city', enemies:['smoke','smoke','heat','radio','coal','waste'], bossLevel:false, planetGain:7 },
+  // 13
+  { name:"LLUVIA ÁCIDA", sub:"Neutraliza las nubes ácidas", bg:'storm', enemies:['acid','acid','smoke','radio','heat'], bossLevel:false, planetGain:7 },
+  // 14
+  { name:"COLAPSO ECOSISTEMA", sub:"Restaura el equilibrio natural", bg:'desert', enemies:['heat','acid','oil','radio','smoke','waste','coal'], bossLevel:false, planetGain:8 },
+  // 15 - BOSS 3
+  { name:"JEFE FINAL: EL DEVASTADOR", sub:"¡La batalla definitiva por el planeta!", bg:'void', enemies:[], bossLevel:true, bossType:'devastator', planetGain:20 },
+];
+
+// ─── ENEMY TYPES ─────────────────────────────────────────────────────────────
+const ENEMY_TYPES = {
+  smoke:  { name:"Humo", color:'#888', hp:2, speed:1.2, size:28, emoji:'💨', dmg:8 },
+  coal:   { name:"Carbón", color:'#444', hp:3, speed:1.0, size:32, emoji:'⛏️', dmg:10 },
+  waste:  { name:"Residuo", color:'#6a4', hp:3, speed:1.1, size:30, emoji:'☣️', dmg:12 },
+  oil:    { name:"Petróleo", color:'#332', hp:4, speed:0.9, size:34, emoji:'🛢️', dmg:14 },
+  radio:  { name:"Radiación", color:'#8f0', hp:4, speed:1.3, size:28, emoji:'☢️', dmg:16 },
+  heat:   { name:"Calor", color:'#f82', hp:3, speed:1.4, size:26, emoji:'🔥', dmg:12 },
+  acid:   { name:"Ácido", color:'#af0', hp:5, speed:1.0, size:32, emoji:'🧪', dmg:18 },
+};
+
+// ─── BOSS TYPES ──────────────────────────────────────────────────────────────
+const BOSS_TYPES = {
+  reactor:  { name:"REACTOR OSCURO", hp:120, color:'#334', size:70, speed:0.8, phase2hp:60, emoji:'☢️', reward:'☀️', rewardName:'Rayo Solar', rewardDesc:'Dispara un rayo de energía solar que atraviesa todos los enemigos' },
+  storm:    { name:"TORMENTA TÓXICA", hp:200, color:'#445', size:80, speed:1.2, phase2hp:100, emoji:'⛈️', reward:'💨', rewardName:'Viento Tornado', rewardDesc:'Lanza un tornado que arrastra y destruye múltiples enemigos' },
+  devastator:{ name:"EL DEVASTADOR", hp:300, color:'#322', size:90, speed:1.5, phase2hp:150, emoji:'💀', reward:'⚡', rewardName:'Tormenta Eléctrica', rewardDesc:'Suelta una descarga eléctrica masiva que daña a todos los enemigos' },
+};
+
+// ─── POWERS ──────────────────────────────────────────────────────────────────
+// Power 0: always available - basic shot
+// Power 1: solar ray (after boss 1)
+// Power 2: wind tornado (after boss 2)
+// Power 3: electric storm (after boss 3)
+const POWERS = [
+  { emoji:'🌿', name:'Disparo Eco', desc:'Disparo básico de energía verde', cost:0, cd:0 },
+  { emoji:'☀️', name:'Rayo Solar', desc:'Rayo que atraviesa enemigos', cost:25, cd:3000 },
+  { emoji:'💨', name:'Viento Tornado', desc:'Tornado que arrastra enemigos', cost:35, cd:5000 },
+  { emoji:'⚡', name:'Tormenta Eléctrica', desc:'Daño masivo a todos', cost:50, cd:8000 },
+];
+
+// ─── PARTICLES ───────────────────────────────────────────────────────────────
+let particles = [];
+function spawnParticles(x, y, color, count=12, speed=3) {
+  for (let i=0; i<count; i++) {
+    const a = Math.random()*Math.PI*2;
+    const s = speed * (0.5 + Math.random());
+    particles.push({ x, y, vx: Math.cos(a)*s, vy: Math.sin(a)*s, life:1, color, size: 3+Math.random()*5 });
+  }
+}
+
+// ─── BACKGROUND THEMES ───────────────────────────────────────────────────────
+const BG_COLORS = {
+  factory:  { sky1:'#1a0e06', sky2:'#2a1208', ground:'#1e1208', accent:'#ff6600' },
+  dump:     { sky1:'#0e1208', sky2:'#1a1e08', ground:'#141a06', accent:'#88aa00' },
+  ocean:    { sky1:'#060e1a', sky2:'#0a1828', ground:'#0a2040', accent:'#0088ff' },
+  city:     { sky1:'#0a0a14', sky2:'#141428', ground:'#1a1a2a', accent:'#ffaa00' },
+  mine:     { sky1:'#100808', sky2:'#1a1010', ground:'#100a08', accent:'#cc6600' },
+  nuclear:  { sky1:'#0a1408', sky2:'#141e10', ground:'#0e1808', accent:'#88ff00' },
+  desert:   { sky1:'#1a1008', sky2:'#2a1a06', ground:'#2a1a0a', accent:'#ffcc00' },
+  glacier:  { sky1:'#0a1020', sky2:'#101828', ground:'#182840', accent:'#aaddff' },
+  storm:    { sky1:'#10080a', sky2:'#1a1020', ground:'#100810', accent:'#aa00ff' },
+  void:     { sky1:'#080010', sky2:'#100020', ground:'#080018', accent:'#ff00ff' },
+};
+
+// ─── INIT GAME ────────────────────────────────────────────────────────────────
+function initGame() {
+  gs = {
+    level: 0,
+    score: 0,
+    planetHealth: 30,
+    player: {
+      x: W/2, y: H-80,
+      w: 44, h: 44,
+      hp: 100, maxHp: 100,
+      energy: 100, maxEnergy: 100,
+      speed: 4.5,
+      invincible: 0,
+      trail: [],
+    },
+    bullets: [],
+    enemyBullets: [],
+    enemies: [],
+    boss: null,
+    bossActive: false,
+    pickups: [],
+    powers: [true, false, false, false],
+    powerCDs: [0, 0, 0, 0],
+    activePower: 0,
+    stars: Array.from({length:80}, () => ({
+      x: Math.random()*W, y: Math.random()*H,
+      s: 0.5+Math.random()*2, t: Math.random()*Math.PI*2
+    })),
+    bgParticles: [],
+    phase: 'playing', // playing, levelComplete, bossIntro, bossWarn, bossWin, dead, win
+    transition: 0,
+    shootCooldown: 0,
+    waveEnemies: [],
+    waveIndex: 0,
+    spawnTimer: 0,
+    bossWarned: false,
+    renewableSprites: [],
+    floatTexts: [],
+  };
+
+  // Spawn some renewable energy decorations
+  for (let i=0; i<5; i++) {
+    gs.renewableSprites.push({
+      x: 100 + i*160,
+      y: H - 30,
+      type: ['🌱','🌿','☀️','💧','🌀'][i],
+      scale: 1 + Math.random()*0.5,
+    });
+  }
+
+  loadLevel(0);
+  buildPowerIcons();
+}
+
+function loadLevel(idx) {
+  gs.level = idx;
+  const lv = LEVELS[idx];
+  gs.enemies = [];
+  gs.boss = null;
+  gs.bossActive = false;
+  gs.waveEnemies = [...lv.enemies];
+  gs.waveIndex = 0;
+  gs.spawnTimer = 60;
+
+  document.getElementById('lvlDisp').textContent = idx+1;
+
+  // Boss level
+  if (lv.bossLevel) {
+    gs.phase = 'bossWarn';
+    gs.bossWarned = false;
+    setTimeout(() => {
+      spawnBoss(lv.bossType);
+      gs.phase = 'playing';
+      document.getElementById('bossWarning').classList.remove('show');
+    }, 2500);
+    document.getElementById('bossWarning').classList.add('show');
+    document.getElementById('bossHPBar').style.display = 'block';
+  } else {
+    gs.phase = 'playing';
+    document.getElementById('bossHPBar').style.display = 'none';
+    document.getElementById('bossWarning').classList.remove('show');
+  }
+
+  showLevelBanner(lv.name, lv.sub);
+}
+
+function spawnBoss(type) {
+  const bt = BOSS_TYPES[type];
+  gs.boss = {
+    type, x: W/2, y: 100,
+    w: bt.size, h: bt.size,
+    hp: bt.hp, maxHp: bt.hp,
+    speed: bt.speed,
+    shootTimer: 0,
+    shootInterval: 90,
+    phase: 1,
+    angle: 0,
+    moveDir: 1,
+    pattern: 0,
+    patternTimer: 0,
+  };
+  gs.bossActive = true;
+  updateBossHP();
+}
+
+function buildPowerIcons() {
+  const cont = document.getElementById('powerIcons');
+  cont.innerHTML = '';
+  POWERS.forEach((p, i) => {
+    const div = document.createElement('div');
+    div.className = 'power-icon' + (i===0?' active':'');
+    div.id = 'pwr'+i;
+    div.innerHTML = p.emoji;
+    if (!gs.powers[i]) div.style.opacity = '0.2';
+    cont.appendChild(div);
+  });
+}
+
+// ─── BANNER ───────────────────────────────────────────────────────────────────
+function showLevelBanner(title, sub) {
+  const b = document.getElementById('levelBanner');
+  document.getElementById('bannerTitle').textContent = title;
+  document.getElementById('bannerSub').textContent = sub;
+  b.classList.add('show');
+  setTimeout(() => b.classList.remove('show'), 2200);
+}
+
+function showPowerUnlock(power) {
+  const u = document.getElementById('powerUnlock');
+  document.getElementById('powerEmoji').textContent = power.emoji;
+  document.getElementById('powerDesc').textContent = power.rewardDesc || power.desc;
+  const h3 = u.querySelector('h3');
+  h3.textContent = '¡NUEVO PODER: ' + (power.rewardName || power.name) + '!';
+  u.classList.add('show');
+  setTimeout(() => u.classList.remove('show'), 3000);
+}
+
+// ─── SPAWN ENEMY ──────────────────────────────────────────────────────────────
+function spawnEnemy(type) {
+  const et = ENEMY_TYPES[type];
+  const x = 60 + Math.random()*(W-120);
+  gs.enemies.push({
+    type, x, y: -40,
+    w: et.size, h: et.size,
+    hp: et.hp + Math.floor(gs.level * 0.5),
+    maxHp: et.hp + Math.floor(gs.level * 0.5),
+    speed: et.speed + gs.level*0.05,
+    vx: (Math.random()-0.5)*1.5,
+    vy: et.speed,
+    shootTimer: Math.random()*120,
+    shootInterval: 120 + Math.random()*80,
+    angle: 0,
+  });
+}
+
+// ─── SHOOT ────────────────────────────────────────────────────────────────────
+function playerShoot(power) {
+  const p = gs.player;
+  if (power === 0) {
+    gs.bullets.push({ x:p.x, y:p.y-20, w:6, h:16, vy:-11, vx:0, dmg:18, type:'basic', life:1 });
+    gs.bullets.push({ x:p.x-14, y:p.y-10, w:5, h:12, vy:-10, vx:-0.5, dmg:10, type:'basic', life:1 });
+    gs.bullets.push({ x:p.x+14, y:p.y-10, w:5, h:12, vy:-10, vx:0.5, dmg:10, type:'basic', life:1 });
+  } else if (power === 1 && gs.powers[1]) {
+    if (gs.player.energy < POWERS[1].cost) return;
+    if (gs.powerCDs[1] > 0) return;
+    gs.player.energy -= POWERS[1].cost;
+    gs.bullets.push({ x:p.x, y:p.y-20, w:8, h:500, vy:-18, vx:0, dmg:60, type:'solar', life:1, pierce:true });
+    gs.powerCDs[1] = POWERS[1].cd;
+    spawnParticles(p.x, p.y, '#ffee00', 20, 5);
+  } else if (power === 2 && gs.powers[2]) {
+    if (gs.player.energy < POWERS[2].cost) return;
+    if (gs.powerCDs[2] > 0) return;
+    gs.player.energy -= POWERS[2].cost;
+    for (let i=0; i<8; i++) {
+      const a = (i/8)*Math.PI*2;
+      gs.bullets.push({ x:p.x, y:p.y-20, w:10, h:10, vy:Math.sin(a)*8-8, vx:Math.cos(a)*8, dmg:40, type:'wind', life:1, pierce:true });
+    }
+    gs.powerCDs[2] = POWERS[2].cd;
+    spawnParticles(p.x, p.y, '#88ddff', 30, 6);
+  } else if (power === 3 && gs.powers[3]) {
+    if (gs.player.energy < POWERS[3].cost) return;
+    if (gs.powerCDs[3] > 0) return;
+    gs.player.energy -= POWERS[3].cost;
+    // Damage all enemies
+    gs.enemies.forEach(e => {
+      e.hp -= 80;
+      spawnParticles(e.x, e.y, '#ffee00', 15, 4);
+    });
+    if (gs.boss) { gs.boss.hp -= 50; updateBossHP(); }
+    gs.powerCDs[3] = POWERS[3].cd;
+    spawnParticles(W/2, H/2, '#ffe100', 60, 8);
+    addFloatText(p.x, p.y-40, '⚡ TORMENTA ELÉCTRICA', '#ffe100');
+  }
+}
+
+function addFloatText(x, y, text, color='#ffffff') {
+  gs.floatTexts.push({ x, y, text, color, life:1, vy:-1 });
+}
+
+// ─── HUD UPDATE ───────────────────────────────────────────────────────────────
+function updateHUD() {
+  const p = gs.player;
+  document.getElementById('hpBar').style.width = (p.hp/p.maxHp*100)+'%';
+  document.getElementById('enBar').style.width = (p.energy/p.maxEnergy*100)+'%';
+  document.getElementById('planetBar').style.width = gs.planetHealth+'%';
+  document.getElementById('scoreDisp').textContent = gs.score;
+
+  POWERS.forEach((pw, i) => {
+    const el = document.getElementById('pwr'+i);
+    if (!el) return;
+    el.className = 'power-icon' + (i===gs.activePower ? ' active' : '');
+    el.style.opacity = gs.powers[i] ? '1' : '0.2';
+    const cdEl = el.querySelector('.cd');
+    if (gs.powerCDs[i] > 0) {
+      if (!cdEl) { const d=document.createElement('div'); d.className='cd'; el.appendChild(d); }
+      el.querySelector('.cd').textContent = Math.ceil(gs.powerCDs[i]/1000)+'s';
+    } else {
+      if (cdEl) cdEl.remove();
+    }
+  });
+}
+
+function updateBossHP() {
+  if (!gs.boss) return;
+  const pct = gs.boss.hp / gs.boss.maxHp * 100;
+  document.getElementById('bossHPFill').style.width = pct+'%';
+}
+
+// ─── COLLISION ────────────────────────────────────────────────────────────────
+function rectsOverlap(a, b) {
+  return a.x-a.w/2 < b.x+b.w/2 &&
+         a.x+a.w/2 > b.x-b.w/2 &&
+         a.y-a.h/2 < b.y+b.h/2 &&
+         a.y+a.h/2 > b.y-b.h/2;
+}
+
+// ─── GAME LOOP ────────────────────────────────────────────────────────────────
+let lastTime = 0;
+function gameLoop(ts) {
+  const dt = Math.min(ts - lastTime, 50);
+  lastTime = ts;
+  if (!gameRunning) return;
+
+  update(dt);
+  draw();
+  animId = requestAnimationFrame(gameLoop);
+}
+
+function update(dt) {
+  if (gs.phase === 'dead' || gs.phase === 'win' || gs.phase === 'bossWarn') return;
+
+  const p = gs.player;
+
+  // ── Player movement
+  if (keys['ArrowLeft'] || keys['a']) p.x -= p.speed;
+  if (keys['ArrowRight'] || keys['d']) p.x += p.speed;
+  if (keys['ArrowUp'] || keys['w']) p.y -= p.speed*0.7;
+  if (keys['ArrowDown'] || keys['s']) p.y += p.speed*0.7;
+  p.x = Math.max(22, Math.min(W-22, p.x));
+  p.y = Math.max(56, Math.min(H-22, p.y));
+
+  // Trail
+  p.trail.unshift({x:p.x, y:p.y});
+  if (p.trail.length > 8) p.trail.pop();
+
+  // ── Shoot
+  if (gs.shootCooldown > 0) gs.shootCooldown -= dt;
+  if ((keys[' '] || keys['Space']) && gs.shootCooldown <= 0) {
+    playerShoot(gs.activePower);
+    gs.shootCooldown = gs.activePower===0 ? 200 : 100;
+  }
+
+  // ── Power CDs
+  for (let i=1; i<4; i++) {
+    if (gs.powerCDs[i] > 0) gs.powerCDs[i] = Math.max(0, gs.powerCDs[i]-dt);
+  }
+
+  // ── Energy regen
+  if (p.energy < p.maxEnergy) p.energy = Math.min(p.maxEnergy, p.energy + 0.05*dt/16);
+
+  // ── Invincibility
+  if (p.invincible > 0) p.invincible -= dt;
+
+  // ── Spawn enemies
+  const lv = LEVELS[gs.level];
+  if (!gs.bossActive && gs.waveEnemies.length > 0) {
+    gs.spawnTimer -= dt;
+    if (gs.spawnTimer <= 0) {
+      spawnEnemy(gs.waveEnemies[gs.waveIndex % gs.waveEnemies.length]);
+      gs.waveIndex++;
+      if (gs.waveIndex >= gs.waveEnemies.length * 2) gs.waveIndex = 0;
+      gs.spawnTimer = 1800 - gs.level * 60;
+      if (gs.spawnTimer < 600) gs.spawnTimer = 600;
+    }
+  }
+
+  // ── Move enemies
+  gs.enemies = gs.enemies.filter(e => {
+    e.x += e.vx;
+    e.y += e.vy;
+    e.angle += 0.05;
+    if (e.x < e.w/2 || e.x > W-e.w/2) e.vx *= -1;
+
+    // Enemy shoot
+    e.shootTimer += dt;
+    if (e.shootTimer > e.shootInterval) {
+      e.shootTimer = 0;
+      const dx = p.x - e.x, dy = p.y - e.y;
+      const d = Math.sqrt(dx*dx+dy*dy);
+      gs.enemyBullets.push({ x:e.x, y:e.y, vx:(dx/d)*3, vy:(dy/d)*3, w:8, h:8, dmg:ENEMY_TYPES[e.type].dmg, life:1 });
+    }
+
+    // Hit player
+    if (p.invincible <= 0 && rectsOverlap(e, p)) {
+      p.hp -= 10;
+      p.invincible = 800;
+      spawnParticles(p.x, p.y, '#ff4444', 10);
+    }
+
+    return e.y < H + 60;
+  });
+
+  // ── Move bullets
+  gs.bullets = gs.bullets.filter(b => {
+    b.x += b.vx; b.y += b.vy;
+    if (b.y < -20 || b.y > H+20 || b.x < -20 || b.x > W+20) return false;
+
+    // Hit enemies
+    let hit = false;
+    gs.enemies = gs.enemies.filter(e => {
+      if (rectsOverlap(b, e)) {
+        e.hp -= b.dmg;
+        spawnParticles(e.x, e.y, '#00ff88', 8);
+        addFloatText(e.x, e.y, '-'+b.dmg, '#00ff88');
+        if (e.hp <= 0) {
+          gs.score += 50 + gs.level*10;
+          spawnParticles(e.x, e.y, ENEMY_TYPES[e.type].color, 20);
+          addFloatText(e.x, e.y-20, '+'+( 50+gs.level*10), '#ffe100');
+          gs.planetHealth = Math.min(100, gs.planetHealth + 0.5);
+          spawnPickup(e.x, e.y);
+        }
+        if (!b.pierce) hit = true;
+        return e.hp > 0;
+      }
+      return true;
+    });
+
+    // Hit boss
+    if (gs.boss && rectsOverlap(b, gs.boss)) {
+      gs.boss.hp -= b.dmg;
+      spawnParticles(gs.boss.x, gs.boss.y, '#ff8800', 8);
+      addFloatText(gs.boss.x, gs.boss.y, '-'+b.dmg, '#ff4444');
+      updateBossHP();
+      if (!b.pierce) hit = true;
+
+      // Phase 2
+      const bt = BOSS_TYPES[gs.boss.type];
+      if (gs.boss.hp <= bt.phase2hp && gs.boss.phase === 1) {
+        gs.boss.phase = 2;
+        gs.boss.speed *= 1.5;
+        gs.boss.shootInterval = Math.max(40, gs.boss.shootInterval - 30);
+        addFloatText(gs.boss.x, gs.boss.y-50, '¡FASE 2!', '#ff4444');
+        spawnParticles(gs.boss.x, gs.boss.y, '#ff4444', 40, 6);
+      }
+
+      if (gs.boss.hp <= 0) {
+        bossDefeated();
+      }
+    }
+
+    return !hit;
+  });
+
+  // ── Enemy bullets
+  gs.enemyBullets = gs.enemyBullets.filter(b => {
+    b.x += b.vx; b.y += b.vy;
+    if (b.y > H+10 || b.x < -10 || b.x > W+10) return false;
+    if (p.invincible <= 0 && rectsOverlap(b, p)) {
+      p.hp -= b.dmg;
+      p.invincible = 600;
+      spawnParticles(p.x, p.y, '#ff4444', 8);
+      return false;
+    }
+    return true;
+  });
+
+  // ── Boss movement
+  if (gs.boss) {
+    const bo = gs.boss;
+    bo.patternTimer += dt;
+    // Sinusoidal movement
+    bo.x = W/2 + Math.sin(bo.patternTimer*0.001*bo.speed) * (W*0.35);
+    if (bo.phase === 2) {
+      bo.y = 80 + Math.sin(bo.patternTimer*0.002) * 60;
+    }
+    bo.angle += 0.03;
+
+    // Boss shoot
+    bo.shootTimer += dt;
+    if (bo.shootTimer > bo.shootInterval) {
+      bo.shootTimer = 0;
+      bossShoot(bo);
+    }
+  }
+
+  // ── Pickups
+  gs.pickups = gs.pickups.filter(pk => {
+    pk.y += 1;
+    pk.angle += 0.05;
+    if (rectsOverlap(pk, p)) {
+      if (pk.type === 'hp') { p.hp = Math.min(p.maxHp, p.hp + 20); addFloatText(p.x, p.y-30, '+20 HP', '#ff8888'); }
+      else if (pk.type === 'en') { p.energy = Math.min(p.maxEnergy, p.energy + 30); addFloatText(p.x, p.y-30, '+30 EN', '#88eeff'); }
+      else if (pk.type === 'score') { gs.score += 100; addFloatText(p.x, p.y-30, '+100', '#ffe100'); }
+      spawnParticles(pk.x, pk.y, pk.color, 10);
+      return false;
+    }
+    return pk.y < H+20;
+  });
+
+  // ── Particles
+  particles = particles.filter(p => {
+    p.x += p.vx; p.y += p.vy;
+    p.vy += 0.1;
+    p.life -= 0.04;
+    return p.life > 0;
+  });
+
+  // ── Float texts
+  gs.floatTexts = gs.floatTexts.filter(ft => {
+    ft.y += ft.vy;
+    ft.life -= 0.03;
+    return ft.life > 0;
+  });
+
+  // ── Level complete
+  const lv2 = LEVELS[gs.level];
+  if (!lv2.bossLevel && gs.waveIndex >= gs.waveEnemies.length*2 && gs.enemies.length === 0 && gs.waveEnemies.length > 0) {
+    levelComplete();
+  }
+
+  // ── Planet health decay
+  gs.planetHealth = Math.max(0, gs.planetHealth - 0.005*dt/16);
+
+  // ── Check death
+  if (p.hp <= 0 || gs.planetHealth <= 0) {
+    gs.phase = 'dead';
+    gameRunning = false;
+    showGameOver();
+  }
+
+  updateHUD();
+}
+
+function bossShoot(bo) {
+  const p = gs.player;
+  const dx = p.x - bo.x, dy = p.y - bo.y;
+  const d = Math.sqrt(dx*dx+dy*dy);
+  if (bo.phase === 1) {
+    for (let i=0; i<3; i++) {
+      const spread = (i-1)*0.3;
+      gs.enemyBullets.push({ x:bo.x, y:bo.y+bo.h/2, vx:(dx/d)*4+spread, vy:(dy/d)*4, w:10, h:10, dmg:18, life:1 });
+    }
+  } else {
+    for (let i=0; i<6; i++) {
+      const a = (i/6)*Math.PI*2 + bo.angle;
+      gs.enemyBullets.push({ x:bo.x, y:bo.y, vx:Math.cos(a)*5, vy:Math.sin(a)*5, w:10, h:10, dmg:22, life:1 });
+    }
+    // Aimed shot
+    gs.enemyBullets.push({ x:bo.x, y:bo.y, vx:(dx/d)*7, vy:(dy/d)*7, w:14, h:14, dmg:30, life:1 });
+  }
+}
+
+function spawnPickup(x, y) {
+  if (Math.random() < 0.3) {
+    const t = Math.random();
+    const type = t < 0.4 ? 'hp' : t < 0.7 ? 'en' : 'score';
+    const color = type==='hp'?'#ff8888':type==='en'?'#88eeff':'#ffe100';
+    const emoji = type==='hp'?'💚':type==='en'?'⚡':'✨';
+    gs.pickups.push({ x, y, w:20, h:20, type, color, emoji, angle:0 });
+  }
+}
+
+function levelComplete() {
+  if (gs.phase !== 'playing') return;
+  gs.phase = 'levelComplete';
+  const lv = LEVELS[gs.level];
+  gs.planetHealth = Math.min(100, gs.planetHealth + lv.planetGain);
+  gs.score += 500 + gs.level*100;
+
+  setTimeout(() => {
+    if (gs.level + 1 >= LEVELS.length) {
+      gameWin();
+    } else {
+      loadLevel(gs.level + 1);
+      gs.phase = 'playing';
+    }
+  }, 1500);
+}
+
+function bossDefeated() {
+  if (!gs.boss) return;
+  const bt = BOSS_TYPES[gs.boss.type];
+  spawnParticles(gs.boss.x, gs.boss.y, '#ffee00', 60, 8);
+  gs.score += 2000 + gs.level*300;
+  gs.planetHealth = Math.min(100, gs.planetHealth + LEVELS[gs.level].planetGain);
+
+  // Unlock power
+  const powerIdx = gs.boss.type==='reactor'?1:gs.boss.type==='storm'?2:3;
+  gs.powers[powerIdx] = true;
+  showPowerUnlock({ ...bt, emoji: bt.reward, rewardName: bt.rewardName, rewardDesc: bt.rewardDesc });
+  buildPowerIcons();
+
+  gs.boss = null;
+  gs.bossActive = false;
+  document.getElementById('bossHPBar').style.display = 'none';
+  document.getElementById('bossWarning').classList.remove('show');
+
+  setTimeout(() => {
+    if (gs.level + 1 >= LEVELS.length) {
+      gameWin();
+    } else {
+      loadLevel(gs.level + 1);
+    }
+  }, 3200);
+}
+
+function gameWin() {
+  gameRunning = false;
+  gs.phase = 'win';
+  document.querySelectorAll('#gameOver,#gameWin').forEach(s=>s.classList.add('hidden'));
+  document.getElementById('gameWin').classList.remove('hidden');
+  document.getElementById('finalScore').textContent = 'PUNTUACIÓN: ' + gs.score;
+}
+
+function showGameOver() {
+  document.querySelectorAll('#gameOver,#gameWin').forEach(s=>s.classList.add('hidden'));
+  document.getElementById('gameOver').classList.remove('hidden');
+  document.getElementById('finalScore').innerHTML = 'PUNTUACIÓN: ' + gs.score + '<br><span style="font-size:14px;color:#aaa">Nivel: '+(gs.level+1)+' / '+LEVELS.length+'</span>';
+}
+
+// ─── DRAW ─────────────────────────────────────────────────────────────────────
+function draw() {
+  ctx.clearRect(0,0,W,H);
+  const bgKey = LEVELS[gs.level]?.bg || 'factory';
+  const bg = BG_COLORS[bgKey] || BG_COLORS.factory;
+
+  // Background gradient
+  const grad = ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0, bg.sky1);
+  grad.addColorStop(0.6, bg.sky2);
+  grad.addColorStop(1, bg.ground);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,0,W,H);
+
+  // Stars
+  gs.stars.forEach(s => {
+    s.t += 0.02;
+    const a = 0.4 + 0.4*Math.sin(s.t);
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.s, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(255,255,255,${a})`;
+    ctx.fill();
+  });
+
+  // Grid lines
+  ctx.strokeStyle = bg.accent+'18';
+  ctx.lineWidth = 1;
+  for (let x=0; x<W; x+=60) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+  for (let y=56; y<H; y+=60) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+  // Renewable sprites (ground decoration)
+  gs.renewableSprites.forEach(s => {
+    ctx.font = `${20*s.scale}px serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(s.type, s.x, s.y);
+  });
+
+  // Player trail
+  gs.player.trail.forEach((t,i) => {
+    const a = (1 - i/8) * 0.3;
+    ctx.save();
+    ctx.globalAlpha = a;
+    drawPlayer(t.x, t.y, 0.7);
+    ctx.restore();
+  });
+
+  // Player
+  if (gs.player.invincible <= 0 || Math.floor(Date.now()/80)%2===0) {
+    drawPlayer(gs.player.x, gs.player.y, 1);
+  }
+
+  // Bullets
+  gs.bullets.forEach(b => {
+    ctx.save();
+    if (b.type==='solar') {
+      const g = ctx.createLinearGradient(b.x-4, b.y-30, b.x+4, b.y+30);
+      g.addColorStop(0,'#ffee00'); g.addColorStop(1,'#ff8800');
+      ctx.fillStyle = g;
+      ctx.shadowColor = '#ffee00'; ctx.shadowBlur = 20;
+      ctx.fillRect(b.x-4, b.y-H, 8, H+20);
+    } else if (b.type==='wind') {
+      ctx.fillStyle = '#88ddff';
+      ctx.shadowColor = '#88ddff'; ctx.shadowBlur = 12;
+      ctx.beginPath(); ctx.arc(b.x, b.y, 6, 0, Math.PI*2); ctx.fill();
+    } else {
+      ctx.fillStyle = '#00ff88';
+      ctx.shadowColor = '#00ff88'; ctx.shadowBlur = 12;
+      ctx.fillRect(b.x-3, b.y-8, 6, 16);
+    }
+    ctx.restore();
+  });
+
+  // Enemy bullets
+  gs.enemyBullets.forEach(b => {
+    ctx.save();
+    ctx.fillStyle = '#ff4444';
+    ctx.shadowColor = '#ff4444'; ctx.shadowBlur = 10;
+    ctx.beginPath(); ctx.arc(b.x, b.y, 5, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  });
+
+  // Enemies
+  gs.enemies.forEach(e => drawEnemy(e));
+
+  // Boss
+  if (gs.boss) drawBoss(gs.boss);
+
+  // Pickups
+  gs.pickups.forEach(pk => {
+    ctx.save();
+    ctx.font = '20px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = pk.color; ctx.shadowBlur = 15;
+    ctx.translate(pk.x, pk.y);
+    ctx.rotate(pk.angle);
+    ctx.fillText(pk.emoji, 0, 0);
+    ctx.restore();
+  });
+
+  // Particles
+  particles.forEach(p => {
+    ctx.save();
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = p.color;
+    ctx.shadowColor = p.color; ctx.shadowBlur = 8;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.size*p.life, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  });
+
+  // Float texts
+  gs.floatTexts.forEach(ft => {
+    ctx.save();
+    ctx.globalAlpha = ft.life;
+    ctx.fillStyle = ft.color;
+    ctx.font = 'bold 13px "Orbitron", monospace';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = ft.color; ctx.shadowBlur = 8;
+    ctx.fillText(ft.text, ft.x, ft.y);
+    ctx.restore();
+  });
+
+  // Planet health overlay (slight tint when low)
+  if (gs.planetHealth < 25) {
+    ctx.fillStyle = `rgba(255,80,0,${(25-gs.planetHealth)/100})`;
+    ctx.fillRect(0,0,W,H);
+  }
+}
+
+function drawPlayer(x, y, alpha) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(x, y);
+
+  // Engine glow
+  ctx.shadowColor = '#00ff88'; ctx.shadowBlur = 20;
+
+  // Body
+  ctx.fillStyle = '#0a3028';
+  ctx.beginPath();
+  ctx.moveTo(0, -22); ctx.lineTo(16, 14); ctx.lineTo(0, 8); ctx.lineTo(-16, 14);
+  ctx.closePath(); ctx.fill();
+
+  // Cockpit
+  ctx.fillStyle = '#00cfff';
+  ctx.shadowColor = '#00cfff'; ctx.shadowBlur = 12;
+  ctx.beginPath();
+  ctx.moveTo(0, -18); ctx.lineTo(8, 2); ctx.lineTo(0, -2); ctx.lineTo(-8, 2);
+  ctx.closePath(); ctx.fill();
+
+  // Thrusters
+  ctx.fillStyle = '#00ff88';
+  ctx.fillRect(-14, 10, 8, 6);
+  ctx.fillRect(6, 10, 8, 6);
+
+  // Thrust flame
+  if (Math.floor(Date.now()/60)%2===0) {
+    ctx.fillStyle = '#ffe100';
+    ctx.shadowColor = '#ffe100'; ctx.shadowBlur = 14;
+    ctx.beginPath();
+    ctx.moveTo(-10, 16); ctx.lineTo(-6, 16+8+Math.random()*6); ctx.lineTo(-2, 16);
+    ctx.closePath(); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(10, 16); ctx.lineTo(8, 16+8+Math.random()*6); ctx.lineTo(12, 16);
+    ctx.closePath(); ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+function drawEnemy(e) {
+  const et = ENEMY_TYPES[e.type];
+  ctx.save();
+  ctx.translate(e.x, e.y);
+  ctx.rotate(e.angle*0.5);
+
+  ctx.shadowColor = et.color; ctx.shadowBlur = 14;
+  ctx.fillStyle = et.color;
+
+  // Body (hexagon shape)
+  ctx.beginPath();
+  for (let i=0; i<6; i++) {
+    const a = (i/6)*Math.PI*2 - Math.PI/6;
+    const r = e.w/2;
+    i===0 ? ctx.moveTo(Math.cos(a)*r, Math.sin(a)*r) : ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r);
+  }
+  ctx.closePath(); ctx.fill();
+
+  // HP bar
+  if (e.hp < e.maxHp) {
+    const bw = e.w+4;
+    ctx.fillStyle = '#300';
+    ctx.fillRect(-bw/2, -e.h/2-10, bw, 5);
+    ctx.fillStyle = '#f44';
+    ctx.fillRect(-bw/2, -e.h/2-10, bw*(e.hp/e.maxHp), 5);
+  }
+
+  // Emoji
+  ctx.shadowBlur = 0;
+  ctx.font = `${e.w*0.6}px serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(et.emoji, 0, 0);
+
+  ctx.restore();
+}
+
+function drawBoss(bo) {
+  const bt = BOSS_TYPES[bo.type];
+  ctx.save();
+  ctx.translate(bo.x, bo.y);
+
+  const pulse = 0.95 + 0.05*Math.sin(Date.now()*0.005);
+  ctx.scale(pulse, pulse);
+
+  // Aura
+  const auraGrad = ctx.createRadialGradient(0,0,bo.w*0.3,0,0,bo.w*1.2);
+  auraGrad.addColorStop(0,'rgba(255,68,0,0.3)');
+  auraGrad.addColorStop(1,'rgba(255,0,0,0)');
+  ctx.fillStyle = auraGrad;
+  ctx.beginPath(); ctx.arc(0,0,bo.w*1.2,0,Math.PI*2); ctx.fill();
+
+  // Body
+  ctx.shadowColor = '#ff4400'; ctx.shadowBlur = 30;
+  ctx.strokeStyle = bo.phase===2 ? '#ff0000' : '#ff6600';
+  ctx.lineWidth = 3;
+  ctx.fillStyle = bt.color;
+
+  ctx.save();
+  ctx.rotate(bo.angle);
+  ctx.beginPath();
+  for (let i=0; i<8; i++) {
+    const a = (i/8)*Math.PI*2;
+    const r = i%2===0 ? bo.w/2 : bo.w/2*0.7;
+    i===0 ? ctx.moveTo(Math.cos(a)*r, Math.sin(a)*r) : ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r);
+  }
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.restore();
+
+  // Emoji
+  ctx.font = `${bo.w*0.7}px serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.shadowBlur = 0;
+  ctx.fillText(bt.emoji, 0, 0);
+
+  // Boss name
+  ctx.fillStyle = bo.phase===2 ? '#ff4444' : '#ff8800';
+  ctx.font = 'bold 12px "Orbitron", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(bt.name + (bo.phase===2?' [FASE 2]':''), 0, -bo.h/2-16);
+
+  ctx.restore();
+}
+
+// ─── CONTROLS ─────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  keys[e.key] = true;
+  keys[e.code] = true;
+  if (e.key === '1') selectPower(0);
+  if (e.key === '2') selectPower(1);
+  if (e.key === '3') selectPower(2);
+  if (e.key === '4') selectPower(3);
+  if (e.key === ' ') e.preventDefault();
+});
+document.addEventListener('keyup', e => { keys[e.key] = false; keys[e.code] = false; });
+
+function selectPower(i) {
+  if (!gs.powers[i]) return;
+  gs.activePower = i;
+}
+
+// ─── UI ACTIONS ───────────────────────────────────────────────────────────────
+function startGame() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  if (animId) cancelAnimationFrame(animId);
+  particles = [];
+  gameRunning = true;
+  initGame();
+  lastTime = performance.now();
+  animId = requestAnimationFrame(gameLoop);
+}
+
+function showTitle() {
+  gameRunning = false;
+  if (animId) cancelAnimationFrame(animId);
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  document.getElementById('titleScreen').classList.remove('hidden');
+}
+
+// Start title animation
+(function titleLoop() {
+  if (document.getElementById('titleScreen').classList.contains('hidden')) return;
+  requestAnimationFrame(titleLoop);
+})();
+</script>
+</body>
+</html>

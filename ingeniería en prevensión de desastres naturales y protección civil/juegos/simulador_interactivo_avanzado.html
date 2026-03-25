@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔥 Simulador Avanzado de Incendios Forestales</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=IBM+Plex+Mono:wght@400;600&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'IBM Plex Mono', monospace;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0f1428 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 30px;
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3.5em;
+            background: linear-gradient(135deg, #ff4444, #ff9500, #ffdd00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            letter-spacing: -1px;
+            text-shadow: 0 4px 20px rgba(255, 68, 68, 0.3);
+        }
+
+        .subtitle {
+            color: #cbd5e1;
+            font-size: 1.1em;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 2.5fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .simulation-area {
+            background: linear-gradient(135deg, rgba(20, 25, 50, 0.9), rgba(30, 35, 60, 0.95));
+            border: 2px solid rgba(255, 68, 68, 0.3);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: radial-gradient(ellipse at bottom, #1a2a4a 0%, #0a1428 100%);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(100, 200, 255, 0.2);
+            margin-bottom: 20px;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 10px 30px rgba(255, 68, 68, 0.2));
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(255, 68, 68, 0.1), rgba(255, 153, 0, 0.1));
+            border: 1px solid rgba(255, 153, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(255, 153, 0, 0.6);
+            box-shadow: 0 10px 20px rgba(255, 153, 0, 0.2);
+        }
+
+        .stat-label {
+            font-size: 0.8em;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: 600;
+            color: #fbbf24;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        .control-panel {
+            display: grid;
+            grid-template-rows: auto auto auto;
+            gap: 20px;
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+        }
+
+        .panel-section {
+            background: linear-gradient(135deg, rgba(248, 113, 113, 0.08), rgba(255, 153, 0, 0.08));
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .panel-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(255, 153, 0, 0.5), transparent);
+        }
+
+        .panel-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3em;
+            color: #fbbf24;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .param-slider {
+            margin-bottom: 18px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+            color: #cbd5e1;
+        }
+
+        .slider-label strong {
+            color: #fbbf24;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: linear-gradient(90deg, #1e3a8a 0%, #dc2626 50%, #ea580c 100%);
+            outline: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #fbbf24, #f97316);
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(255, 153, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 6px 16px rgba(255, 153, 0, 0.7);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #fbbf24, #f97316);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 4px 12px rgba(255, 153, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            background: rgba(15, 23, 42, 0.8);
+            color: #fbbf24;
+            border: 1px solid rgba(255, 153, 0, 0.3);
+            border-radius: 8px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        select:hover {
+            border-color: rgba(255, 153, 0, 0.6);
+            box-shadow: 0 0 15px rgba(255, 153, 0, 0.2);
+        }
+
+        .resource-group {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .resource-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            justify-content: space-between;
+        }
+
+        .resource-label {
+            flex: 1;
+            font-size: 0.9em;
+            color: #cbd5e1;
+        }
+
+        .resource-value {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #fbbf24;
+            min-width: 50px;
+            text-align: right;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        button {
+            padding: 8px 12px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 0.85em;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #dc2626, #ea580c);
+            color: white;
+            flex: 1;
+            padding: 12px 20px;
+            font-size: 1em;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(220, 38, 38, 0.4);
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+
+        .btn-secondary {
+            background: rgba(71, 85, 105, 0.5);
+            color: white;
+            flex: 1;
+            padding: 12px 20px;
+            font-size: 1em;
+            border-radius: 10px;
+            border: 1px solid rgba(100, 116, 139, 0.5);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(100, 116, 139, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .btn-sm {
+            padding: 6px 10px;
+            font-size: 0.8em;
+            flex: 1;
+        }
+
+        .btn-minus {
+            background: rgba(220, 38, 38, 0.6);
+            color: white;
+        }
+
+        .btn-minus:hover {
+            background: rgba(220, 38, 38, 1);
+        }
+
+        .btn-plus {
+            background: rgba(22, 163, 74, 0.6);
+            color: white;
+        }
+
+        .btn-plus:hover {
+            background: rgba(22, 163, 74, 1);
+        }
+
+        .charts-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+            animation: fadeInUp 0.8s ease-out 0.6s both;
+        }
+
+        .chart-card {
+            background: linear-gradient(135deg, rgba(20, 25, 50, 0.9), rgba(30, 35, 60, 0.95));
+            border: 1px solid rgba(100, 200, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .chart-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.2em;
+            color: #fbbf24;
+            margin-bottom: 15px;
+        }
+
+        .chart-canvas {
+            width: 100%;
+            height: 250px;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            10%, 20%, 40%, 60%, 80%, 90% { opacity: 0.8; }
+            30%, 50%, 70% { opacity: 0.5; }
+        }
+
+        .fire-flicker {
+            animation: flicker 0.15s infinite;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 15px;
+        }
+
+        .status-active {
+            background: linear-gradient(135deg, rgba(220, 38, 38, 0.3), rgba(239, 68, 68, 0.3));
+            color: #fca5a5;
+            border: 1px solid rgba(220, 38, 38, 0.6);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .status-controlled {
+            background: linear-gradient(135deg, rgba(22, 163, 74, 0.3), rgba(74, 222, 128, 0.3));
+            color: #86efac;
+            border: 1px solid rgba(22, 163, 74, 0.6);
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 2.5em;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .control-panel {
+                grid-template-rows: auto;
+            }
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #64748b;
+            font-size: 0.85em;
+            padding: 20px;
+            border-top: 1px solid rgba(100, 116, 139, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="stars" id="starsContainer"></div>
+
+    <div class="container">
+        <header>
+            <h1>🔥 SIMULADOR DE INCENDIOS FORESTALES</h1>
+            <p class="subtitle">Basado en 1,531 incendios reales • Control interactivo avanzado</p>
+        </header>
+
+        <div class="main-layout">
+            <!-- ÁREA DE SIMULACIÓN -->
+            <div class="simulation-area">
+                <div class="canvas-container">
+                    <svg id="simulationSVG" viewBox="0 0 1200 675">
+                        <!-- Cielo -->
+                        <defs>
+                            <linearGradient id="skyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" style="stop-color:#1a2a4a;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#3a4f7a;stop-opacity:1" />
+                            </linearGradient>
+                            <radialGradient id="fireGlow" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" style="stop-color:#ffff99;stop-opacity:0.8" />
+                                <stop offset="50%" style="stop-color:#ff9933;stop-opacity:0.4" />
+                                <stop offset="100%" style="stop-color:#ff3333;stop-opacity:0" />
+                            </radialGradient>
+                            <filter id="glow">
+                                <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                                <feMerge>
+                                    <feMergeNode in="coloredBlur"/>
+                                    <feMergeNode in="SourceGraphic"/>
+                                </feMerge>
+                            </filter>
+                        </defs>
+
+                        <!-- Cielo -->
+                        <rect width="1200" height="675" fill="url(#skyGradient)"/>
+
+                        <!-- Montañas -->
+                        <path d="M 0 400 Q 300 250 600 350 T 1200 400 L 1200 675 L 0 675 Z" fill="#1a3a2a" opacity="0.8"/>
+                        <path d="M 0 450 Q 400 300 800 420 T 1200 450 L 1200 675 L 0 675 Z" fill="#0f2020" opacity="0.6"/>
+
+                        <!-- Terreno -->
+                        <rect y="500" width="1200" height="175" fill="#0a4a0a"/>
+
+                        <!-- Fuego (será animado) -->
+                        <circle id="fireCircle" cx="600" cy="400" r="0" fill="url(#fireGlow)" filter="url(#glow)" class="fire-flicker"/>
+                        <circle id="fireCenter" cx="600" cy="400" r="0" fill="#ff6b1f"/>
+
+                        <!-- Helicópteros (animados) -->
+                        <g id="helicopter1" transform="translate(200, 150)">
+                            <rect x="-30" y="-8" width="60" height="16" fill="#ff4444" rx="5"/>
+                            <circle cx="0" cy="-20" r="25" fill="none" stroke="#ff4444" stroke-width="3"/>
+                            <circle cx="0" cy="-20" r="20" fill="none" stroke="#ff4444" stroke-width="2" stroke-dasharray="5,5"/>
+                            <circle cx="0" cy="0" r="6" fill="#ffd700"/>
+                        </g>
+
+                        <g id="helicopter2" transform="translate(400, 180)">
+                            <rect x="-30" y="-8" width="60" height="16" fill="#ff4444" rx="5"/>
+                            <circle cx="0" cy="-20" r="25" fill="none" stroke="#ff4444" stroke-width="3"/>
+                            <circle cx="0" cy="-20" r="20" fill="none" stroke="#ff4444" stroke-width="2" stroke-dasharray="5,5"/>
+                            <circle cx="0" cy="0" r="6" fill="#ffd700"/>
+                        </g>
+
+                        <!-- Bomberos -->
+                        <g id="firefighters" transform="translate(0, 480)">
+                            <circle cx="150" cy="0" r="8" fill="#ffd700"/>
+                            <rect x="142" y="8" width="16" height="20" fill="#ffd700"/>
+                            
+                            <circle cx="250" cy="0" r="8" fill="#ffd700"/>
+                            <rect x="242" y="8" width="16" height="20" fill="#ffd700"/>
+                            
+                            <circle cx="350" cy="0" r="8" fill="#ffd700"/>
+                            <rect x="342" y="8" width="16" height="20" fill="#ffd700"/>
+                        </g>
+
+                        <!-- Líneas de agua desde helicópteros -->
+                        <line id="waterLine1" x1="0" y1="0" x2="0" y2="0" stroke="#00bfff" stroke-width="3" opacity="0.6"/>
+                        <line id="waterLine2" x1="0" y1="0" x2="0" y2="0" stroke="#00bfff" stroke-width="3" opacity="0.6"/>
+
+                        <!-- Texto info -->
+                        <text x="30" y="40" font-family="monospace" font-size="20" fill="#fbbf24">Área: <tspan id="areaText">0.0</tspan> ha</text>
+                        <text x="30" y="70" font-family="monospace" font-size="20" fill="#fbbf24">Días: <tspan id="daysText">0</tspan></text>
+                        <text x="30" y="100" font-family="monospace" font-size="20" fill="#fbbf24">Temp: <tspan id="tempText">0</tspan>°C</text>
+                    </svg>
+                </div>
+
+                <!-- ESTADÍSTICAS -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">📍 Área Incendio</div>
+                        <div class="stat-value" id="statArea">0.00 ha</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">⏱️ Días</div>
+                        <div class="stat-value" id="statDays">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">👥 Personas</div>
+                        <div class="stat-value" id="statPersons">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">🎯 Estado</div>
+                        <div class="stat-value" id="statStatus">—</div>
+                    </div>
+                </div>
+
+                <!-- Botones de Control -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
+                    <button class="btn-primary" onclick="toggleSimulation()">
+                        <span id="btnText">▶ INICIAR SIMULACIÓN</span>
+                    </button>
+                    <button class="btn-secondary" onclick="resetSimulation()">
+                        ↺ REINICIAR
+                    </button>
+                </div>
+            </div>
+
+            <!-- PANEL DE CONTROL -->
+            <div class="control-panel">
+                <!-- Parámetros del Incendio -->
+                <div class="panel-section">
+                    <div class="panel-title">🌡️ INCENDIO</div>
+
+                    <div class="param-slider">
+                        <div class="slider-label">
+                            <span>Temperatura</span>
+                            <strong id="tempLabel">850°C</strong>
+                        </div>
+                        <input type="range" id="temperature" min="200" max="1200" value="850"
+                               oninput="updateParam('temperature', this.value)">
+                    </div>
+
+                    <div class="param-slider">
+                        <div class="slider-label">
+                            <span>Viento</span>
+                            <strong id="windLabel">12 km/h</strong>
+                        </div>
+                        <input type="range" id="windSpeed" min="0" max="50" value="12"
+                               oninput="updateParam('windSpeed', this.value)">
+                    </div>
+
+                    <div class="param-slider">
+                        <div class="slider-label">
+                            <span>Humedad</span>
+                            <strong id="humidityLabel">35%</strong>
+                        </div>
+                        <input type="range" id="humidity" min="5" max="100" value="35"
+                               oninput="updateParam('humidity', this.value)">
+                    </div>
+
+                    <div class="param-slider">
+                        <div class="slider-label">
+                            <span>Vegetación</span>
+                        </div>
+                        <select id="vegetation" onchange="updateVegetation()">
+                            <option value="pine">🌲 Bosque de Pino (1.8x)</option>
+                            <option value="oak">🌳 Bosque de Encino (1.4x)</option>
+                            <option value="shrub">🌾 Matorral Crasicaule (2.1x)</option>
+                            <option value="mesophyll">🌿 Bosque Mesófilo (1.6x)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Recursos -->
+                <div class="panel-section">
+                    <div class="panel-title">👥 RECURSOS</div>
+
+                    <div class="resource-group">
+                        <div class="resource-control">
+                            <span class="resource-label">🚁 Helicópteros</span>
+                            <span class="resource-value" id="helicoptersValue">1</span>
+                        </div>
+                        <div class="btn-group" style="margin-top: 8px;">
+                            <button class="btn-sm btn-minus" onclick="updateResource('helicopters', -1)">−</button>
+                            <button class="btn-sm btn-plus" onclick="updateResource('helicopters', 1)">+</button>
+                        </div>
+                    </div>
+
+                    <div class="resource-group">
+                        <div class="resource-control">
+                            <span class="resource-label">👨‍🚒 Bomberos</span>
+                            <span class="resource-value" id="firefightersValue">15</span>
+                        </div>
+                        <div class="btn-group" style="margin-top: 8px;">
+                            <button class="btn-sm btn-minus" onclick="updateResource('firefighters', -5)">−5</button>
+                            <button class="btn-sm btn-plus" onclick="updateResource('firefighters', 5)">+5</button>
+                        </div>
+                    </div>
+
+                    <div class="resource-group">
+                        <div class="resource-control">
+                            <span class="resource-label">💧 Tanques de Agua</span>
+                            <span class="resource-value" id="waterTanksValue">5</span>
+                        </div>
+                        <div class="btn-group" style="margin-top: 8px;">
+                            <button class="btn-sm btn-minus" onclick="updateResource('waterTanks', -1)">−</button>
+                            <button class="btn-sm btn-plus" onclick="updateResource('waterTanks', 1)">+</button>
+                        </div>
+                    </div>
+
+                    <div id="statusBadge" style="margin-top: 15px;"></div>
+                </div>
+
+                <!-- Información -->
+                <div class="panel-section">
+                    <div class="panel-title">ℹ️ INFORMACIÓN</div>
+                    <div style="font-size: 0.85em; color: #cbd5e1; line-height: 1.6;">
+                        <p style="margin-bottom: 10px;">
+                            <strong style="color: #fbbf24;">📊 Datos Reales:</strong><br>
+                            1,531 incendios registrados
+                        </p>
+                        <p style="margin-bottom: 10px;">
+                            <strong style="color: #fbbf24;">📈 Rango:</strong><br>
+                            0.1 - 152,820 ha
+                        </p>
+                        <p>
+                            <strong style="color: #fbbf24;">👥 Personal:</strong><br>
+                            5 - 1,249 personas
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- GRÁFICOS -->
+        <div class="charts-section">
+            <div class="chart-card">
+                <div class="chart-title">📈 Crecimiento del Incendio</div>
+                <canvas id="growthChart" class="chart-canvas"></canvas>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">⚖️ Supresión vs Propagación</div>
+                <canvas id="suppressionChart" class="chart-canvas"></canvas>
+            </div>
+        </div>
+
+        <footer>
+            <p>Simulador Avanzado de Incendios Forestales • Entrenamiento interactivo para especialistas en control de emergencias</p>
+            <p style="margin-top: 10px;">Datos basados en registros reales de la República Mexicana</p>
+        </footer>
+    </div>
+
+    <script>
+        // ===== ESTADO DE LA SIMULACIÓN =====
+        let isRunning = false;
+        let simState = {
+            fireArea: 0,
+            daysElapsed: 0,
+            personDays: 0,
+            suppressed: false,
+            history: { days: [], area: [], suppression: [], propagation: [] }
+        };
+
+        let fireParams = {
+            temperature: 850,
+            windSpeed: 12,
+            humidity: 35,
+            vegetationType: 'pine',
+            spreadRate: 1.5
+        };
+
+        let resources = {
+            helicopters: 1,
+            firefighters: 15,
+            waterTanks: 5
+        };
+
+        const vegetationData = {
+            pine: { name: 'Bosque de Pino', spreadMultiplier: 1.8 },
+            oak: { name: 'Bosque de Encino-Pino', spreadMultiplier: 1.4 },
+            shrub: { name: 'Matorral Crasicaule', spreadMultiplier: 2.1 },
+            mesophyll: { name: 'Bosque Mesófilo', spreadMultiplier: 1.6 }
+        };
+
+        // Crear estrellas de fondo
+        function createStars() {
+            const container = document.getElementById('starsContainer');
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.style.position = 'absolute';
+                star.style.width = Math.random() * 2 + 'px';
+                star.style.height = star.style.width;
+                star.style.background = '#fff';
+                star.style.borderRadius = '50%';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.opacity = Math.random() * 0.7 + 0.3;
+                star.style.animation = `pulse ${Math.random() * 3 + 2}s ease-in-out infinite`;
+                container.appendChild(star);
+            }
+        }
+
+        // Actualizar parámetros
+        function updateParam(param, value) {
+            fireParams[param] = parseInt(value);
+            const labels = {
+                'temperature': 'tempLabel',
+                'windSpeed': 'windLabel',
+                'humidity': 'humidityLabel'
+            };
+            if (labels[param]) {
+                const suffix = param === 'humidity' ? '%' : (param === 'windSpeed' ? ' km/h' : '°C');
+                document.getElementById(labels[param]).textContent = value + suffix;
+            }
+        }
+
+        function updateVegetation() {
+            fireParams.vegetationType = document.getElementById('vegetation').value;
+        }
+
+        function updateResource(resource, delta) {
+            const newValue = Math.max(0, resources[resource] + delta);
+            resources[resource] = newValue;
+            document.getElementById(resource + 'Value').textContent = newValue;
+        }
+
+        // Calcular comportamiento del fuego
+        function calculateFireBehavior() {
+            const vegData = vegetationData[fireParams.vegetationType];
+            const windFactor = 1 + (fireParams.windSpeed / 50);
+            const humidityFactor = 1 - (fireParams.humidity / 200);
+            const tempFactor = 1 + (fireParams.temperature - 800) / 200;
+            
+            const spreadFactor = windFactor * humidityFactor * tempFactor * vegData.spreadMultiplier;
+            const nextAreaGrowth = Math.max(0.05, fireParams.spreadRate * spreadFactor * (1 - Math.min(1, simState.fireArea / 500)));
+            
+            const suppressionBase = (resources.helicopters * 0.08 + resources.firefighters * 0.003 + resources.waterTanks * 0.05) / 100;
+            const suppressionRate = Math.min(0.95, suppressionBase);
+            
+            return { nextAreaGrowth, suppressionRate };
+        }
+
+        // Controles
+        function toggleSimulation() {
+            isRunning = !isRunning;
+            document.getElementById('btnText').textContent = isRunning ? '⏸ PAUSAR' : '▶ INICIAR';
+        }
+
+        function resetSimulation() {
+            isRunning = false;
+            simState = {
+                fireArea: 0,
+                daysElapsed: 0,
+                personDays: 0,
+                suppressed: false,
+                history: { days: [], area: [], suppression: [], propagation: [] }
+            };
+            document.getElementById('btnText').textContent = '▶ INICIAR SIMULACIÓN';
+            updateUI();
+        }
+
+        // Actualizar UI
+        function updateUI() {
+            document.getElementById('statArea').textContent = simState.fireArea.toFixed(2) + ' ha';
+            document.getElementById('statDays').textContent = simState.daysElapsed;
+            document.getElementById('statPersons').textContent = simState.personDays;
+            
+            let statusHTML = '';
+            let statusText = '—';
+            
+            if (simState.fireArea === 0) {
+                statusText = '✓ CONTROLADO';
+                statusHTML = '<div class="status-badge status-controlled">✓ INCENDIO CONTROLADO</div>';
+            } else if (simState.fireArea > 50) {
+                statusText = '🔥 CRÍTICO';
+                statusHTML = '<div class="status-badge status-active">⚠️ SITUACIÓN CRÍTICA</div>';
+            } else {
+                statusText = '⚠️ ACTIVO';
+                statusHTML = '<div class="status-badge status-active">🔥 INCENDIO ACTIVO</div>';
+            }
+            
+            document.getElementById('statStatus').textContent = statusText;
+            document.getElementById('statusBadge').innerHTML = statusHTML;
+        }
+
+        // Dibujar en SVG
+        function drawSimulation() {
+            const fireRadius = Math.sqrt(simState.fireArea) * 15;
+            document.getElementById('fireCircle').setAttribute('r', fireRadius);
+            document.getElementById('fireCenter').setAttribute('r', fireRadius * 0.6);
+            
+            document.getElementById('areaText').textContent = simState.fireArea.toFixed(1);
+            document.getElementById('daysText').textContent = simState.daysElapsed;
+            document.getElementById('tempText').textContent = fireParams.temperature;
+
+            // Helicópteros
+            const heli1 = document.getElementById('helicopter1');
+            const heli2 = document.getElementById('helicopter2');
+            const offsetY = Math.sin(Date.now() / 1000) * 30;
+            
+            heli1.setAttribute('transform', `translate(${200 + Math.cos(Date.now() / 2000) * 100}, ${150 + offsetY})`);
+            heli2.setAttribute('transform', `translate(${1000 - Math.sin(Date.now() / 2000) * 100}, ${180 + offsetY})`);
+
+            // Líneas de agua
+            if (resources.helicopters > 0 && simState.fireArea > 0) {
+                document.getElementById('waterLine1').setAttribute('x1', '200');
+                document.getElementById('waterLine1').setAttribute('y1', '150');
+                document.getElementById('waterLine1').setAttribute('x2', '600');
+                document.getElementById('waterLine1').setAttribute('y2', '400');
+                document.getElementById('waterLine1').style.display = 'block';
+            } else {
+                document.getElementById('waterLine1').style.display = 'none';
+            }
+        }
+
+        // Actualizar simulación
+        function updateSimulation() {
+            if (!isRunning) return;
+
+            const behavior = calculateFireBehavior();
+            const newArea = Math.max(0, simState.fireArea + behavior.nextAreaGrowth - (behavior.suppressionRate * simState.fireArea * 0.05));
+            
+            simState.fireArea = newArea;
+            simState.daysElapsed += 1;
+            simState.personDays += resources.firefighters;
+
+            // Historial
+            simState.history.days.push(simState.daysElapsed);
+            simState.history.area.push(simState.fireArea);
+            simState.history.suppression.push(behavior.suppressionRate * 100);
+            simState.history.propagation.push(behavior.nextAreaGrowth);
+
+            updateUI();
+            updateCharts();
+        }
+
+        // Gráficos
+        function updateCharts() {
+            drawGrowthChart();
+            drawSuppressionChart();
+        }
+
+        function drawGrowthChart() {
+            const canvas = document.getElementById('growthChart');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (simState.history.days.length === 0) return;
+
+            const maxArea = Math.max(...simState.history.area) || 100;
+            const padding = 40;
+            const width = canvas.width - padding * 2;
+            const height = canvas.height - padding * 2;
+
+            // Ejes
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(padding, padding);
+            ctx.lineTo(padding, canvas.height - padding);
+            ctx.lineTo(canvas.width - padding, canvas.height - padding);
+            ctx.stroke();
+
+            // Línea
+            ctx.strokeStyle = '#ff9500';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            for (let i = 0; i < simState.history.days.length; i++) {
+                const x = padding + (i / simState.history.days.length) * width;
+                const y = canvas.height - padding - (simState.history.area[i] / maxArea) * height;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            // Etiquetas
+            ctx.fillStyle = '#cbd5e1';
+            ctx.font = 'bold 12px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('Días', canvas.width / 2, canvas.height - 10);
+            ctx.textAlign = 'right';
+            ctx.save();
+            ctx.translate(15, canvas.height / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('Hectáreas', 0, 0);
+            ctx.restore();
+        }
+
+        function drawSuppressionChart() {
+            const canvas = document.getElementById('suppressionChart');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (simState.history.days.length === 0) return;
+
+            const padding = 40;
+            const width = canvas.width - padding * 2;
+            const height = canvas.height - padding * 2;
+
+            // Ejes
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(padding, padding);
+            ctx.lineTo(padding, canvas.height - padding);
+            ctx.lineTo(canvas.width - padding, canvas.height - padding);
+            ctx.stroke();
+
+            // Supresión
+            ctx.strokeStyle = '#4ade80';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for (let i = 0; i < simState.history.days.length; i++) {
+                const x = padding + (i / simState.history.days.length) * width;
+                const y = canvas.height - padding - (simState.history.suppression[i] / 100) * height;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            // Propagación
+            ctx.strokeStyle = '#ff6b6b';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            const maxPropagation = Math.max(...simState.history.propagation) || 1;
+            for (let i = 0; i < simState.history.days.length; i++) {
+                const x = padding + (i / simState.history.days.length) * width;
+                const y = canvas.height - padding - (simState.history.propagation[i] / maxPropagation) * height;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            // Leyenda
+            ctx.fillStyle = '#4ade80';
+            ctx.fillRect(canvas.width - 180, 10, 10, 10);
+            ctx.fillStyle = '#cbd5e1';
+            ctx.font = 'bold 11px monospace';
+            ctx.textAlign = 'left';
+            ctx.fillText('Supresión', canvas.width - 160, 18);
+
+            ctx.fillStyle = '#ff6b6b';
+            ctx.fillRect(canvas.width - 180, 25, 10, 10);
+            ctx.fillStyle = '#cbd5e1';
+            ctx.fillText('Propagación', canvas.width - 160, 33);
+        }
+
+        // Animación principal
+        function animate() {
+            drawSimulation();
+            updateSimulation();
+            requestAnimationFrame(animate);
+        }
+
+        // Iniciar
+        createStars();
+        updateUI();
+        animate();
+    </script>
+</body>
+</html>

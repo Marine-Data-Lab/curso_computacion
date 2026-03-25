@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PYROGUARD — Simulador de Incendios Forestales</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --fire1: #ff4500;
+    --fire2: #ff8c00;
+    --fire3: #ffd700;
+    --ember: #ff6b00;
+    --green: #00ff88;
+    --water: #00cfff;
+    --dark: #0a0a0f;
+    --panel: #0f1520;
+    --panel2: #141e2e;
+    --border: #1e3a5f;
+    --text: #c8d8e8;
+    --accent: #ff6b00;
+    --danger: #ff2244;
+    --safe: #00e676;
+    --glow: rgba(255,107,0,0.3);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--dark);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ─── HEADER ─── */
+  #header {
+    background: linear-gradient(90deg, #0a0a0f 0%, #1a0800 50%, #0a0a0f 100%);
+    border-bottom: 2px solid var(--fire1);
+    padding: 8px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 30px rgba(255,69,0,0.4);
+    flex-shrink: 0;
+    z-index: 100;
+  }
+  #header h1 {
+    font-family: 'Orbitron', monospace;
+    font-size: 22px;
+    font-weight: 900;
+    background: linear-gradient(90deg, var(--fire1), var(--fire3), var(--fire2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 4px;
+    text-shadow: none;
+    filter: drop-shadow(0 0 10px var(--fire1));
+  }
+  .header-stats {
+    display: flex; gap: 20px; align-items: center;
+  }
+  .hstat {
+    text-align: center;
+    background: rgba(255,69,0,0.1);
+    border: 1px solid rgba(255,69,0,0.3);
+    border-radius: 6px;
+    padding: 4px 12px;
+  }
+  .hstat-val {
+    font-family: 'Orbitron', monospace;
+    font-size: 16px;
+    color: var(--fire3);
+    font-weight: 700;
+  }
+  .hstat-lbl { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+  #tiempo-display {
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    color: var(--green);
+    background: rgba(0,255,136,0.1);
+    border: 1px solid rgba(0,255,136,0.3);
+    border-radius: 6px;
+    padding: 4px 14px;
+  }
+
+  /* ─── LAYOUT ─── */
+  #main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ─── LEFT PANEL ─── */
+  #panel-left {
+    width: 260px;
+    flex-shrink: 0;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    padding: 10px;
+    gap: 10px;
+  }
+  .panel-section {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+  }
+  .panel-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--fire2);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255,140,0,0.2);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .panel-title::before {
+    content: '';
+    width: 8px; height: 8px;
+    background: var(--fire1);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--fire1);
+    flex-shrink: 0;
+  }
+
+  label {
+    font-size: 11px;
+    color: #aab;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: block;
+    margin-bottom: 3px;
+    margin-top: 8px;
+  }
+  label:first-of-type { margin-top: 0; }
+
+  input[type=range] {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 4px;
+    background: linear-gradient(90deg, var(--fire1), var(--fire3));
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    background: white;
+    border-radius: 50%;
+    border: 2px solid var(--fire1);
+    box-shadow: 0 0 8px var(--fire1);
+    cursor: pointer;
+  }
+
+  select {
+    width: 100%;
+    background: #0a1520;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 5px 8px;
+    border-radius: 5px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 12px;
+    outline: none;
+    cursor: pointer;
+  }
+  select:focus { border-color: var(--fire2); }
+
+  .range-val {
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    color: var(--fire3);
+    float: right;
+  }
+
+  /* ─── BUTTONS ─── */
+  .btn-group { display: flex; gap: 6px; flex-wrap: wrap; }
+  .btn {
+    flex: 1;
+    min-width: 60px;
+    padding: 7px 5px;
+    border: none;
+    border-radius: 6px;
+    font-family: 'Orbitron', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .btn-fire {
+    background: linear-gradient(135deg, var(--fire1), var(--fire2));
+    color: white;
+    box-shadow: 0 0 12px rgba(255,69,0,0.5);
+  }
+  .btn-fire:hover { box-shadow: 0 0 20px rgba(255,69,0,0.8); transform: translateY(-1px); }
+  .btn-stop {
+    background: linear-gradient(135deg, #1a1a2e, #2d1b69);
+    color: #aaf;
+    border: 1px solid #3a2d8f;
+  }
+  .btn-stop:hover { background: linear-gradient(135deg, #2d1b69, #1a1a2e); }
+  .btn-reset {
+    background: linear-gradient(135deg, #0a2a0a, #1a4a1a);
+    color: var(--green);
+    border: 1px solid #1a4a1a;
+  }
+  .btn-reset:hover { box-shadow: 0 0 12px rgba(0,255,136,0.4); }
+  .btn-water {
+    background: linear-gradient(135deg, #003366, #006699);
+    color: var(--water);
+    border: 1px solid #0066aa;
+  }
+  .btn-water:hover { box-shadow: 0 0 12px rgba(0,207,255,0.5); }
+  .btn-firebreak {
+    background: linear-gradient(135deg, #2a2a00, #4a4a00);
+    color: #ffee00;
+    border: 1px solid #5a5a00;
+  }
+  .btn-firebreak:hover { box-shadow: 0 0 12px rgba(255,238,0,0.4); }
+  .btn-active {
+    animation: btnPulse 1s infinite;
+    transform: scale(1.03);
+  }
+  @keyframes btnPulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  /* ─── LEGEND ─── */
+  .legend-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    color: #99a;
+  }
+  .legend-dot {
+    width: 12px; height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  /* ─── CENTER CANVAS ─── */
+  #center {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: #050810;
+  }
+  #gameCanvas {
+    display: block;
+    cursor: crosshair;
+  }
+  #canvasOverlay {
+    position: absolute;
+    top: 0; left: 0;
+    pointer-events: none;
+    width: 100%; height: 100%;
+  }
+
+  /* ─── MODE INDICATOR ─── */
+  #mode-indicator {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    padding: 5px 16px;
+    border-radius: 20px;
+    background: rgba(0,0,0,0.7);
+    border: 1px solid transparent;
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  /* ─── RIGHT PANEL ─── */
+  #panel-right {
+    width: 240px;
+    flex-shrink: 0;
+    background: var(--panel);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    padding: 10px;
+    gap: 10px;
+  }
+
+  /* ─── LOG ─── */
+  #log-container {
+    flex: 1;
+    overflow-y: auto;
+    max-height: 200px;
+    min-height: 80px;
+  }
+  #log {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .log-entry {
+    font-size: 10px;
+    padding: 3px 6px;
+    border-radius: 3px;
+    border-left: 2px solid;
+    animation: logSlide 0.3s ease;
+  }
+  @keyframes logSlide { from { opacity:0; transform:translateX(10px); } to { opacity:1; transform:translateX(0); } }
+  .log-fire { border-color: var(--fire1); background: rgba(255,69,0,0.1); color: #ffaa88; }
+  .log-water { border-color: var(--water); background: rgba(0,207,255,0.1); color: #88ddff; }
+  .log-info { border-color: #556; background: rgba(50,60,80,0.5); color: #99aacc; }
+  .log-warn { border-color: var(--fire3); background: rgba(255,215,0,0.1); color: var(--fire3); }
+
+  /* ─── STATS BARS ─── */
+  .stat-bar-container {
+    margin-top: 4px;
+  }
+  .stat-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #889;
+    margin-bottom: 2px;
+  }
+  .stat-bar-label span:last-child {
+    font-family: 'Orbitron', monospace;
+    color: var(--fire2);
+    font-size: 9px;
+  }
+  .stat-bar-bg {
+    height: 6px;
+    background: #111;
+    border-radius: 3px;
+    overflow: hidden;
+    border: 1px solid #222;
+  }
+  .stat-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+  }
+  .fill-fire { background: linear-gradient(90deg, var(--fire1), var(--fire3)); }
+  .fill-burnt { background: linear-gradient(90deg, #333, #666); }
+  .fill-safe { background: linear-gradient(90deg, var(--green), #00aa55); }
+  .fill-water { background: linear-gradient(90deg, var(--water), #0066aa); }
+
+  /* ─── MINI CHART ─── */
+  #mini-chart {
+    width: 100%;
+    height: 60px;
+    background: #050810;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  /* ─── DEFENSE POINTS PANEL ─── */
+  .defense-item {
+    background: rgba(0,30,60,0.6);
+    border: 1px solid rgba(0,100,200,0.3);
+    border-radius: 5px;
+    padding: 6px 8px;
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    animation: logSlide 0.3s ease;
+  }
+  .defense-item .def-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 9px;
+    color: var(--water);
+  }
+  .defense-item .def-stat { color: #88aacc; }
+  .def-remove {
+    cursor: pointer;
+    color: #ff4444;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0 2px;
+  }
+  .def-remove:hover { color: #ff8888; }
+
+  /* ─── PARTICLE CANVAS ─── */
+  #particles { position:absolute; top:0;left:0; pointer-events:none; }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: #080c14; }
+  ::-webkit-scrollbar-thumb { background: #1e3a5f; border-radius: 2px; }
+
+  /* ─── ALERTS ─── */
+  #alert-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    display: flex;
+    justify-content: center;
+    padding: 6px;
+    pointer-events: none;
+    z-index: 20;
+  }
+  .alert-msg {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    padding: 6px 20px;
+    border-radius: 20px;
+    animation: alertPop 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  }
+  @keyframes alertPop { from { transform:translateY(20px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+  .alert-danger { background: rgba(255,20,60,0.9); color: white; border: 1px solid #ff4477; }
+  .alert-good { background: rgba(0,200,100,0.9); color: white; border: 1px solid #00ff88; }
+
+  /* ─── WIND ARROW ─── */
+  #wind-widget {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0,20,40,0.5);
+    border-radius: 8px;
+    padding: 8px;
+    border: 1px solid rgba(0,100,200,0.2);
+  }
+  #wind-compass {
+    width: 50px; height: 50px;
+    border-radius: 50%;
+    border: 2px solid rgba(0,150,255,0.3);
+    position: relative;
+    flex-shrink: 0;
+    background: radial-gradient(circle, #0a1520, #050810);
+  }
+  #wind-arrow {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 2px; height: 20px;
+    background: linear-gradient(var(--water), transparent);
+    transform-origin: bottom center;
+    transform: translate(-50%, -100%);
+    transition: transform 0.5s ease;
+  }
+  .wind-dir-label {
+    font-family: 'Orbitron', monospace;
+    font-size: 10px;
+    color: var(--water);
+  }
+</style>
+</head>
+<body>
+
+<!-- ─── HEADER ─── -->
+<div id="header">
+  <h1>🔥 PYROGUARD</h1>
+  <div class="header-stats">
+    <div class="hstat">
+      <div class="hstat-val" id="h-burning">0</div>
+      <div class="hstat-lbl">Celdas activas</div>
+    </div>
+    <div class="hstat">
+      <div class="hstat-val" id="h-area">0.0</div>
+      <div class="hstat-lbl">Ha quemadas</div>
+    </div>
+    <div class="hstat">
+      <div class="hstat-val" id="h-persons">0</div>
+      <div class="hstat-lbl">Días/persona</div>
+    </div>
+    <div class="hstat">
+      <div class="hstat-val" id="h-impact" style="color:#00ff88">—</div>
+      <div class="hstat-lbl">Clasificación</div>
+    </div>
+  </div>
+  <div id="tiempo-display">T: <span id="t-counter">0</span> min</div>
+</div>
+
+<!-- ─── MAIN ─── -->
+<div id="main">
+
+  <!-- ─── LEFT PANEL ─── -->
+  <div id="panel-left">
+
+    <div class="panel-section">
+      <div class="panel-title">Controles</div>
+      <div class="btn-group">
+        <button class="btn btn-fire" id="btn-start" onclick="startSim()">▶ INICIAR</button>
+        <button class="btn btn-stop" id="btn-pause" onclick="pauseSim()">⏸ PAUSAR</button>
+        <button class="btn btn-reset" onclick="resetSim()">↺ RESET</button>
+      </div>
+      <div style="margin-top:8px">
+        <label>Velocidad sim <span class="range-val" id="v-speed">2x</span></label>
+        <input type="range" id="sim-speed" min="1" max="8" value="2" oninput="updateSpeed(this.value)">
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-title">Parámetros del Incendio</div>
+
+      <label>Causa <span class="range-val" id="v-causa"></span></label>
+      <select id="causa" onchange="updateCausa()">
+        <option>Desconocidas</option>
+        <option>Intencional</option>
+        <option>Actividades agrícolas</option>
+        <option>Actividades pecuarias</option>
+        <option>Fogatas</option>
+        <option>Fumadores</option>
+        <option>Cazadores</option>
+        <option>Quema de basureros</option>
+      </select>
+
+      <label>Tipo de Vegetación</label>
+      <select id="vegetacion" onchange="updateVeg()">
+        <option value="0.9">Bosque de Pino</option>
+        <option value="1.0">Selva Baja Caducifolia</option>
+        <option value="0.85">Bosque de Pino-Encino</option>
+        <option value="0.7">Matorral Crasicaule</option>
+        <option value="0.8">Bosque de Encino</option>
+        <option value="0.6">Pastizal Natural</option>
+        <option value="1.1">Matorral Desértico</option>
+        <option value="0.75">Bosque Cultivado</option>
+      </select>
+
+      <label>Velocidad Viento <span class="range-val" id="v-wind">15 km/h</span></label>
+      <input type="range" id="wind-speed" min="0" max="100" value="15" oninput="updateWind(this)">
+
+      <label>Dirección Viento <span class="range-val" id="v-winddir">N</span></label>
+      <input type="range" id="wind-dir" min="0" max="359" value="0" oninput="updateWindDir(this)">
+
+      <label>Temperatura <span class="range-val" id="v-temp">28°C</span></label>
+      <input type="range" id="temperatura" min="10" max="55" value="28" oninput="updateTemp(this)">
+
+      <label>Humedad Relativa <span class="range-val" id="v-hum">40%</span></label>
+      <input type="range" id="humedad" min="5" max="95" value="40" oninput="updateHum(this)">
+
+      <label>Pendiente Terreno <span class="range-val" id="v-pend">10°</span></label>
+      <input type="range" id="pendiente" min="0" max="60" value="10" oninput="updatePend(this)">
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-title">Viento</div>
+      <div id="wind-widget">
+        <div id="wind-compass">
+          <div id="wind-arrow"></div>
+        </div>
+        <div>
+          <div class="wind-dir-label" id="wind-label-compass">N</div>
+          <div style="font-size:10px;color:#556;margin-top:2px">Dirección</div>
+          <div style="font-family:'Orbitron',monospace;font-size:12px;color:#0af;margin-top:4px" id="wind-speed-display">15 km/h</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-title">Herramienta Activa</div>
+      <div class="btn-group" style="flex-direction:column;">
+        <button class="btn btn-fire" id="tool-ignite" onclick="setTool('ignite')">🔥 Encender Fuego</button>
+        <button class="btn btn-water" id="tool-water" onclick="setTool('water')">💧 Punto Agua/Helicóptero</button>
+        <button class="btn btn-firebreak" id="tool-break" onclick="setTool('firebreak')">🪓 Cortafuego</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ─── CANVAS ─── -->
+  <div id="center">
+    <canvas id="gameCanvas"></canvas>
+    <canvas id="particles"></canvas>
+    <div id="mode-indicator"></div>
+    <div id="alert-bar"></div>
+  </div>
+
+  <!-- ─── RIGHT PANEL ─── -->
+  <div id="panel-right">
+
+    <div class="panel-section">
+      <div class="panel-title">Estado del Incendio</div>
+      <div class="stat-bar-container">
+        <div class="stat-bar-label"><span>🔥 En llamas</span><span id="pct-fire">0%</span></div>
+        <div class="stat-bar-bg"><div class="stat-bar-fill fill-fire" id="bar-fire" style="width:0%"></div></div>
+      </div>
+      <div class="stat-bar-container">
+        <div class="stat-bar-label"><span>⬛ Quemado</span><span id="pct-burnt">0%</span></div>
+        <div class="stat-bar-bg"><div class="stat-bar-fill fill-burnt" id="bar-burnt" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="stat-bar-container">
+        <div class="stat-bar-label"><span>🌲 Intacto</span><span id="pct-safe">100%</span></div>
+        <div class="stat-bar-bg"><div class="stat-bar-fill fill-safe" id="bar-safe" style="width:100%"></div></div>
+      </div>
+      <div class="stat-bar-container">
+        <div class="stat-bar-label"><span>💧 Controlado</span><span id="pct-water">0%</span></div>
+        <div class="stat-bar-bg"><div class="stat-bar-fill fill-water" id="bar-water" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-title">Puntos de Defensa</div>
+      <div class="btn-group" style="margin-bottom:8px">
+        <button class="btn btn-water" onclick="addDefensePoint('helicoptero')">🚁 Helicóptero</button>
+        <button class="btn btn-water" onclick="addDefensePoint('bomba')">🚒 Brigada</button>
+      </div>
+      <div class="btn-group" style="margin-bottom:8px">
+        <button class="btn btn-firebreak" onclick="addDefensePoint('cortafuego')">🪓 Cortafuego</button>
+        <button class="btn btn-stop" onclick="addDefensePoint('retardante')">🧪 Retardante</button>
+      </div>
+      <div id="defense-list"></div>
+    </div>
+
+    <div class="panel-section" style="flex:1">
+      <div class="panel-title">Registro de Eventos</div>
+      <div id="log-container">
+        <div id="log"></div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-title">Leyenda</div>
+      <div class="legend-grid">
+        <div class="legend-item"><div class="legend-dot" style="background:#ff4500"></div>Fuego activo</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#1a0a00"></div>Quemado</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#1a3a1a"></div>Vegetación</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#00cfff"></div>Agua/Control</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#aaaa00"></div>Cortafuego</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#5544aa"></div>Retardante</div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  PYROGUARD — Fire Spread Simulator
+//  Based on real CONAFOR fire data from Mexico
+// ══════════════════════════════════════════════════════════════
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const pCanvas = document.getElementById('particles');
+const pCtx = pCanvas.getContext('2d');
+
+// Grid config
+const CELL = 8;
+let COLS, ROWS;
+let grid = [], nextGrid = [];
+let simRunning = false;
+let simInterval = null;
+let simTime = 0;
+let simSpeedMs = 120;
+let activeTool = 'ignite';
+let defensePoints = [];
+let defenseCounter = { helicoptero:0, bomba:0, cortafuego:0, retardante:0 };
+let particles = [];
+let chartHistory = [];
+let mouseDown = false;
+
+// Cell states
+const EMPTY = 0, VEGETATION = 1, BURNING = 2, BURNT = 3, FIREBREAK = 4, WATER_CTRL = 5, RETARDANT = 6;
+
+// Fire parameters (based on data)
+let params = {
+  windSpeed: 15,
+  windDir: 0,    // degrees, 0=N
+  temperature: 28,
+  humidity: 40,
+  slope: 10,
+  vegFactor: 0.9,
+  causeMultiplier: 1.0
+};
+
+// Cause multipliers from data
+const CAUSE_MULT = {
+  'Desconocidas': 1.0,
+  'Intencional': 1.15,
+  'Actividades agrícolas': 1.05,
+  'Actividades pecuarias': 0.95,
+  'Fogatas': 1.2,
+  'Fumadores': 0.9,
+  'Cazadores': 0.85,
+  'Quema de basureros': 1.1
+};
+
+// ─── INIT ─────────────────────────────────────────────────────
+function initCanvas() {
+  const center = document.getElementById('center');
+  canvas.width = center.clientWidth;
+  canvas.height = center.clientHeight;
+  pCanvas.width = canvas.width;
+  pCanvas.height = canvas.height;
+  COLS = Math.floor(canvas.width / CELL);
+  ROWS = Math.floor(canvas.height / CELL);
+  initGrid();
+}
+
+function initGrid() {
+  grid = [];
+  nextGrid = [];
+  for (let r = 0; r < ROWS; r++) {
+    grid[r] = [];
+    nextGrid[r] = [];
+    for (let c = 0; c < COLS; c++) {
+      // Create varied vegetation terrain
+      const noise = Math.random();
+      if (noise < 0.75) grid[r][c] = { state: VEGETATION, fuel: 0.5 + Math.random()*0.5, age: 0 };
+      else if (noise < 0.85) grid[r][c] = { state: VEGETATION, fuel: 0.3 + Math.random()*0.3, age: 0 }; // sparse
+      else grid[r][c] = { state: EMPTY, fuel: 0, age: 0 }; // clearings
+      nextGrid[r][c] = { ...grid[r][c] };
+    }
+  }
+  simTime = 0;
+  chartHistory = [];
+  particles = [];
+  defensePoints = [];
+  document.getElementById('defense-list').innerHTML = '';
+  defenseCounter = { helicoptero:0, bomba:0, cortafuego:0, retardante:0 };
+  updateStats();
+  drawGrid();
+}
+
+// ─── SPREAD PROBABILITY ──────────────────────────────────────
+function spreadProb(fromR, fromC, toR, toC) {
+  const cell = grid[toR][toC];
+  if (cell.state !== VEGETATION) return 0;
+
+  // Base probability from temp & humidity
+  const tempFactor = 0.3 + (params.temperature - 10) / 90 * 0.7;
+  const humFactor = 1 - (params.humidity / 100) * 0.8;
+  const slopeFactor = 1 + (params.slope / 60) * 0.5;
+
+  // Wind effect
+  const dr = toR - fromR, dc = toC - fromC;
+  const windRad = (params.windDir * Math.PI) / 180;
+  const windDX = Math.sin(windRad), windDY = -Math.cos(windRad);
+  const dotProduct = (dc * windDX + dr * windDY) / Math.sqrt(dc*dc + dr*dr + 0.001);
+  const windMult = 0.8 + (params.windSpeed / 100) * 1.5 * (dotProduct + 1);
+
+  let base = 0.04 * tempFactor * humFactor * slopeFactor * windMult
+            * params.vegFactor * params.causeMultiplier * cell.fuel;
+
+  // Retardant nearby reduces spread
+  if (hasNearby(toR, toC, RETARDANT, 2)) base *= 0.2;
+
+  return Math.min(base, 0.95);
+}
+
+function hasNearby(r, c, state, radius) {
+  for (let dr = -radius; dr <= radius; dr++) {
+    for (let dc = -radius; dc <= radius; dc++) {
+      const nr = r+dr, nc = c+dc;
+      if (nr>=0 && nr<ROWS && nc>=0 && nc<COLS && grid[nr][nc].state === state) return true;
+    }
+  }
+  return false;
+}
+
+// ─── SIMULATE STEP ───────────────────────────────────────────
+function step() {
+  simTime++;
+  let burnCount = 0, newFires = 0;
+
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      nextGrid[r][c] = { ...grid[r][c] };
+    }
+  }
+
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const cell = grid[r][c];
+      if (cell.state === BURNING) {
+        burnCount++;
+        cell.age++;
+        // Burn duration depends on fuel
+        const burnTime = 3 + Math.floor(cell.fuel * 6);
+        if (cell.age > burnTime) {
+          nextGrid[r][c].state = BURNT;
+          nextGrid[r][c].age = 0;
+        }
+
+        // Spread to neighbors (8-dir)
+        const neighbors = [
+          [-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]
+        ];
+        for (const [dr,dc] of neighbors) {
+          const nr=r+dr, nc=c+dc;
+          if (nr<0||nr>=ROWS||nc<0||nc>=COLS) continue;
+          if (grid[nr][nc].state !== VEGETATION) continue;
+          if (Math.random() < spreadProb(r, c, nr, nc)) {
+            nextGrid[nr][nc].state = BURNING;
+            nextGrid[nr][nc].age = 0;
+            newFires++;
+            spawnParticles(nc*CELL + CELL/2, nr*CELL + CELL/2);
+          }
+        }
+
+        // Water control nearby extinguishes
+        for (let dp of defensePoints) {
+          if (dp.type === 'helicoptero' || dp.type === 'bomba') {
+            const dist = Math.sqrt((c-dp.col)**2 + (r-dp.row)**2);
+            const range = dp.type === 'helicoptero' ? 8 : 5;
+            if (dist < range && Math.random() < 0.15) {
+              nextGrid[r][c].state = WATER_CTRL;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Swap
+  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) grid[r][c] = nextGrid[r][c];
+
+  // Track history
+  chartHistory.push(burnCount);
+  if (chartHistory.length > 80) chartHistory.shift();
+
+  updateStats();
+  drawGrid();
+  updateParticles();
+
+  // Check end conditions
+  if (burnCount === 0 && simRunning) {
+    const hasFire = grid.some(row => row.some(c => c.state === BURNING));
+    if (!hasFire) {
+      logEvent('Incendio extinguido — simulación completa', 'info');
+      showAlert('🛡️ INCENDIO CONTROLADO', 'good');
+      pauseSim();
+    }
+  }
+}
+
+// ─── DRAWING ─────────────────────────────────────────────────
+const VEG_COLORS = ['#1a3a12','#1e4415','#224e18','#163210','#1a3a14'];
+const FIRE_COLORS = ['#ff4500','#ff5500','#ff6600','#ff7700','#ff8800','#ffaa00','#ffcc00'];
+const BURNT_COLORS = ['#1a0a00','#180800','#200c00','#1c0900'];
+
+function drawGrid() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  for (let r=0;r<ROWS;r++) {
+    for (let c=0;c<COLS;c++) {
+      const cell = grid[r][c];
+      const x = c*CELL, y = r*CELL;
+
+      switch(cell.state) {
+        case EMPTY:
+          ctx.fillStyle = '#0a0e14';
+          break;
+        case VEGETATION:
+          ctx.fillStyle = VEG_COLORS[Math.floor((c*7+r*3)%VEG_COLORS.length)];
+          break;
+        case BURNING:
+          const fIdx = Math.floor(simTime*2 + c + r) % FIRE_COLORS.length;
+          ctx.fillStyle = FIRE_COLORS[fIdx];
+          // Glow
+          ctx.shadowBlur = 6;
+          ctx.shadowColor = '#ff4500';
+          break;
+        case BURNT:
+          ctx.fillStyle = BURNT_COLORS[(c+r)%BURNT_COLORS.length];
+          break;
+        case FIREBREAK:
+          ctx.fillStyle = '#8b6914';
+          break;
+        case WATER_CTRL:
+          ctx.fillStyle = '#0044aa';
+          break;
+        case RETARDANT:
+          ctx.fillStyle = '#5544aa';
+          break;
+      }
+
+      ctx.fillRect(x, y, CELL-1, CELL-1);
+      if (cell.state === BURNING) {
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = 'transparent';
+      }
+    }
+  }
+
+  // Draw defense point indicators
+  for (let dp of defensePoints) {
+    const x = dp.col * CELL + CELL/2;
+    const y = dp.row * CELL + CELL/2;
+    ctx.beginPath();
+    ctx.arc(x, y, dp.type==='helicoptero'?8*CELL:5*CELL, 0, Math.PI*2);
+    ctx.strokeStyle = dp.type==='helicoptero' ? 'rgba(0,200,255,0.3)' : 'rgba(0,100,255,0.25)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Icon
+    ctx.font = `${CELL*2}px serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const icons = { helicoptero:'🚁', bomba:'🚒', cortafuego:'🪓', retardante:'🧪' };
+    ctx.fillText(icons[dp.type] || '📍', x, y);
+  }
+}
+
+// ─── PARTICLES ───────────────────────────────────────────────
+function spawnParticles(x, y) {
+  if (particles.length > 150) return;
+  const count = 2 + Math.floor(Math.random()*3);
+  for (let i=0;i<count;i++) {
+    const windRad = (params.windDir * Math.PI) / 180;
+    particles.push({
+      x, y,
+      vx: (Math.random()-0.5)*2 + Math.sin(windRad)*params.windSpeed*0.05,
+      vy: -1-Math.random()*2 + Math.cos(windRad)*params.windSpeed*0.02,
+      life: 1,
+      size: 1+Math.random()*3,
+      color: FIRE_COLORS[Math.floor(Math.random()*FIRE_COLORS.length)]
+    });
+  }
+}
+
+function updateParticles() {
+  pCtx.clearRect(0,0,pCanvas.width,pCanvas.height);
+  particles = particles.filter(p => p.life > 0);
+  for (let p of particles) {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy -= 0.05;
+    p.life -= 0.04;
+    p.size *= 0.97;
+    pCtx.globalAlpha = p.life * 0.8;
+    pCtx.fillStyle = p.color;
+    pCtx.beginPath();
+    pCtx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+    pCtx.fill();
+  }
+  pCtx.globalAlpha = 1;
+}
+
+// ─── STATS ───────────────────────────────────────────────────
+function updateStats() {
+  let burning=0, burnt=0, veg=0, water=0, total=0;
+  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
+    const s = grid[r][c].state;
+    total++;
+    if (s===BURNING) burning++;
+    else if (s===BURNT) burnt++;
+    else if (s===VEGETATION) veg++;
+    else if (s===WATER_CTRL) water++;
+  }
+
+  const pFire = (burning/total*100).toFixed(1);
+  const pBurnt = (burnt/total*100).toFixed(1);
+  const pSafe = (veg/total*100).toFixed(1);
+  const pWater = (water/total*100).toFixed(1);
+
+  document.getElementById('bar-fire').style.width = pFire+'%';
+  document.getElementById('bar-burnt').style.width = pBurnt+'%';
+  document.getElementById('bar-safe').style.width = pSafe+'%';
+  document.getElementById('bar-water').style.width = pWater+'%';
+  document.getElementById('pct-fire').textContent = pFire+'%';
+  document.getElementById('pct-burnt').textContent = pBurnt+'%';
+  document.getElementById('pct-safe').textContent = pSafe+'%';
+  document.getElementById('pct-water').textContent = pWater+'%';
+
+  // Header stats
+  document.getElementById('h-burning').textContent = burning;
+  const haPerCell = 0.064; // Each cell ~8m → 64m² → 0.0064 ha, but scaled for fun
+  document.getElementById('h-area').textContent = ((burnt+burning)*haPerCell).toFixed(1);
+  const persons = Math.floor((burnt+burning) * 0.18 * params.vegFactor);
+  document.getElementById('h-persons').textContent = persons;
+  document.getElementById('t-counter').textContent = simTime * 5; // 5 min per step
+
+  // Classification
+  const totalBurntPct = (burnt+burning)/total;
+  let cls = '—', clsColor = '#00ff88';
+  if (totalBurntPct > 0.001) { cls = 'Mínimo'; clsColor = '#ffcc00'; }
+  if (totalBurntPct > 0.015) { cls = 'Moderado'; clsColor = '#ff8800'; }
+  if (totalBurntPct > 0.04)  { cls = 'SEVERO'; clsColor = '#ff2244'; }
+  document.getElementById('h-impact').textContent = cls;
+  document.getElementById('h-impact').style.color = clsColor;
+}
+
+// ─── LOG ─────────────────────────────────────────────────────
+let logCount = 0;
+function logEvent(msg, type='info') {
+  const log = document.getElementById('log');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry log-'+type;
+  const t = String(simTime*5).padStart(4,'0');
+  entry.textContent = `[${t}m] ${msg}`;
+  log.insertBefore(entry, log.firstChild);
+  if (log.children.length > 40) log.removeChild(log.lastChild);
+  logCount++;
+  if (logCount === 1) logEvent('Simulador listo — haz clic en el mapa para encender', 'info');
+}
+
+// ─── ALERTS ──────────────────────────────────────────────────
+function showAlert(msg, type) {
+  const bar = document.getElementById('alert-bar');
+  const el = document.createElement('div');
+  el.className = `alert-msg alert-${type}`;
+  el.textContent = msg;
+  bar.innerHTML = '';
+  bar.appendChild(el);
+  setTimeout(()=>{ if(el.parentNode) el.remove(); }, 3000);
+}
+
+// ─── CONTROLS ────────────────────────────────────────────────
+function startSim() {
+  if (simRunning) return;
+  simRunning = true;
+  simInterval = setInterval(step, simSpeedMs);
+  logEvent('Simulación iniciada', 'warn');
+}
+function pauseSim() {
+  simRunning = false;
+  clearInterval(simInterval);
+}
+function resetSim() {
+  pauseSim();
+  initGrid();
+  logEvent('Simulación reiniciada', 'info');
+}
+function updateSpeed(v) {
+  document.getElementById('v-speed').textContent = v+'x';
+  simSpeedMs = Math.round(300 / v);
+  if (simRunning) { clearInterval(simInterval); simInterval = setInterval(step, simSpeedMs); }
+}
+function updateWind(el) {
+  params.windSpeed = +el.value;
+  document.getElementById('v-wind').textContent = el.value+' km/h';
+  document.getElementById('wind-speed-display').textContent = el.value+' km/h';
+}
+function updateWindDir(el) {
+  params.windDir = +el.value;
+  const dirs = ['N','NE','E','SE','S','SO','O','NO'];
+  const d = dirs[Math.round(el.value/45) % 8];
+  document.getElementById('v-winddir').textContent = d;
+  document.getElementById('wind-label-compass').textContent = d;
+  document.getElementById('wind-arrow').style.transform =
+    `translate(-50%, -100%) rotate(${el.value}deg)`;
+}
+function updateTemp(el) {
+  params.temperature = +el.value;
+  document.getElementById('v-temp').textContent = el.value+'°C';
+}
+function updateHum(el) {
+  params.humidity = +el.value;
+  document.getElementById('v-hum').textContent = el.value+'%';
+}
+function updatePend(el) {
+  params.slope = +el.value;
+  document.getElementById('v-pend').textContent = el.value+'°';
+}
+function updateVeg() {
+  params.vegFactor = +document.getElementById('vegetacion').value;
+}
+function updateCausa() {
+  const causa = document.getElementById('causa').value;
+  params.causeMultiplier = CAUSE_MULT[causa] || 1.0;
+}
+
+// ─── TOOLS ───────────────────────────────────────────────────
+function setTool(t) {
+  activeTool = t;
+  document.querySelectorAll('#panel-left .btn').forEach(b => b.classList.remove('btn-active'));
+  document.getElementById('tool-'+t)?.classList.add('btn-active');
+
+  const modeEl = document.getElementById('mode-indicator');
+  const modes = {
+    ignite: { text:'🔥 ENCENDIENDO FUEGO', color:'rgba(255,80,0,0.8)', border:'#ff4500' },
+    water:  { text:'💧 COLOCANDO PUNTO DE AGUA', color:'rgba(0,100,200,0.7)', border:'#00cfff' },
+    break:  { text:'🪓 TRAZANDO CORTAFUEGO', color:'rgba(100,80,0,0.7)', border:'#aaaa00' }
+  };
+  const m = modes[t];
+  modeEl.textContent = m.text;
+  modeEl.style.borderColor = m.border;
+  modeEl.style.background = m.color;
+  modeEl.style.color = 'white';
+}
+
+// ─── CANVAS INTERACTION ──────────────────────────────────────
+canvas.addEventListener('mousedown', e => { mouseDown = true; applyTool(e); });
+canvas.addEventListener('mouseup', () => mouseDown = false);
+canvas.addEventListener('mousemove', e => { if (mouseDown) applyTool(e); });
+
+function applyTool(e) {
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const c = Math.floor(x / CELL);
+  const r = Math.floor(y / CELL);
+  if (r<0||r>=ROWS||c<0||c>=COLS) return;
+
+  if (activeTool === 'ignite') {
+    if (grid[r][c].state === VEGETATION || grid[r][c].state === EMPTY) {
+      grid[r][c].state = BURNING;
+      grid[r][c].age = 0;
+      spawnParticles(c*CELL+CELL/2, r*CELL+CELL/2);
+      logEvent(`Fuego iniciado en (${c},${r})`, 'fire');
+      drawGrid();
+    }
+  } else if (activeTool === 'water') {
+    // Paint water control in radius
+    for (let dr=-2;dr<=2;dr++) for (let dc=-2;dc<=2;dc++) {
+      const nr=r+dr, nc=c+dc;
+      if (nr<0||nr>=ROWS||nc<0||nc>=COLS) continue;
+      if (grid[nr][nc].state === BURNING || grid[nr][nc].state === VEGETATION) {
+        grid[nr][nc].state = WATER_CTRL;
+      }
+    }
+    drawGrid();
+  } else if (activeTool === 'firebreak') {
+    grid[r][c].state = FIREBREAK;
+    drawGrid();
+  }
+}
+
+// ─── DEFENSE POINTS ──────────────────────────────────────────
+function addDefensePoint(type) {
+  defenseCounter[type]++;
+  const names = { helicoptero:'Helicóptero', bomba:'Brigada', cortafuego:'Cortafuego', retardante:'Retardante' };
+  const id = type + defenseCounter[type];
+
+  // Place in center of map by default
+  const row = Math.floor(ROWS/2) + Math.floor(Math.random()*20-10);
+  const col = Math.floor(COLS/2) + Math.floor(Math.random()*20-10);
+  defensePoints.push({ id, type, row, col });
+
+  // For cortafuego/retardante, paint on grid
+  if (type === 'cortafuego') {
+    for (let dc=-3;dc<=3;dc++) {
+      const nc = col+dc;
+      if (nc>=0 && nc<COLS) grid[row][nc].state = FIREBREAK;
+    }
+  } else if (type === 'retardante') {
+    for (let dr=-4;dr<=4;dr++) for (let dc=-4;dc<=4;dc++) {
+      const nr=row+dr,nc=col+dc;
+      if (nr>=0&&nr<ROWS&&nc>=0&&nc<COLS && grid[nr][nc].state === VEGETATION) {
+        grid[nr][nc].state = RETARDANT;
+      }
+    }
+  }
+
+  // Add to list UI
+  const list = document.getElementById('defense-list');
+  const item = document.createElement('div');
+  item.className = 'defense-item';
+  item.id = 'dp-'+id;
+  const icons = { helicoptero:'🚁', bomba:'🚒', cortafuego:'🪓', retardante:'🧪' };
+  const ranges = { helicoptero:'R:64m', bomba:'R:40m', cortafuego:'Línea', retardante:'Área' };
+  item.innerHTML = `
+    <div>
+      <div class="def-name">${icons[type]} ${names[type]} #${defenseCounter[type]}</div>
+      <div class="def-stat">${ranges[type]} · (${col},${row})</div>
+    </div>
+    <span class="def-remove" onclick="removeDefense('${id}')">✕</span>
+  `;
+  list.insertBefore(item, list.firstChild);
+
+  logEvent(`Desplegado: ${names[type]} #${defenseCounter[type]}`, 'water');
+  drawGrid();
+}
+
+function removeDefense(id) {
+  defensePoints = defensePoints.filter(d => d.id !== id);
+  const el = document.getElementById('dp-'+id);
+  if (el) el.remove();
+  logEvent(`Punto de defensa retirado`, 'info');
+  drawGrid();
+}
+
+// ─── INIT ─────────────────────────────────────────────────────
+window.addEventListener('resize', initCanvas);
+initCanvas();
+setTool('ignite');
+logEvent('PYROGUARD v1.0 — Sistema listo', 'info');
+logEvent('Usa las herramientas para simular incendios forestales', 'info');
+
+// Continuous redraw for fire animation
+function animLoop() {
+  if (simRunning) {
+    drawGrid();
+  }
+  requestAnimationFrame(animLoop);
+}
+animLoop();
+</script>
+</body>
+</html>

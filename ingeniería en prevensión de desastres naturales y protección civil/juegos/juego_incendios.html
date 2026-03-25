@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GUARDABOSQUES · Simulador de Incendios</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0f0a;
+  --surface: #141810;
+  --card: #1a1f14;
+  --border: #2a3020;
+  --fire: #ff5500;
+  --fire2: #ff9900;
+  --fire3: #ffcc00;
+  --green: #4a7c3f;
+  --green2: #6db55b;
+  --green3: #a8e063;
+  --water: #3b9ddd;
+  --smoke: #7a8a70;
+  --text: #e8eee0;
+  --muted: #6b7a60;
+  --danger: #cc2200;
+  --safe: #2a7a3a;
+  --radius: 10px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Barlow', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  cursor: default;
+}
+
+/* ── PARTICLES ── */
+#particles {
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 0;
+  overflow: hidden;
+}
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  animation: drift linear infinite;
+  opacity: 0;
+}
+@keyframes drift {
+  0%   { transform: translateY(100vh) scale(0); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: .6; }
+  100% { transform: translateY(-20px) scale(1.5); opacity: 0; }
+}
+
+/* ── SCREENS ── */
+.screen { display: none; position: relative; z-index: 1; }
+.screen.active { display: flex; }
+
+/* ════════════════════════════════
+   INTRO SCREEN
+════════════════════════════════ */
+#intro {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 40px 20px;
+  text-align: center;
+  background: radial-gradient(ellipse at 50% 80%, rgba(255,85,0,.15) 0%, transparent 60%);
+}
+.fire-emoji-big {
+  font-size: 80px;
+  animation: flicker 1.5s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 30px #ff5500);
+  margin-bottom: 16px;
+}
+@keyframes flicker {
+  0%   { transform: scale(1) rotate(-2deg); filter: drop-shadow(0 0 30px #ff5500); }
+  100% { transform: scale(1.08) rotate(2deg); filter: drop-shadow(0 0 50px #ff9900); }
+}
+#intro h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(52px, 10vw, 96px);
+  letter-spacing: 6px;
+  line-height: .95;
+  color: var(--fire2);
+  text-shadow: 0 0 40px rgba(255,153,0,.5);
+}
+#intro h1 span { color: var(--green3); text-shadow: 0 0 30px rgba(168,224,99,.4); }
+.tagline {
+  font-size: clamp(13px, 2vw, 17px);
+  color: var(--smoke);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin: 12px 0 32px;
+}
+.intro-desc {
+  max-width: 540px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: #b0bda0;
+  margin-bottom: 40px;
+  background: rgba(255,255,255,.03);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  text-align: left;
+}
+.intro-desc p { margin-bottom: 8px; }
+.intro-desc p:last-child { margin: 0; }
+.intro-desc strong { color: var(--fire2); }
+.btn {
+  display: inline-block;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 3px;
+  padding: 14px 48px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn-fire {
+  background: linear-gradient(135deg, var(--fire), var(--fire2));
+  color: #fff;
+  box-shadow: 0 4px 24px rgba(255,85,0,.4);
+}
+.btn-fire:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(255,85,0,.6); }
+.author-tag {
+  margin-top: 28px;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+.author-tag span { color: var(--green2); }
+
+/* ════════════════════════════════
+   GAME SCREEN
+════════════════════════════════ */
+#game {
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Top HUD */
+.hud {
+  position: sticky; top: 0;
+  background: rgba(13,15,10,.95);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(8px);
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  z-index: 10;
+}
+.hud-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  letter-spacing: 3px;
+  color: var(--fire2);
+  flex-shrink: 0;
+}
+.hud-stats {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+.hud-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 90px;
+}
+.hud-stat-label {
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.hud-stat-value {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  line-height: 1;
+}
+.hud-bar-wrap {
+  width: 100%;
+  height: 4px;
+  background: #1a2014;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 2px;
+}
+.hud-bar {
+  height: 100%; border-radius: 2px;
+  transition: width .5s ease;
+}
+.bar-forest { background: linear-gradient(90deg, var(--green), var(--green3)); }
+.bar-resources { background: linear-gradient(90deg, var(--water), #7bd3f7); }
+.bar-moral { background: linear-gradient(90deg, var(--fire2), var(--fire3)); }
+.val-forest { color: var(--green2); }
+.val-resources { color: var(--water); }
+.val-moral { color: var(--fire2); }
+.val-damage { color: var(--danger); }
+.week-badge {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 13px;
+  background: var(--border);
+  padding: 4px 10px;
+  border-radius: 4px;
+  letter-spacing: 2px;
+  color: var(--smoke);
+  flex-shrink: 0;
+}
+
+/* Game content */
+.game-content {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 0;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 28px 24px;
+  gap: 24px;
+}
+@media (max-width: 800px) {
+  .game-content { grid-template-columns: 1fr; }
+}
+
+/* Scenario panel */
+.scenario-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Map visual */
+.map-visual {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  position: relative;
+  height: 220px;
+}
+.map-visual canvas {
+  width: 100%; height: 100%;
+}
+.map-overlay {
+  position: absolute; inset: 0;
+  display: flex; align-items: flex-end;
+  padding: 14px;
+  background: linear-gradient(to top, rgba(0,0,0,.7) 0%, transparent 60%);
+}
+.map-location {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 2px;
+  color: #fff;
+  text-shadow: 0 2px 8px rgba(0,0,0,.8);
+}
+.map-location span {
+  font-family: 'Barlow', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--smoke);
+  display: block;
+  margin-bottom: 2px;
+}
+.map-severity {
+  position: absolute; top: 14px; right: 14px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 13px;
+  letter-spacing: 2px;
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+.sev-min  { background: rgba(74,124,63,.3); border: 1px solid var(--green);  color: var(--green3); }
+.sev-mod  { background: rgba(255,153,0,.2); border: 1px solid var(--fire2); color: var(--fire2); }
+.sev-sev  { background: rgba(204,34,0,.3);  border: 1px solid var(--danger); color: #ff6644; }
+
+/* Scenario text */
+.scenario-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+.scenario-week {
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.scenario-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 24px;
+  letter-spacing: 1px;
+  color: var(--fire2);
+  margin-bottom: 10px;
+  line-height: 1.1;
+}
+.scenario-body {
+  font-size: 14px;
+  line-height: 1.75;
+  color: #b8c8a8;
+}
+.scenario-body strong { color: var(--text); }
+.scenario-body em { color: var(--fire2); font-style: normal; font-weight: 600; }
+
+/* Consequence banner */
+.consequence {
+  display: none;
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  border-left: 4px solid;
+  margin-bottom: 4px;
+  animation: slideIn .4s ease;
+}
+.consequence.show { display: block; }
+.consequence.good  { background: rgba(42,122,58,.15); border-color: var(--safe); }
+.consequence.bad   { background: rgba(204,34,0,.15);  border-color: var(--danger); }
+.consequence.mid   { background: rgba(255,153,0,.12); border-color: var(--fire2); }
+.consequence-title { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 1px; margin-bottom: 4px; }
+.consequence.good  .consequence-title { color: var(--green3); }
+.consequence.bad   .consequence-title { color: #ff6644; }
+.consequence.mid   .consequence-title { color: var(--fire2); }
+.consequence-text  { font-size: 13px; color: #a0b090; line-height: 1.6; }
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Choices panel */
+.choices-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.choice-btn {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  cursor: pointer;
+  text-align: left;
+  transition: all .2s;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.choice-btn:hover:not(:disabled) {
+  border-color: var(--fire2);
+  background: rgba(255,153,0,.06);
+  transform: translateX(4px);
+}
+.choice-btn:disabled { opacity: .4; cursor: not-allowed; }
+.choice-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+.choice-text-wrap { flex: 1; }
+.choice-label {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.choice-desc {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.choice-cost {
+  font-size: 10px;
+  color: var(--water);
+  margin-top: 4px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.next-btn-wrap { margin-top: 8px; }
+.btn-next {
+  width: 100%;
+  background: linear-gradient(135deg, var(--green), #2a5a25);
+  color: #fff;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  letter-spacing: 3px;
+  padding: 14px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  display: none;
+  transition: all .2s;
+}
+.btn-next:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(74,124,63,.5); }
+.btn-next.show { display: block; }
+
+/* Side panel */
+.side-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.data-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.data-card-title {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.data-card-title::after {
+  content: ''; flex: 1; height: 1px;
+  background: var(--border);
+}
+
+.fact-list { display: flex; flex-direction: column; gap: 10px; }
+.fact-item {
+  display: flex; gap: 10px; align-items: flex-start;
+  font-size: 12px; line-height: 1.5; color: #9aaa88;
+}
+.fact-item .fact-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.fact-item strong { color: var(--text); display: block; font-size: 11px; letter-spacing: .5px; }
+
+.history-list {
+  display: flex; flex-direction: column; gap: 6px;
+  max-height: 200px; overflow-y: auto;
+}
+.history-item {
+  display: flex; gap: 8px; align-items: flex-start;
+  font-size: 11px; color: var(--muted); line-height: 1.4;
+}
+.history-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  flex-shrink: 0; margin-top: 4px;
+}
+.history-dot.good  { background: var(--green2); }
+.history-dot.bad   { background: var(--danger); }
+.history-dot.mid   { background: var(--fire2); }
+
+/* ════════════════════════════════
+   END SCREEN
+════════════════════════════════ */
+#end {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 40px 20px;
+  text-align: center;
+}
+.end-emoji { font-size: 72px; margin-bottom: 16px; animation: flicker 2s infinite alternate; }
+.end-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(36px, 8vw, 72px);
+  letter-spacing: 4px;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.end-subtitle { font-size: 15px; color: var(--smoke); margin-bottom: 30px; letter-spacing: 1px; }
+.end-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+  max-width: 560px;
+  width: 100%;
+  margin-bottom: 28px;
+}
+.end-stat {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.end-stat-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.end-stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 28px; line-height: 1; }
+.end-rank {
+  max-width: 480px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  margin-bottom: 28px;
+  text-align: left;
+}
+.end-rank-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.end-rank-title { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 2px; color: var(--fire2); margin-bottom: 6px; }
+.end-rank-desc { font-size: 13px; color: #9aaa88; line-height: 1.6; }
+.btn-restart {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  letter-spacing: 3px;
+  padding: 12px 36px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn-restart:hover { border-color: var(--fire2); color: var(--fire2); }
+</style>
+</head>
+<body>
+
+<div id="particles"></div>
+
+<!-- ══ INTRO ══ -->
+<div id="intro" class="screen active">
+  <div class="fire-emoji-big">🔥</div>
+  <h1>GUARDA<br><span>BOSQUES</span></h1>
+  <p class="tagline">Simulador de Crisis Forestal · México</p>
+  <div class="intro-desc">
+    <p>Eres el <strong>Coordinador de Protección Forestal</strong> de una región mexicana durante la temporada de incendios.</p>
+    <p>Cada semana recibirás reportes de incendios reales (basados en datos del registro nacional). Deberás <strong>tomar decisiones</strong> que afectan:</p>
+    <p>🌲 <strong>La cobertura forestal</strong> · 💧 <strong>Tus recursos operativos</strong> · 📣 <strong>La moral social</strong></p>
+    <p>Tus decisiones tienen <em>consecuencias reales</em>. No siempre hay una opción perfecta.</p>
+  </div>
+  <button class="btn btn-fire" onclick="startGame()">▶ INICIAR MISIÓN</button>
+  <p class="author-tag">Diseñado por <span>Paulina Caballero Cota</span> · paca_21@alu.uabcs.mx</p>
+</div>
+
+<!-- ══ GAME ══ -->
+<div id="game" class="screen">
+  <div class="hud">
+    <div class="hud-logo">🔥 GUARDABOSQUES</div>
+    <div class="hud-stats">
+      <div class="hud-stat">
+        <div class="hud-stat-label">Cobertura forestal</div>
+        <div class="hud-stat-value val-forest" id="hud-forest">100%</div>
+        <div class="hud-bar-wrap"><div class="hud-bar bar-forest" id="bar-forest" style="width:100%"></div></div>
+      </div>
+      <div class="hud-stat">
+        <div class="hud-stat-label">Recursos</div>
+        <div class="hud-stat-value val-resources" id="hud-resources">100</div>
+        <div class="hud-bar-wrap"><div class="hud-bar bar-resources" id="bar-resources" style="width:100%"></div></div>
+      </div>
+      <div class="hud-stat">
+        <div class="hud-stat-label">Moral social</div>
+        <div class="hud-stat-value val-moral" id="hud-moral">100%</div>
+        <div class="hud-bar-wrap"><div class="hud-bar bar-moral" id="bar-moral" style="width:100%"></div></div>
+      </div>
+      <div class="hud-stat">
+        <div class="hud-stat-label">Superficie quemada</div>
+        <div class="hud-stat-value val-damage" id="hud-damage">0 ha</div>
+      </div>
+    </div>
+    <div class="week-badge" id="hud-week">SEM 1/8</div>
+  </div>
+
+  <div class="game-content">
+    <div class="scenario-panel">
+      <!-- Map -->
+      <div class="map-visual">
+        <canvas id="mapCanvas"></canvas>
+        <div class="map-overlay">
+          <div class="map-location">
+            <span id="map-estado-label">Estado</span>
+            <span id="map-estado">—</span>
+          </div>
+        </div>
+        <div class="map-severity" id="map-severity"></div>
+      </div>
+
+      <!-- Consequence -->
+      <div class="consequence" id="consequence-box">
+        <div class="consequence-title" id="con-title"></div>
+        <div class="consequence-text" id="con-text"></div>
+      </div>
+
+      <!-- Scenario -->
+      <div class="scenario-box">
+        <div class="scenario-week" id="sc-week"></div>
+        <div class="scenario-title" id="sc-title"></div>
+        <div class="scenario-body" id="sc-body"></div>
+      </div>
+
+      <!-- Choices -->
+      <div class="choices-panel" id="choices-panel"></div>
+      <div class="next-btn-wrap">
+        <button class="btn-next" id="btn-next" onclick="nextScenario()">SIGUIENTE SEMANA →</button>
+      </div>
+    </div>
+
+    <div class="side-panel">
+      <!-- Facts -->
+      <div class="data-card">
+        <div class="data-card-title">📊 Dato real</div>
+        <div class="fact-list" id="fact-list"></div>
+      </div>
+      <!-- History -->
+      <div class="data-card">
+        <div class="data-card-title">📋 Historial de decisiones</div>
+        <div class="history-list" id="history-list">
+          <div style="font-size:12px;color:var(--muted)">Aún no has tomado decisiones.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ END ══ -->
+<div id="end" class="screen">
+  <div class="end-emoji" id="end-emoji">🌲</div>
+  <div class="end-title" id="end-title">MISIÓN COMPLETADA</div>
+  <div class="end-subtitle" id="end-subtitle"></div>
+  <div class="end-stats-grid">
+    <div class="end-stat">
+      <div class="end-stat-label">Cobertura final</div>
+      <div class="end-stat-val val-forest" id="end-forest"></div>
+    </div>
+    <div class="end-stat">
+      <div class="end-stat-label">Recursos restantes</div>
+      <div class="end-stat-val val-resources" id="end-resources"></div>
+    </div>
+    <div class="end-stat">
+      <div class="end-stat-label">Moral social</div>
+      <div class="end-stat-val val-moral" id="end-moral"></div>
+    </div>
+    <div class="end-stat">
+      <div class="end-stat-label">Superficie quemada</div>
+      <div class="end-stat-val val-damage" id="end-damage"></div>
+    </div>
+  </div>
+  <div class="end-rank">
+    <div class="end-rank-label">Tu calificación</div>
+    <div class="end-rank-title" id="end-rank-title"></div>
+    <div class="end-rank-desc" id="end-rank-desc"></div>
+  </div>
+  <button class="btn-restart" onclick="restart()">↺ JUGAR DE NUEVO</button>
+</div>
+
+<script>
+// ── State ──
+let state = {};
+let currentScenario = 0;
+let choiceMade = false;
+let history = [];
+
+function initState() {
+  state = { forest: 100, resources: 100, moral: 100, damage: 0 };
+  currentScenario = 0;
+  choiceMade = false;
+  history = [];
+}
+
+// ── Scenarios (based on real data) ──
+const scenarios = [
+  {
+    week: 1, estado: "México (Estado)", municipio: "Tlalmanalco",
+    severity: "mod", severityLabel: "Impacto Moderado",
+    title: "FUEGO EN EL POPOCATÉPETL",
+    body: `Es la semana 1. Un incendio de <em>110 hectáreas</em> consume el bosque de pino en las faldas del Popocatépetl, dentro del ANP <strong>Iztaccíhuatl-Popocatépetl</strong>. La causa probable es <em>actividades pecuarias</em>. Tienes recursos limitados. ¿Cómo respondes?`,
+    choices: [
+      { icon: "🚒", label: "Combate intensivo", desc: "Moviliza brigadas completas al área. Alto costo, mayor efectividad.", cost: "−25 recursos", effect: { forest: +5, resources: -25, moral: +10, damage: 80 }, outcome: "good", outTitle: "Incendio contenido", outText: "Tus brigadas lograron controlar el fuego rápidamente. La comunidad valora la respuesta, pero los recursos escasean." },
+      { icon: "👁️", label: "Monitoreo y vigilancia", desc: "Observa la evolución antes de intervenir. Bajo costo, riesgo de expansión.", cost: "−5 recursos", effect: { forest: -12, resources: -5, moral: -5, damage: 110 }, outcome: "mid", outTitle: "El fuego avanzó más de lo esperado", outText: "La decisión de esperar costó más superficie. El incendio fue finalmente controlado, pero con más daño." },
+      { icon: "🤝", label: "Apoyo comunitario", desc: "Activa brigadas locales y voluntarios. Costo medio, fortalece lazos.", cost: "−12 recursos", effect: { forest: -3, resources: -12, moral: +15, damage: 90 }, outcome: "good", outTitle: "La comunidad respondió", outText: "Las brigadas locales conocen el terreno. La participación ciudadana reforzó la moral y el incendio se controló." },
+    ],
+    fact: [{ icon: "📍", title: "Tlalmanalco, Edo. Méx.", text: "Registró incendios de hasta 110 ha en bosque de pino dentro del ANP Iztaccíhuatl-Popocatépetl durante la semana 11 del registro." }, { icon: "🐄", title: "Actividades pecuarias", text: "Una de las causas más frecuentes en zonas de bosque templado junto con actividades agrícolas." }]
+  },
+  {
+    week: 2, estado: "Tabasco", municipio: "Centla / Jonuta",
+    severity: "min", severityLabel: "Impacto Mínimo",
+    title: "HUMEDALES EN LLAMAS",
+    body: `Semana 2. Tres incendios simultáneos en la zona de <strong>Pantanos de Centla</strong> suman <em>290 hectáreas</em> de tular y popal. Las causas van desde <em>actividades agrícolas</em> hasta <em>desconocidas</em>. El ecosistema es altamente sensible. ¿Qué prioridades defines?`,
+    choices: [
+      { icon: "💧", label: "Proteger el ANP", desc: "Enfoca todos los recursos en los Pantanos de Centla. Deja áreas periféricas.", cost: "−20 recursos", effect: { forest: +2, resources: -20, moral: +5, damage: 180 }, outcome: "good", outTitle: "ANP preservada", outText: "Lograste proteger el corazón del humedal. Las zonas periféricas sufrieron más, pero el ecosistema crítico sobrevivió." },
+      { icon: "🔥", label: "Contención perimetral", desc: "Crea cortafuegos para evitar que se unan los tres incendios.", cost: "−18 recursos", effect: { forest: -5, resources: -18, moral: +8, damage: 220 }, outcome: "mid", outTitle: "Éxito parcial", outText: "Dos de los tres incendios se unieron antes de que la contención funcionara. Se evitó un desastre mayor." },
+      { icon: "📢", label: "Alerta a ganaderos", desc: "Campañas de prevención y diálogo con comunidades locales para evitar reincidencia.", cost: "−8 recursos", effect: { forest: -15, resources: -8, moral: +20, damage: 290 }, outcome: "bad", outTitle: "Los incendios se extendieron", outText: "La campaña fue valiosa a largo plazo, pero en lo inmediato el fuego avanzó sin contención directa." },
+    ],
+    fact: [{ icon: "🌿", title: "Pantanos de Centla", text: "ANP en Tabasco. Los incendios de tular y popal afectan hábitats de aves migratorias y biodiversidad acuática única." }, { icon: "🔢", title: "Dato real", text: "En la semana 11 se registraron 3 incendios simultáneos en Centla y Jonuta sumando más de 289 hectáreas con atención de monitoreo." }]
+  },
+  {
+    week: 3, estado: "Jalisco", municipio: "San Miguel el Alto",
+    severity: "mod", severityLabel: "Impacto Moderado",
+    title: "SELVA BAJA EN CRISIS",
+    body: `Semana 3. Un incendio de <em>49.5 hectáreas</em> de selva baja caducifolia en <strong>San Miguel el Alto</strong>, Jalisco, atribuido a <em>actividades agrícolas</em>. Los campesinos locales defienden la práctica de roza-tumba-quema como parte de su tradición. Hay tensión social. ¿Cómo lo manejas?`,
+    choices: [
+      { icon: "⚖️", label: "Diálogo y mediación", desc: "Reunión urgente con ejidatarios. Busca acuerdos para prácticas alternativas.", cost: "−10 recursos", effect: { forest: -8, resources: -10, moral: +18, damage: 49 }, outcome: "mid", outTitle: "Acuerdo alcanzado", outText: "El diálogo funcionó: los ejidatarios aceptaron usar quemas controladas con supervisión. La relación se fortaleció." },
+      { icon: "🚫", label: "Sanción y prohibición", desc: "Levantar acta oficial y prohibir actividades. Rápido pero genera conflicto.", cost: "−5 recursos", effect: { forest: +5, resources: -5, moral: -20, damage: 30 }, outcome: "bad", outTitle: "Conflicto social", outText: "La prohibición generó protestas. Aunque el fuego se controló, la comunidad perdió confianza en las autoridades." },
+      { icon: "🌱", label: "Capacitación técnica", desc: "Programa de agricultura sostenible a mediano plazo. Costo alto, beneficio duradero.", cost: "−22 recursos", effect: { forest: -4, resources: -22, moral: +25, damage: 49 }, outcome: "good", outTitle: "Inversión a futuro", outText: "El programa de capacitación es bien recibido. Los incendios no cesan hoy, pero las comunidades cambian poco a poco." },
+    ],
+    fact: [{ icon: "🌾", title: "Roza-tumba-quema", text: "Práctica agrícola ancestral en México. Su uso no controlado cerca de áreas forestales es una de las principales causas de incendios en el sureste." }, { icon: "📊", title: "Jalisco en datos", text: "Con 159 incendios, Jalisco es el 3er estado más afectado en el registro, acumulando más de 4,186 hectáreas quemadas." }]
+  },
+  {
+    week: 4, estado: "Oaxaca / Guerrero", municipio: "Varios municipios",
+    severity: "sev", severityLabel: "Impacto Severo",
+    title: "INCENDIO MASIVO: EMERGENCIA REGIONAL",
+    body: `Semana 4. Una ola de calor dispara incendios en Oaxaca y Guerrero. En conjunto acumulan más de <em>15,000 hectáreas</em>. Los vientos aumentan la velocidad de propagación. Los recursos nacionales son limitados y otras regiones también están en crisis. <strong>Debes elegir dónde concentrar la ayuda.</strong>`,
+    choices: [
+      { icon: "🏔️", label: "Priorizar Oaxaca (ANP)", desc: "Enfocar brigadas en áreas naturales protegidas con mayor biodiversidad.", cost: "−30 recursos", effect: { forest: -15, resources: -30, moral: +5, damage: 8000 }, outcome: "mid", outTitle: "Biodiversidad parcialmente protegida", outText: "Las ANP sobrevivieron, pero las zonas productivas de Guerrero perdieron más superficie de lo esperado." },
+      { icon: "🏘️", label: "Priorizar comunidades", desc: "Proteger primero las zonas habitadas aunque el bosque sufra más.", cost: "−25 recursos", effect: { forest: -25, resources: -25, moral: +20, damage: 12000 }, outcome: "good", outTitle: "Cero víctimas humanas", outText: "La decisión fue costosa para el bosque, pero ninguna comunidad fue evacuada de emergencia. La moral sube." },
+      { icon: "📡", label: "Solicitar apoyo federal", desc: "Escalar la emergencia. Tarda más, pero trae más recursos.", cost: "−5 recursos", effect: { forest: -30, resources: +15, moral: -5, damage: 15000 }, outcome: "bad", outTitle: "El apoyo llegó tarde", outText: "El proceso burocrático tardó. El incendio alcanzó su máximo impacto antes de que llegara el refuerzo federal." },
+    ],
+    fact: [{ icon: "📈", title: "Semana 8: el peor momento", text: "El registro real muestra que la semana 8 concentró 264 incendios y más de 26,872 hectáreas quemadas, la cifra semanal más alta del año." }, { icon: "🗺️", title: "San Luis Potosí", text: "Fue el estado con mayor superficie afectada total: 19,491 hectáreas. Una sola semana puede definir la estadística anual." }]
+  },
+  {
+    week: 5, estado: "Tlaxcala", municipio: "Chiautempan / Huamantla",
+    severity: "min", severityLabel: "Impacto Mínimo",
+    title: "INCENDIOS INTENCIONALES EN LA MALINCHE",
+    body: `Semana 5. Tres incendios intencionales en la zona de <strong>La Montaña Malinche o Matlalcuéyatl</strong>, Tlaxcala. En total <em>14 hectáreas</em> de bosque de pino. La causa parece ser conflictos por tierras. Tu equipo de investigación tiene una pista sobre el responsable. ¿Qué haces?`,
+    choices: [
+      { icon: "🔍", label: "Investigar y denunciar", desc: "Recolecta evidencia antes de actuar. Proceso legal formal.", cost: "−8 recursos", effect: { forest: -2, resources: -8, moral: +12, damage: 14 }, outcome: "good", outTitle: "Caso en proceso legal", outText: "La investigación prosperó. Aunque lento, el proceso legal envía un mensaje claro: los incendios intencionales tienen consecuencias." },
+      { icon: "🚔", label: "Detención inmediata", desc: "Actuar rápido con las autoridades. Riesgo de error si la pista falla.", cost: "−12 recursos", effect: { forest: 0, resources: -12, moral: -8, damage: 10 }, outcome: "mid", outTitle: "Detención parcialmente exitosa", outText: "Se detuvo a un sospechoso, pero sin suficiente evidencia. La comunidad está dividida. El caso está en revisión." },
+      { icon: "🌐", label: "Campaña preventiva", desc: "Señalización, patrullaje y concientización en la región.", cost: "−15 recursos", effect: { forest: -1, resources: -15, moral: +20, damage: 14 }, outcome: "good", outTitle: "Zona bajo vigilancia", outText: "No se capturó al responsable, pero la región quedó bajo vigilancia reforzada. Los incendios intencionales disminuyeron las semanas siguientes." },
+    ],
+    fact: [{ icon: "🔥", title: "Incendios intencionales", text: "Con 401 casos, son la segunda causa más frecuente en el registro. Incluyen quemas por conflictos agrarios, venganzas y tráfico de tierras." }, { icon: "🌲", title: "La Malinche", text: "ANP de Tlaxcala y Puebla. Hogar del bosque de pino más importante de la región central de México." }]
+  },
+  {
+    week: 6, estado: "Durango", municipio: "Durango / San Dimas",
+    severity: "mod", severityLabel: "Impacto Moderado",
+    title: "FOGATAS Y DESCUIDO EN LA SIERRA",
+    body: `Semana 6. Dos incendios en Durango suman <em>496 hectáreas</em> de bosque de pino y matorral. La causa: <em>fogatas abandonadas</em>. La temporada de senderismo está en apogeo y hay grupos de turistas en la zona. Los medios de comunicación están cubriendo el caso. ¿Cuál es tu estrategia de comunicación y control?`,
+    choices: [
+      { icon: "📣", label: "Comunicado oficial", desc: "Transparencia total con los medios. Explica causas y acciones tomadas.", cost: "−5 recursos", effect: { forest: -10, resources: -5, moral: +15, damage: 350 }, outcome: "mid", outTitle: "Opinión pública favorable", outText: "La transparencia ganó credibilidad. El incendio continuó, pero la ciudadanía apoyó el trabajo de las brigadas." },
+      { icon: "🛑", label: "Cerrar el área", desc: "Cierre temporal de senderos. Reduce el riesgo futuro pero afecta el turismo.", cost: "−10 recursos", effect: { forest: +3, resources: -10, moral: -5, damage: 250 }, outcome: "good", outTitle: "Control con fricción", outText: "El cierre funcionó para proteger el área, pero los operadores turísticos protestaron. La decisión fue necesaria." },
+      { icon: "🎓", label: "Educación en campo", desc: "Equipos en el terreno educando turistas en tiempo real.", cost: "−18 recursos", effect: { forest: -5, resources: -18, moral: +22, damage: 300 }, outcome: "good", outTitle: "Cultura preventiva", outText: "Los turistas quedaron impresionados. Se viralizó en redes sociales. La cultura de prevención ganó visibilidad nacional." },
+    ],
+    fact: [{ icon: "🏕️", title: "Fogatas: causa frecuente", text: "67 incendios en el registro se originaron por fogatas. La Sierra Madre Occidental de Durango concentra algunos de los bosques de pino más extensos del país." }, { icon: "📰", title: "Durango y sus incendios", text: "Registra 39 incendios con un incendio de más de 434 ha solo por fogatas en la ciudad de Durango." }]
+  },
+  {
+    week: 7, estado: "San Luis Potosí", municipio: "Varios",
+    severity: "sev", severityLabel: "CRISIS TOTAL",
+    title: "EL ESTADO MÁS AFECTADO",
+    body: `Semana 7. San Luis Potosí supera las <em>19,000 hectáreas</em> quemadas acumuladas. La situación es crítica. El gobernador exige resultados inmediatos. Tu presupuesto está casi agotado. Debes tomar la decisión más importante de la temporada: ¿en qué inviertes los últimos recursos?`,
+    choices: [
+      { icon: "🌱", label: "Reforestación inmediata", desc: "Inicia recuperación de zonas ya controladas. Largo plazo, esperanza visible.", cost: "−20 recursos", effect: { forest: +8, resources: -20, moral: +20, damage: 0 }, outcome: "good", outTitle: "Señal de esperanza", outText: "Las imágenes de reforestación conmueven a la opinión pública. La moral sube, y el futuro del bosque tiene un primer paso." },
+      { icon: "💧", label: "Última brigada activa", desc: "Moviliza todo lo que queda para apagar los focos activos.", cost: "−25 recursos", effect: { forest: +10, resources: -25, moral: +10, damage: -500 }, outcome: "good", outTitle: "Focos extinguidos", outText: "La apuesta máxima funcionó. Los últimos incendios activos fueron controlados. Tus brigadas están exhaustas pero orgullosas." },
+      { icon: "📋", label: "Informe y cierre de temporada", desc: "Documentar todo para el siguiente año. Preservar recursos mínimos.", cost: "−5 recursos", effect: { forest: -5, resources: -5, moral: -10, damage: 200 }, outcome: "mid", outTitle: "Fin de temporada amargo", outText: "El informe fue ejemplar, pero la ciudadanía sintió que te rendiste. El bosque sigue ardiendo mientras documentas." },
+    ],
+    fact: [{ icon: "🏆", title: "San Luis Potosí: el más afectado", text: "Con 19,491 hectáreas quemadas, encabeza la lista de superficie afectada. La causa principal: actividades agrícolas e intencionales." }, { icon: "⏱️", title: "Temporada crítica", text: "La semana 9 fue la de más incendios (303 eventos). Semanas 8-10 concentran el 60% de la superficie total afectada del registro." }]
+  },
+  {
+    week: 8, estado: "Todo México", municipio: "Cierre de temporada",
+    severity: "min", severityLabel: "Fin de temporada",
+    title: "BALANCE FINAL: ¿QUÉ DEJAMOS AL BOSQUE?",
+    body: `Última semana. La temporada de incendios concluye. En todo el país se registraron <em>1,531 incendios</em> con <em>69,468 hectáreas</em> afectadas. Tu región fue parte de esa estadística. Queda una decisión final: ¿cuál es el legado de tu gestión?`,
+    choices: [
+      { icon: "📚", label: "Programa de educación ambiental", desc: "Invierte en prevención para la próxima temporada con escuelas y comunidades.", cost: "−15 recursos", effect: { forest: +5, resources: -15, moral: +25, damage: 0 }, outcome: "good", outTitle: "Semillas de cambio", outText: "Miles de niños y familias aprenden sobre el bosque. La próxima temporada comenzará con una cultura preventiva más sólida." },
+      { icon: "🌳", label: "Reforestación masiva", desc: "Plantar árboles en las zonas más afectadas. Resultado visible e impactante.", cost: "−20 recursos", effect: { forest: +15, resources: -20, moral: +15, damage: 0 }, outcome: "good", outTitle: "El bosque renace", outText: "Decenas de miles de árboles plantados. El trabajo de un año destructivo comienza a revertirse con manos de muchos." },
+      { icon: "💼", label: "Tecnología y monitoreo", desc: "Invertir en drones y sistemas de alerta temprana para el futuro.", cost: "−18 recursos", effect: { forest: +3, resources: -18, moral: +10, damage: 0 }, outcome: "good", outTitle: "Innovación forestal", outText: "La tecnología de monitoreo reducirá el tiempo de respuesta en la próxima temporada. Una inversión invisible pero poderosa." },
+    ],
+    fact: [{ icon: "🌎", title: "México en cifras reales", text: "En el registro analizado: 1,531 incendios, 69,468 hectáreas afectadas, 32 estados involucrados, causas: 27% intencional, 27% desconocida, 19% agrícola." }, { icon: "💡", title: "La solución es colectiva", text: "No existe una sola respuesta correcta. La protección forestal requiere política pública, comunidades informadas y recursos suficientes." }]
+  },
+];
+
+// ── Particle system ──
+function createParticles() {
+  const container = document.getElementById('particles');
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = Math.random() * 6 + 2;
+    p.style.cssText = `
+      width:${size}px;height:${size}px;
+      left:${Math.random()*100}%;
+      background:hsl(${20+Math.random()*40},90%,${50+Math.random()*20}%);
+      animation-duration:${4+Math.random()*8}s;
+      animation-delay:${Math.random()*6}s;
+    `;
+    container.appendChild(p);
+  }
+}
+
+// ── Map Canvas ──
+function drawMap(scenario) {
+  const canvas = document.getElementById('mapCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth || 600;
+  canvas.height = canvas.offsetHeight || 220;
+  const W = canvas.width, H = canvas.height;
+
+  // Background
+  const bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, '#0d1a08');
+  bg.addColorStop(1, '#1a1205');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Draw forest patches
+  const colors = scenario.severity === 'sev'
+    ? ['#1a3010','#3a5020','#ff3300','#ff6600','#cc2200']
+    : scenario.severity === 'mod'
+    ? ['#1a3010','#3a5020','#4a7c3f','#ff5500','#cc4400']
+    : ['#1a3010','#3a5020','#4a7c3f','#6db55b','#a8e063'];
+
+  const rng = (seed) => {
+    let x = Math.sin(seed) * 10000;
+    return x - Math.floor(x);
+  };
+
+  for (let i = 0; i < 80; i++) {
+    const x = rng(i * 7.3 + 1) * W;
+    const y = rng(i * 3.7 + 2) * H;
+    const r = rng(i * 5.1 + 3) * 28 + 8;
+    const colorIdx = Math.floor(rng(i * 2.9 + 4) * colors.length);
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = colors[colorIdx] + 'aa';
+    ctx.fill();
+  }
+
+  // Fire spots
+  const fireCount = scenario.severity === 'sev' ? 8 : scenario.severity === 'mod' ? 4 : 2;
+  for (let i = 0; i < fireCount; i++) {
+    const x = rng(i * 11.3 + 99) * W;
+    const y = rng(i * 8.1 + 77) * H;
+    const grd = ctx.createRadialGradient(x, y, 0, x, y, 30 + i * 8);
+    grd.addColorStop(0, 'rgba(255,200,0,0.9)');
+    grd.addColorStop(.4, 'rgba(255,80,0,0.6)');
+    grd.addColorStop(1, 'rgba(255,0,0,0)');
+    ctx.beginPath();
+    ctx.arc(x, y, 30 + i * 8, 0, Math.PI * 2);
+    ctx.fillStyle = grd;
+    ctx.fill();
+  }
+
+  // Grid lines (map feel)
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+  for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+}
+
+// ── HUD update ──
+function updateHUD() {
+  document.getElementById('hud-forest').textContent = Math.max(0,Math.round(state.forest)) + '%';
+  document.getElementById('hud-resources').textContent = Math.max(0,Math.round(state.resources));
+  document.getElementById('hud-moral').textContent = Math.max(0,Math.round(state.moral)) + '%';
+  document.getElementById('hud-damage').textContent = Math.round(state.damage).toLocaleString('es-MX') + ' ha';
+  document.getElementById('bar-forest').style.width = Math.max(0,state.forest) + '%';
+  document.getElementById('bar-resources').style.width = Math.max(0,Math.min(100,state.resources)) + '%';
+  document.getElementById('bar-moral').style.width = Math.max(0,state.moral) + '%';
+  document.getElementById('hud-week').textContent = `SEM ${currentScenario+1}/${scenarios.length}`;
+}
+
+// ── Render scenario ──
+function renderScenario() {
+  const sc = scenarios[currentScenario];
+  choiceMade = false;
+
+  // Map
+  drawMap(sc);
+  document.getElementById('map-estado-label').textContent = sc.estado;
+  document.getElementById('map-estado').textContent = sc.municipio;
+  const sevEl = document.getElementById('map-severity');
+  sevEl.textContent = sc.severityLabel;
+  sevEl.className = `map-severity sev-${sc.severity}`;
+
+  // Hide consequence
+  document.getElementById('consequence-box').className = 'consequence';
+
+  // Scenario text
+  document.getElementById('sc-week').textContent = `📅 Semana ${sc.week} de ${scenarios.length}`;
+  document.getElementById('sc-title').textContent = sc.title;
+  document.getElementById('sc-body').innerHTML = sc.body;
+
+  // Choices
+  const panel = document.getElementById('choices-panel');
+  panel.innerHTML = '';
+  sc.choices.forEach((c, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerHTML = `
+      <div class="choice-icon">${c.icon}</div>
+      <div class="choice-text-wrap">
+        <div class="choice-label">${c.label}</div>
+        <div class="choice-desc">${c.desc}</div>
+        <div class="choice-cost">${c.cost}</div>
+      </div>`;
+    btn.onclick = () => makeChoice(i);
+    panel.appendChild(btn);
+  });
+
+  // Facts
+  const factList = document.getElementById('fact-list');
+  factList.innerHTML = sc.fact.map(f => `
+    <div class="fact-item">
+      <div class="fact-icon">${f.icon}</div>
+      <div><strong>${f.title}</strong>${f.text}</div>
+    </div>`).join('');
+
+  document.getElementById('btn-next').classList.remove('show');
+  updateHUD();
+}
+
+// ── Make choice ──
+function makeChoice(idx) {
+  if (choiceMade) return;
+  choiceMade = true;
+  const sc = scenarios[currentScenario];
+  const c = sc.choices[idx];
+
+  // Apply effect
+  state.forest = Math.min(100, Math.max(0, state.forest + (c.effect.forest || 0)));
+  state.resources = Math.min(150, Math.max(0, state.resources + (c.effect.resources || 0)));
+  state.moral = Math.min(100, Math.max(0, state.moral + (c.effect.moral || 0)));
+  state.damage += (c.effect.damage || 0);
+
+  // Disable all choices
+  document.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
+
+  // Consequence
+  const box = document.getElementById('consequence-box');
+  box.className = `consequence show ${c.outcome}`;
+  document.getElementById('con-title').textContent = c.outTitle;
+  document.getElementById('con-text').textContent = c.outText;
+
+  // History
+  history.push({ outcome: c.outcome, text: `Sem ${sc.week}: ${c.label} — ${c.outTitle}` });
+  renderHistory();
+
+  // Show next
+  document.getElementById('btn-next').classList.add('show');
+  updateHUD();
+}
+
+function renderHistory() {
+  const list = document.getElementById('history-list');
+  list.innerHTML = history.slice().reverse().map(h => `
+    <div class="history-item">
+      <div class="history-dot ${h.outcome}"></div>
+      <div>${h.text}</div>
+    </div>`).join('');
+}
+
+function nextScenario() {
+  currentScenario++;
+  if (currentScenario >= scenarios.length) {
+    showEnd();
+  } else {
+    renderScenario();
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+}
+
+// ── End screen ──
+function showEnd() {
+  show('end');
+  document.getElementById('end-forest').textContent = Math.max(0,Math.round(state.forest)) + '%';
+  document.getElementById('end-resources').textContent = Math.max(0,Math.round(state.resources));
+  document.getElementById('end-moral').textContent = Math.max(0,Math.round(state.moral)) + '%';
+  document.getElementById('end-damage').textContent = Math.round(state.damage).toLocaleString('es-MX') + ' ha';
+
+  const score = (state.forest + state.moral) / 2 - state.damage / 500;
+  let emoji, title, desc, subtitle;
+
+  if (score >= 60 && state.forest >= 80) {
+    emoji = '🌲'; title = 'GUARDIÁN EJEMPLAR';
+    subtitle = 'El bosque te lo agradece';
+    desc = 'Tu gestión equilibrada entre acción, prevención y diálogo comunitario logró proteger la mayor parte del territorio forestal. Eres un ejemplo de coordinación efectiva.';
+  } else if (score >= 35) {
+    emoji = '🔥'; title = 'GESTOR EN CAMPO';
+    subtitle = 'Tomaste decisiones difíciles';
+    desc = 'Tus decisiones tuvieron impactos mixtos. Protegiste comunidades pero sacrificaste parte del bosque. La realidad de la gestión forestal rara vez ofrece soluciones perfectas.';
+  } else {
+    emoji = '💨'; title = 'TEMPORADA CRÍTICA';
+    subtitle = 'El bosque necesita más apoyo';
+    desc = 'La temporada fue devastadora. Las decisiones tomadas no lograron contener el daño. Pero cada error es aprendizaje: los sistemas forestales necesitan más recursos, más personal y más voluntad política.';
+  }
+
+  document.getElementById('end-emoji').textContent = emoji;
+  document.getElementById('end-title').textContent = title;
+  document.getElementById('end-subtitle').textContent = subtitle;
+  document.getElementById('end-rank-title').textContent = title;
+  document.getElementById('end-rank-desc').textContent = desc;
+}
+
+// ── Navigation ──
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startGame() {
+  initState();
+  show('game');
+  renderScenario();
+  window.scrollTo({top:0});
+}
+
+function restart() {
+  show('intro');
+  window.scrollTo({top:0});
+}
+
+// ── Init ──
+createParticles();
+window.addEventListener('resize', () => {
+  if (document.getElementById('game').classList.contains('active')) {
+    drawMap(scenarios[currentScenario]);
+  }
+});
+</script>
+</body>
+</html>

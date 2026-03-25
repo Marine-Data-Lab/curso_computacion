@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>SIFA · Rescate Forestal</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080d12;--panel:#0f1923;--panel2:#131f2b;--border:#1e3448;
+  --accent:#f97316;--red:#ef4444;--amber:#f59e0b;
+  --green:#22c55e;--blue:#3b82f6;--water:#0ea5e9;
+  --purple:#a78bfa;--teal:#2dd4bf;
+  --text:#e2e8f0;--muted:#64748b;--soft:#94a3b8;
+}
+html,body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;font-size:12px;height:100%}
+body{padding:12px;overflow-x:hidden}
+
+/* HEADER */
+.hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.hdr-left{display:flex;flex-direction:column;gap:2px}
+.hdr-title{font-size:11px;letter-spacing:4px;color:var(--soft);text-transform:uppercase;font-weight:700}
+.hdr-sub{font-size:9px;color:var(--muted);letter-spacing:2px}
+.hdr-right{display:flex;align-items:center;gap:12px}
+.live-badge{display:flex;align-items:center;gap:5px;font-size:9px;color:var(--green);letter-spacing:1px}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:pulse 1.8s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.8)}}
+
+/* STEPPER */
+.stepper{display:flex;align-items:center;margin-bottom:12px;gap:0;overflow-x:auto;padding:4px 0}
+.si{display:flex;align-items:center;flex-shrink:0}
+.sc{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--muted);cursor:pointer;transition:all .25s;flex-shrink:0;background:var(--bg)}
+.sc.done{background:#0a1f0e;border-color:var(--green);color:var(--green)}
+.sc.act{background:var(--accent);border-color:var(--accent);color:#000;box-shadow:0 0 10px rgba(249,115,22,.4)}
+.sc.lock{opacity:.25;cursor:default}
+.sl{width:28px;height:1px;background:var(--border);flex-shrink:0;transition:background .3s}
+.sl.done{background:var(--green)}
+
+/* STEP CARD */
+.step-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;border-left:3px solid var(--accent);position:relative;overflow:hidden}
+.step-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--accent),transparent)}
+.step-hdr{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+.step-num{width:20px;height:20px;border-radius:50%;background:var(--accent);color:#000;font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-title{font-size:11px;font-weight:700;color:var(--text);letter-spacing:.5px}
+.step-desc{font-size:10px;color:var(--muted);line-height:1.65;margin-bottom:10px}
+.step-body{margin-bottom:10px}
+.step-btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{padding:6px 14px;border:none;border-radius:5px;font-size:9px;font-weight:700;letter-spacing:1.5px;cursor:pointer;font-family:inherit;transition:all .15s;text-transform:uppercase}
+.btn:hover{opacity:.85;transform:translateY(-1px)}
+.btn:active{transform:scale(.97)}
+.btn.pri{background:var(--accent);color:#000}
+.btn.blu{background:#1e40af;color:#fff}
+.btn.pur{background:#5b21b6;color:#fff}
+.btn.teal{background:#0f766e;color:#fff}
+.btn.sec{background:transparent;border:1px solid var(--border);color:var(--muted)}
+.btn.sec:hover{border-color:var(--green);color:var(--green)}
+.btn.dan{background:transparent;border:1px solid var(--border);color:var(--muted)}
+.btn.dan:hover{border-color:var(--red);color:var(--red)}
+.btn:disabled{opacity:.25;cursor:default;transform:none}
+
+/* MAIN LAYOUT */
+.layout{display:grid;grid-template-columns:1fr 270px;gap:12px}
+
+/* CANVAS */
+.cbox{position:relative;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:#030810}
+.cbox::after{content:'';position:absolute;inset:0;border-radius:10px;pointer-events:none;box-shadow:inset 0 0 30px rgba(0,0,0,.5)}
+.chint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.8);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:9px;color:var(--soft);pointer-events:none;white-space:nowrap;letter-spacing:1px}
+
+/* SIDEBAR */
+.side{display:flex;flex-direction:column;gap:8px}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:11px}
+.plbl{font-size:8px;letter-spacing:2.5px;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--border);padding-bottom:5px;margin-bottom:9px}
+
+/* STAT GRID */
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.scard{background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:7px}
+.snum{font-size:18px;font-weight:700;color:var(--accent);line-height:1}
+.slbl{font-size:8px;color:var(--muted);letter-spacing:.5px;margin-top:2px}
+.prog{height:3px;background:var(--border);border-radius:2px;margin-top:7px;overflow:hidden}
+.pf{height:100%;border-radius:2px;transition:width .4s}
+
+/* ANIMAL RESCUE */
+.rescue-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:6px}
+.animal-badge{background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:5px;text-align:center;font-size:14px;line-height:1.2}
+.animal-badge .count{font-size:9px;color:var(--muted);display:block}
+.animal-badge.rescued{border-color:var(--green);background:rgba(34,197,94,.08)}
+.animal-badge.rescued .count{color:var(--green)}
+
+/* UNIT LIST */
+.unit-item{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid rgba(30,52,72,.5)}
+.uav{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;flex-shrink:0}
+.uname{font-size:10px;color:var(--text)}
+.usub{font-size:8px;color:var(--muted)}
+.ubadge{font-size:7px;padding:1px 5px;border-radius:10px;letter-spacing:.5px}
+.ub-m{background:rgba(59,130,246,.15);color:var(--blue);border:1px solid rgba(59,130,246,.3)}
+.ub-f{background:rgba(245,158,11,.15);color:var(--amber);border:1px solid rgba(245,158,11,.3)}
+.ub-r{background:rgba(45,212,191,.15);color:var(--teal);border:1px solid rgba(45,212,191,.3)}
+.ub-i{background:rgba(100,116,139,.1);color:var(--muted);border:1px solid var(--border)}
+
+/* LOG */
+.log-box{max-height:85px;overflow-y:auto;font-size:8px;color:var(--muted);line-height:1.8}
+.log-e{padding:1px 0;border-bottom:1px solid rgba(30,52,72,.3)}
+.log-ts{color:#2a3a4a;margin-right:5px}
+.log-fire{color:var(--amber)}
+.log-rescue{color:var(--teal)}
+.log-heli{color:#60a5fa}
+
+/* PARAMS */
+.param{margin-bottom:7px}
+.pr{display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-bottom:3px}
+.pv{color:var(--accent);font-weight:700}
+input[type=range]{width:100%;height:3px;accent-color:var(--accent);cursor:pointer}
+
+/* LEGEND */
+.lgrow{display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:9px;color:var(--muted)}
+.lgd{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+
+/* UNIT TYPE CARDS */
+.ugrid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:8px}
+.ucard{background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:6px}
+.ucl{font-size:8px;font-weight:700;margin-bottom:2px;letter-spacing:.5px}
+.ucs{font-size:8px;color:var(--muted);line-height:1.5}
+
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* TAGS */
+.tag-wrap{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}
+.tag{display:inline-flex;align-items:center;font-size:8px;padding:2px 7px;border-radius:10px;letter-spacing:.5px}
+.tag-fire{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#fca5a5}
+.tag-water{background:rgba(14,165,233,.15);border:1px solid rgba(14,165,233,.3);color:#7dd3fc}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-left">
+    <div class="hdr-title">SIFA · Simulador de Rescate Forestal</div>
+    <div class="hdr-sub">Sistema Integral de Combate y Rescate de Fauna · CONAFOR MX</div>
+    <div class="hdr-sub" style="color:#a78bfa;letter-spacing:3px;font-size:9px;margin-top:2px">Desarrollado por: Alexa Nicolle Fernández Sánchez</div>
+  </div>
+  <div class="hdr-right">
+    <div style="font-size:9px;color:var(--muted)">TICK: <span id="tickDisp" style="color:var(--accent);font-weight:700">0</span></div>
+    <div class="live-badge"><div class="dot"></div>EN LÍNEA</div>
+  </div>
+</div>
+
+<div class="stepper" id="STP"></div>
+<div id="CARD"></div>
+
+<div class="layout">
+  <div class="cbox">
+    <canvas id="CV" width="520" height="430"></canvas>
+    <div class="chint" id="HINT">Completa el paso 1 para activar el mapa</div>
+  </div>
+
+  <div class="side">
+    <!-- STATS -->
+    <div class="panel">
+      <div class="plbl">Estado operativo</div>
+      <div class="sgrid">
+        <div class="scard"><div class="snum" id="stHa">0</div><div class="slbl">HA QUEMADAS</div></div>
+        <div class="scard"><div class="snum" id="stFires" style="color:var(--red)">0</div><div class="slbl">FOCOS ACTIVOS</div></div>
+        <div class="scard"><div class="snum" id="stRescued" style="color:var(--teal)">0</div><div class="slbl">ANIMALES RESCATADOS</div></div>
+        <div class="scard"><div class="snum" id="stLost" style="color:var(--red)">0</div><div class="slbl">ANIMALES PERDIDOS</div></div>
+      </div>
+      <div style="margin-top:8px">
+        <div class="pr">Índice de peligro <span class="pv" id="dLbl">—</span></div>
+        <div class="prog"><div class="pf" id="dBar" style="width:0%;background:var(--muted)"></div></div>
+      </div>
+    </div>
+
+    <!-- RESCATE FAUNA -->
+    <div class="panel">
+      <div class="plbl">Fauna silvestre · rescates</div>
+      <div class="rescue-grid" id="rescueGrid"></div>
+      <div style="font-size:8px;color:var(--muted)">Haz clic en un animal del mapa para priorizarlo</div>
+    </div>
+
+    <!-- UNIDADES -->
+    <div class="panel">
+      <div class="plbl">Unidades desplegadas</div>
+      <div id="unitList" style="max-height:130px;overflow-y:auto">
+        <div style="font-size:9px;color:var(--muted)">Sin unidades aún</div>
+      </div>
+    </div>
+
+    <!-- LEYENDA -->
+    <div class="panel">
+      <div class="plbl">Leyenda del mapa</div>
+      <div class="lgrow"><div class="lgd" style="background:#14532d"></div>Bosque de pino</div>
+      <div class="lgrow"><div class="lgd" style="background:#3f6212"></div>Selva baja</div>
+      <div class="lgrow"><div class="lgd" style="background:#854d0e"></div>Pastizal/matorral</div>
+      <div class="lgrow"><div class="lgd" style="background:#44403c"></div>Roca (no arde)</div>
+      <div class="lgrow"><div class="lgd" style="background:#f97316"></div>Fuego activo</div>
+      <div class="lgrow"><div class="lgd" style="background:#1c0900"></div>Área quemada</div>
+      <div class="lgrow"><div class="lgd" style="background:#0ea5e9"></div>Punto fijo de agua</div>
+      <div class="lgrow"><div class="lgd" style="background:#60a5fa"></div>Helicóptero</div>
+      <div class="lgrow"><div class="lgd" style="background:#a78bfa"></div>Brigada terrestre</div>
+      <div class="lgrow"><div class="lgd" style="background:var(--teal)"></div>Animal (rescate)</div>
+    </div>
+
+    <!-- LOG -->
+    <div class="panel">
+      <div class="plbl">Bitácora de operaciones</div>
+      <div class="log-box" id="LOG"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const cv = document.getElementById('CV');
+const cx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+const CELL = 7;
+const COLS = Math.floor(W/CELL), ROWS = Math.floor(H/CELL);
+
+// ── VEG TYPES ─────────────────────────────────────────────
+const VT = {
+  pino:     {col:'#14532d', colB:'#052e16', spread:.74, fuel:.86},
+  encino:   {col:'#166534', colB:'#14532d', spread:.63, fuel:.73},
+  selva:    {col:'#3f6212', colB:'#365314', spread:.83, fuel:.70},
+  matorral: {col:'#713f12', colB:'#78350f', spread:.57, fuel:.62},
+  pastizal: {col:'#854d0e', colB:'#7c2d12', spread:.93, fuel:.50},
+  roca:     {col:'#3a3632', colB:'#2c2826', spread:.03, fuel:.01},
+};
+
+// ── ANIMALS ───────────────────────────────────────────────
+const ANIMAL_TYPES = [
+  {emoji:'🦌', name:'Venado',    speed:.6, points:3, color:'#86efac'},
+  {emoji:'🐺', name:'Lobo',     speed:.9, points:5, color:'#c4b5fd'},
+  {emoji:'🦅', name:'Águila',   speed:1.4, points:4, color:'#fde68a'},
+  {emoji:'🐆', name:'Jaguar',   speed:1.0, points:6, color:'#fed7aa'},
+  {emoji:'🐇', name:'Conejo',   speed:.8, points:1, color:'#fbcfe8'},
+  {emoji:'🦊', name:'Zorra',    speed:.85, points:2, color:'#fdba74'},
+  {emoji:'🦉', name:'Búho',     speed:.7, points:3, color:'#e2e8f0'},
+  {emoji:'🐍', name:'Serpiente',speed:.5, points:2, color:'#a7f3d0'},
+];
+
+// ── UNIT DEFS ─────────────────────────────────────────────
+const UDEFS = {
+  helico:  {label:'Helicóptero', color:'#60a5fa', tc:'#000', spd:3.0, pow:.75, rng:6, stam:80,  sym:'H', air:true,  canRescue:true,  rescueRng:7},
+  brigade: {label:'Brigada',     color:'#a78bfa', tc:'#fff', spd:1.2, pow:.45, rng:3, stam:110, sym:'B', air:false, canRescue:false, rescueRng:0},
+  tanker:  {label:'Avión Tanque',color:'#34d399', tc:'#000', spd:4.2, pow:.92, rng:8, stam:55,  sym:'T', air:true,  canRescue:false, rescueRng:0},
+  squad:   {label:'Cuadrilla',   color:'#fbbf24', tc:'#000', spd:1.0, pow:.60, rng:3, stam:130, sym:'S', air:false, canRescue:true,  rescueRng:3},
+};
+const UKEYS = Object.keys(UDEFS);
+
+// ── STATE ─────────────────────────────────────────────────
+let vegGrid=[], grid=[], ctrlGrid=[];
+let fires=[], ctrlPts=[], units=[], animals=[];
+let windAngle = Math.PI/4;
+let tick=0, unitCtr=0;
+let simRunning=false, simIv=null;
+let clickMode=null;
+let currentStep=0, doneSt=new Set();
+let wsVal=25, hmVal=35, tpVal=28, slVal=15;
+let rescuedCount=0, lostCount=0;
+let rescueStats={};
+
+// init rescue stats
+ANIMAL_TYPES.forEach(a => { rescueStats[a.name] = {rescued:0,lost:0}; });
+
+// ── GRID INIT ─────────────────────────────────────────────
+function initGrids(){
+  vegGrid=[]; grid=[]; ctrlGrid=[];
+  fires=[]; ctrlPts=[]; units=[]; animals=[];
+  unitCtr=0; tick=0; rescuedCount=0; lostCount=0;
+  ANIMAL_TYPES.forEach(a => { rescueStats[a.name]={rescued:0,lost:0}; });
+
+  const patches=[];
+  const types=['pino','pino','pino','encino','encino','selva','selva','matorral','matorral','pastizal','pastizal','roca'];
+  for(let i=0;i<28;i++) patches.push({
+    r:Math.random()*ROWS, c:Math.random()*COLS,
+    type:types[Math.floor(Math.random()*types.length)],
+    rx:5+Math.random()*14, ry:4+Math.random()*12
+  });
+
+  for(let r=0;r<ROWS;r++){
+    vegGrid[r]=[]; grid[r]=[]; ctrlGrid[r]=[];
+    for(let c=0;c<COLS;c++){
+      let best=null, bd=Infinity;
+      patches.forEach(p => {
+        const d=Math.hypot((r-p.r)/p.ry,(c-p.c)/p.rx);
+        if(d<bd){bd=d;best=p;}
+      });
+      const vk = bd<1 ? best.type : 'pastizal';
+      vegGrid[r][c]=vk;
+      const V=VT[vk];
+      grid[r][c]={fuel:V.fuel*(.7+Math.random()*.6), burning:false, burned:false, heat:0};
+      ctrlGrid[r][c]=false;
+    }
+  }
+
+  // Spawn animals across non-roca terrain
+  for(let i=0;i<20;i++){
+    const aType = ANIMAL_TYPES[Math.floor(Math.random()*ANIMAL_TYPES.length)];
+    let r, c, tries=0;
+    do {
+      r = 2 + Math.floor(Math.random()*(ROWS-4));
+      c = 2 + Math.floor(Math.random()*(COLS-4));
+      tries++;
+    } while(vegGrid[r][c]==='roca' && tries<20);
+    animals.push({
+      type: aType,
+      r, c,
+      px: c*CELL+CELL/2,
+      py: r*CELL+CELL/2,
+      fleeing: false,
+      rescued: false,
+      lost: false,
+      id: i,
+      fleeAngle: Math.random()*Math.PI*2,
+      wobble: Math.random()*Math.PI*2,
+      priority: false,
+    });
+  }
+
+  updateStats();
+  buildRescueGrid();
+}
+
+// ── TERRAIN RENDER ────────────────────────────────────────
+function drawTerrain(){
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      const vk=vegGrid[r][c], V=VT[vk];
+      cx.fillStyle = Math.random()<.25 ? V.colB : V.col;
+      cx.fillRect(c*CELL, r*CELL, CELL, CELL);
+    }
+  }
+  // texture
+  for(let r=0;r<ROWS;r+=2){
+    for(let c=0;c<COLS;c+=2){
+      const vk=vegGrid[r][c];
+      const x=c*CELL+Math.random()*4, y=r*CELL+Math.random()*4;
+      if(vk==='pino'||vk==='encino'){
+        cx.globalAlpha=.18; cx.fillStyle='#052e16';
+        cx.beginPath(); cx.arc(x,y,1.6,0,Math.PI*2); cx.fill(); cx.globalAlpha=1;
+      } else if(vk==='pastizal'){
+        cx.globalAlpha=.15; cx.fillStyle='#fef08a';
+        cx.fillRect(x,y,1,3); cx.globalAlpha=1;
+      } else if(vk==='selva'){
+        cx.globalAlpha=.15; cx.fillStyle='#4ade80';
+        cx.beginPath(); cx.arc(x,y,1.2,0,Math.PI*2); cx.fill(); cx.globalAlpha=1;
+      }
+    }
+  }
+}
+
+function drawFire(){
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      const cell=grid[r][c], x=c*CELL, y=r*CELL;
+      if(cell.burned){
+        cx.fillStyle='#1c0900'; cx.fillRect(x,y,CELL,CELL);
+      } else if(cell.burning){
+        const h=Math.min(cell.heat,1);
+        cx.fillStyle=`rgb(${Math.floor(210+h*45)},${Math.floor(h*85)},0)`;
+        cx.fillRect(x,y,CELL,CELL);
+        if(Math.random()<.33){
+          cx.globalAlpha=.5+Math.random()*.5;
+          cx.fillStyle=`rgba(255,${Math.floor(190+Math.random()*65)},0,.9)`;
+          cx.fillRect(x+Math.random()*CELL,y+Math.random()*CELL,Math.random()*4+1,Math.random()*4+1);
+          cx.globalAlpha=1;
+        }
+      } else if(ctrlGrid[r][c]){
+        cx.fillStyle='rgba(34,197,94,.15)'; cx.fillRect(x,y,CELL,CELL);
+      }
+    }
+  }
+}
+
+function drawCtrlPts(){
+  ctrlPts.forEach(p => {
+    const x=p.c*CELL+CELL/2, y=p.r*CELL+CELL/2;
+    cx.globalAlpha=.12; cx.fillStyle='#0ea5e9';
+    cx.beginPath(); cx.arc(x,y,p.radius*CELL,0,Math.PI*2); cx.fill();
+    cx.globalAlpha=.4; cx.strokeStyle='#0ea5e9'; cx.lineWidth=1; cx.stroke(); cx.globalAlpha=1;
+    cx.fillStyle='#0ea5e9'; cx.beginPath(); cx.arc(x,y,4,0,Math.PI*2); cx.fill();
+    cx.fillStyle='#fff'; cx.font='bold 6px Courier New'; cx.textAlign='center'; cx.textBaseline='middle';
+    cx.fillText('W',x,y);
+  });
+}
+
+// ── DRAW ANIMALS ──────────────────────────────────────────
+function drawAnimals(){
+  animals.forEach(a => {
+    if(a.rescued || a.lost) return;
+    const px=a.px, py=a.py;
+    const wobble = Math.sin(tick*0.18 + a.wobble) * (a.fleeing ? 2.5 : 1);
+
+    // threat ring when fleeing
+    if(a.fleeing){
+      cx.globalAlpha=.12+Math.sin(tick*.2)*.08;
+      cx.strokeStyle='#ef4444'; cx.lineWidth=1.5;
+      cx.beginPath(); cx.arc(px,py,12+Math.sin(tick*.15)*3,0,Math.PI*2); cx.stroke();
+      cx.globalAlpha=1;
+    }
+
+    // priority ring
+    if(a.priority){
+      cx.globalAlpha=.3+Math.sin(tick*.25)*.2;
+      cx.strokeStyle=a.type.color; cx.lineWidth=1.5;
+      cx.beginPath(); cx.arc(px,py,14,0,Math.PI*2); cx.stroke();
+      cx.globalAlpha=1;
+    }
+
+    // shadow
+    cx.globalAlpha=.2; cx.fillStyle='#000';
+    cx.beginPath(); cx.ellipse(px,py+6,6,2.5,0,0,Math.PI*2); cx.fill(); cx.globalAlpha=1;
+
+    // body circle
+    cx.fillStyle = a.fleeing ? 'rgba(239,68,68,.9)' : a.type.color;
+    cx.beginPath(); cx.arc(px, py+wobble, 8, 0, Math.PI*2); cx.fill();
+
+    // emoji
+    cx.font='11px serif'; cx.textAlign='center'; cx.textBaseline='middle';
+    cx.fillText(a.type.emoji, px, py+wobble);
+
+    // name
+    cx.fillStyle='rgba(255,255,255,.55)'; cx.font='6px Courier New';
+    cx.textAlign='center';
+    cx.fillText(a.type.name, px, py-10+wobble);
+  });
+}
+
+// ── DRAW UNITS ────────────────────────────────────────────
+function drawUnits(){
+  units.forEach(u => {
+    if(!u.active) return;
+    const px=u.px, py=u.py, D=u.def;
+
+    // range aura
+    cx.globalAlpha=.06; cx.fillStyle=D.color;
+    cx.beginPath(); cx.arc(px,py,D.rng*CELL,0,Math.PI*2); cx.fill();
+    cx.globalAlpha=.18; cx.strokeStyle=D.color; cx.lineWidth=.7; cx.stroke(); cx.globalAlpha=1;
+
+    if(D.air){
+      // helicopter/plane body
+      cx.globalAlpha=.18; cx.fillStyle='#000';
+      cx.beginPath(); cx.ellipse(px,py-4,12,7,0,0,Math.PI*2); cx.fill(); cx.globalAlpha=1;
+      cx.fillStyle=D.color;
+      cx.beginPath(); cx.ellipse(px,py,12,7,0,0,Math.PI*2); cx.fill();
+      // tail boom
+      cx.strokeStyle=D.color; cx.lineWidth=2.5;
+      cx.beginPath(); cx.moveTo(px+12,py); cx.lineTo(px+21,py-3); cx.stroke();
+      // tail rotor blade
+      cx.strokeStyle=D.color; cx.lineWidth=1;
+      cx.beginPath(); cx.moveTo(px+21,py-7); cx.lineTo(px+21,py+1); cx.stroke();
+      // main rotor spinning
+      cx.save(); cx.translate(px, py-2); cx.rotate(tick * (D.sym==='T' ? .08 : .22));
+      cx.strokeStyle='rgba(255,255,255,.5)'; cx.lineWidth=1.5;
+      if(D.sym==='H'){
+        cx.beginPath(); cx.moveTo(-14,0); cx.lineTo(14,0); cx.stroke();
+        cx.beginPath(); cx.moveTo(0,-14); cx.lineTo(0,14); cx.stroke();
+      } else {
+        cx.beginPath(); cx.moveTo(-18,0); cx.lineTo(18,0); cx.stroke();
+      }
+      cx.restore();
+      cx.fillStyle=D.tc; cx.font='bold 7px Courier New'; cx.textAlign='center'; cx.textBaseline='middle';
+      cx.fillText(D.sym,px,py);
+    } else {
+      // ground unit shadow
+      cx.globalAlpha=.2; cx.fillStyle='#000';
+      cx.beginPath(); cx.ellipse(px,py+6,7,3,0,0,Math.PI*2); cx.fill(); cx.globalAlpha=1;
+      cx.fillStyle=D.color; cx.beginPath(); cx.arc(px,py,7,0,Math.PI*2); cx.fill();
+      cx.fillStyle=D.tc; cx.font='bold 8px Courier New'; cx.textAlign='center'; cx.textBaseline='middle';
+      cx.fillText(D.sym,px,py);
+    }
+
+    // name tag
+    cx.fillStyle='rgba(255,255,255,.55)'; cx.font='6px Courier New';
+    cx.textAlign='center'; cx.fillText(u.name, px, py-(D.air?20:13));
+
+    // stamina bar
+    const bw=18, bh=2, bx=px-bw/2, by=py+(D.air?10:10);
+    cx.fillStyle='#1e3448'; cx.fillRect(bx,by,bw,bh);
+    const sr=u.stamina/D.stam;
+    cx.fillStyle=sr>.5?'#22c55e':sr>.25?'#f59e0b':'#ef4444';
+    cx.fillRect(bx,by,bw*sr,bh);
+
+    // fighting glow
+    if(u.status==='fighting'){
+      cx.globalAlpha=.15; cx.fillStyle='#f59e0b';
+      cx.beginPath(); cx.arc(px,py,D.air?17:12,0,Math.PI*2); cx.fill(); cx.globalAlpha=1;
+    }
+    // rescuing glow
+    if(u.status==='rescuing'){
+      cx.globalAlpha=.2+Math.sin(tick*.3)*.15; cx.fillStyle='#2dd4bf';
+      cx.beginPath(); cx.arc(px,py,D.air?17:12,0,Math.PI*2); cx.fill(); cx.globalAlpha=1;
+    }
+
+    // route line
+    if((u.status==='moving'||u.status==='rescuing_move') && u.tR>=0){
+      const tx=u.tC*CELL+CELL/2, ty=u.tR*CELL+CELL/2;
+      cx.globalAlpha=.15; cx.strokeStyle=D.color; cx.lineWidth=.7; cx.setLineDash([3,3]);
+      cx.beginPath(); cx.moveTo(px,py); cx.lineTo(tx,ty); cx.stroke();
+      cx.setLineDash([]); cx.globalAlpha=1;
+    }
+  });
+}
+
+function drawWind(){
+  const x0=38, y0=38, len=18;
+  cx.save(); cx.translate(x0,y0); cx.rotate(windAngle);
+  cx.strokeStyle='rgba(255,255,255,.35)'; cx.lineWidth=1.5;
+  cx.beginPath(); cx.moveTo(0,-len); cx.lineTo(0,len);
+  cx.moveTo(0,-len); cx.lineTo(-5,-len+9); cx.moveTo(0,-len); cx.lineTo(5,-len+9);
+  cx.stroke(); cx.restore();
+  cx.fillStyle='rgba(255,255,255,.28)'; cx.font='7px Courier New'; cx.textAlign='center';
+  cx.fillText('N',x0,y0-len-5);
+  cx.fillText(wsVal+'km/h',x0,y0+len+11);
+}
+
+function drawVegKey(){
+  const items=[['pino','Pino'],['selva','Selva'],['matorral','Matorral'],['pastizal','Pastizal'],['roca','Roca']];
+  let y=H-8;
+  items.forEach(([k,l]) => {
+    cx.fillStyle='rgba(0,0,0,.6)'; cx.fillRect(W-60,y-10,60,10);
+    cx.fillStyle=VT[k].col; cx.fillRect(W-60,y-10,8,10);
+    cx.fillStyle='rgba(255,255,255,.45)'; cx.font='6px Courier New'; cx.textAlign='left';
+    cx.textBaseline='middle'; cx.fillText(l,W-49,y-5); y-=11;
+  });
+}
+
+function render(){
+  drawTerrain(); drawFire(); drawCtrlPts();
+  drawAnimals(); drawUnits(); drawWind(); drawVegKey();
+}
+
+// ── FIRE SPREAD ───────────────────────────────────────────
+function spreadFire(){
+  const nf=[];
+  const dirs=[[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]];
+  fires.forEach(f => {
+    const cell = grid[f.r]&&grid[f.r][f.c]; if(!cell) return;
+    cell.heat = Math.min(cell.heat+.13, 1);
+    if(cell.heat>.70){
+      dirs.forEach(([dr,dc]) => {
+        const nr=f.r+dr, nc=f.c+dc;
+        if(nr<0||nr>=ROWS||nc<0||nc>=COLS) return;
+        if(grid[nr][nc].burned||grid[nr][nc].burning||ctrlGrid[nr][nc]) return;
+        const vk=vegGrid[nr][nc], V=VT[vk];
+        const wb=1+(Math.cos(windAngle)*dc+Math.sin(windAngle)*dr)*wsVal/65;
+        const sb=1+slVal/90*(dr<0?1.3:.7);
+        const hb=1-hmVal/130, tb=1+(tpVal-20)/55;
+        if(Math.random() < V.spread*V.fuel*grid[nr][nc].fuel*wb*sb*hb*tb*.15){
+          grid[nr][nc].burning=true; grid[nr][nc].heat=.25; nf.push({r:nr,c:nc});
+        }
+      });
+      if(cell.heat>=1){
+        cell.burning=false; cell.burned=true;
+        const fi=fires.indexOf(f); if(fi>-1) fires.splice(fi,1);
+      }
+    }
+  });
+  fires.push(...nf);
+}
+
+function applyCtrl(){
+  ctrlPts.forEach(p => {
+    for(let r=p.r-p.radius;r<=p.r+p.radius;r++){
+      for(let c=p.c-p.radius;c<=p.c+p.radius;c++){
+        if(r<0||r>=ROWS||c<0||c>=COLS) continue;
+        if(Math.hypot(r-p.r,c-p.c)>p.radius) continue;
+        ctrlGrid[r][c]=true;
+        if(grid[r][c].burning&&Math.random()<.07){
+          grid[r][c].burning=false; grid[r][c].heat=0;
+          fires.splice(fires.findIndex(f=>f.r===r&&f.c===c),1);
+        }
+      }
+    }
+  });
+}
+
+// ── ANIMAL LOGIC ──────────────────────────────────────────
+function updateAnimals(){
+  animals.forEach(a => {
+    if(a.rescued || a.lost) return;
+    const ar=a.r, ac=a.c;
+    // check if current cell is burning or burned
+    const burning = grid[ar]&&grid[ar][ac]&&(grid[ar][ac].burning||grid[ar][ac].burned);
+    if(burning && !a.lost){
+      a.lost=true; lostCount++;
+      rescueStats[a.type.name].lost++;
+      addLog('⚠ '+a.type.name+' #'+a.id+' perdido en incendio','fire');
+      updateStats(); buildRescueGrid(); return;
+    }
+    // flee if nearby fire
+    let nearFire=false, closestFireDist=Infinity;
+    fires.slice(0,8).forEach(f => {
+      const d=Math.hypot(f.c-ac, f.r-ar);
+      if(d<8){nearFire=true;}
+      if(d<closestFireDist) closestFireDist=d;
+    });
+    a.fleeing = nearFire;
+    if(nearFire){
+      // flee away from centroid of nearest fires
+      let fx=0,fy=0,cnt=0;
+      fires.slice(0,6).forEach(f=>{
+        const d=Math.hypot(f.c-ac,f.r-ar);
+        if(d<10){fx+=f.c;fy+=f.r;cnt++;}
+      });
+      if(cnt>0){
+        const awayX=ac-(fx/cnt), awayY=ar-(fy/cnt);
+        const dist=Math.hypot(awayX,awayY)||1;
+        a.fleeAngle=Math.atan2(awayY/dist,awayX/dist);
+      }
+      const spd=a.type.speed*(nearFire?1.4:1);
+      a.px+=Math.cos(a.fleeAngle)*spd;
+      a.py+=Math.sin(a.fleeAngle)*spd;
+      a.c=Math.max(0,Math.min(COLS-1,Math.floor(a.px/CELL)));
+      a.r=Math.max(0,Math.min(ROWS-1,Math.floor(a.py/CELL)));
+      // keep in bounds
+      a.px=Math.max(CELL,Math.min(W-CELL,a.px));
+      a.py=Math.max(CELL,Math.min(H-CELL,a.py));
+    }
+  });
+}
+
+// ── UNIT AI ───────────────────────────────────────────────
+function nearestFire(ux,uy){
+  let best=null,bd=Infinity;
+  fires.forEach(f=>{
+    const d=Math.hypot(f.c*CELL+CELL/2-ux, f.r*CELL+CELL/2-uy);
+    if(d<bd){bd=d;best=f;}
+  });
+  return best;
+}
+
+function nearestAnimal(ux,uy,onlyPriority=false){
+  let best=null,bd=Infinity;
+  animals.forEach(a=>{
+    if(a.rescued||a.lost) return;
+    if(onlyPriority&&!a.priority) return;
+    const d=Math.hypot(a.px-ux,a.py-uy);
+    if(d<bd){bd=d;best=a;}
+  });
+  return best;
+}
+
+function moveUnits(){
+  units.forEach(u=>{
+    if(!u.active||u.stamina<=0){u.status='idle';return;}
+
+    // helicopters prioritize animal rescue when animals are fleeing
+    const D=u.def;
+    let targetAnimal=null;
+    if(D.canRescue){
+      // first priority: animals on fire or fleeing
+      targetAnimal=nearestAnimal(u.px,u.py,true) || nearestAnimal(u.px,u.py);
+    }
+
+    // if close to animal, rescue it
+    if(targetAnimal){
+      const adx=targetAnimal.px-u.px, ady=targetAnimal.py-u.py;
+      const adist=Math.hypot(adx,ady);
+      if(adist < D.rescueRng*CELL){
+        u.status='rescuing';
+        u.stamina=Math.max(0,u.stamina-.3);
+        // rescue action
+        if(Math.random()<.06){
+          targetAnimal.rescued=true;
+          rescuedCount++;
+          rescueStats[targetAnimal.type.name].rescued++;
+          addLog('✓ '+D.label+' rescató '+targetAnimal.type.emoji+' '+targetAnimal.type.name,'rescue');
+          updateStats(); buildRescueGrid();
+        }
+        return;
+      } else {
+        u.status='rescuing_move';
+        u.tR=Math.floor(targetAnimal.py/CELL);
+        u.tC=Math.floor(targetAnimal.px/CELL);
+        u.stamina=Math.max(0,u.stamina-.05);
+        u.px+=adx/adist*D.spd;
+        u.py+=ady/adist*D.spd;
+        return;
+      }
+    }
+
+    // fire fighting
+    if(!fires.length){u.status='idle';return;}
+    const nf=nearestFire(u.px,u.py);if(!nf)return;
+    u.tR=nf.r;u.tC=nf.c;
+    const tx=nf.c*CELL+CELL/2, ty=nf.r*CELL+CELL/2;
+    const dx=tx-u.px, dy=ty-u.py, dist=Math.hypot(dx,dy);
+    if(dist < D.rng*CELL){
+      u.status='fighting'; u.stamina=Math.max(0,u.stamina-.8);
+      for(let dr=-D.rng;dr<=D.rng;dr++) for(let dc=-D.rng;dc<=D.rng;dc++){
+        const nr=nf.r+dr, nc=nf.c+dc;
+        if(nr<0||nr>=ROWS||nc<0||nc>=COLS||Math.hypot(dr,dc)>D.rng) continue;
+        if(grid[nr][nc].burning&&Math.random()<D.pow*.11){
+          grid[nr][nc].burning=false; grid[nr][nc].heat=0; grid[nr][nc].burned=true;
+          fires.splice(fires.findIndex(f=>f.r===nr&&f.c===nc),1);
+          ctrlGrid[nr][nc]=true;
+        }
+      }
+    } else {
+      u.status='moving'; u.stamina=Math.max(0,u.stamina-.1);
+      u.px+=dx/dist*D.spd; u.py+=dy/dist*D.spd;
+    }
+  });
+}
+
+// ── SIM STEP ──────────────────────────────────────────────
+function simStep(){
+  tick++;
+  spreadFire(); applyCtrl(); updateAnimals(); moveUnits();
+  render(); updateStats(); updateUnitList();
+  document.getElementById('tickDisp').textContent=tick;
+  if(tick%30===0) addLog('t:'+tick+' focos:'+fires.length+' rescatados:'+rescuedCount,'');
+}
+
+// ── STATS ─────────────────────────────────────────────────
+function updateStats(){
+  let burned=0, ctrl=0;
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+    if(grid[r][c].burned) burned++;
+    if(ctrlGrid[r][c]) ctrl++;
+  }
+  document.getElementById('stHa').textContent=Math.round(burned*.22);
+  document.getElementById('stFires').textContent=fires.length;
+  document.getElementById('stRescued').textContent=rescuedCount;
+  document.getElementById('stLost').textContent=lostCount;
+  const di=Math.min(((wsVal/100*.3)+((100-hmVal)/100*.35)+((tpVal-5)/50*.2)+(slVal/60*.15))*100,100);
+  const bar=document.getElementById('dBar'), lbl=document.getElementById('dLbl');
+  bar.style.width=Math.round(di)+'%';
+  if(di<35){bar.style.background='#22c55e';lbl.textContent='BAJO';}
+  else if(di<65){bar.style.background='#f59e0b';lbl.textContent='MODERADO';}
+  else if(di<85){bar.style.background='#f97316';lbl.textContent='ALTO';}
+  else{bar.style.background='#ef4444';lbl.textContent='EXTREMO';}
+}
+
+function buildRescueGrid(){
+  const el=document.getElementById('rescueGrid');
+  el.innerHTML='';
+  ANIMAL_TYPES.forEach(a=>{
+    const stats=rescueStats[a.name];
+    const d=document.createElement('div');
+    d.className='animal-badge'+(stats.rescued>0?' rescued':'');
+    d.innerHTML=`<span style="font-size:16px">${a.emoji}</span><span class="count">✓${stats.rescued} ✗${stats.lost}</span>`;
+    d.title=a.name;
+    el.appendChild(d);
+  });
+}
+
+function updateUnitList(){
+  const el=document.getElementById('unitList');
+  const active=units.filter(u=>u.active);
+  if(!active.length){el.innerHTML='<div style="font-size:9px;color:var(--muted)">Sin unidades aún</div>';return;}
+  el.innerHTML='';
+  active.forEach(u=>{
+    const d=document.createElement('div'); d.className='unit-item';
+    const sm={moving:'ub-m',fighting:'ub-f',rescuing:'ub-r',rescuing_move:'ub-r',idle:'ub-i',active:'ub-i'};
+    const sl={moving:'EN RUTA',fighting:'COMBATE',rescuing:'RESCATE',rescuing_move:'A RESCATE',idle:'ESPERA',active:'ACTIVO'};
+    const st=u.status||'active';
+    const airTag=u.def.air?'<span style="font-size:8px;margin-left:3px;color:#60a5fa">✈</span>':'';
+    const rescTag=u.def.canRescue?'<span style="font-size:7px;margin-left:3px;color:var(--teal)">R</span>':'';
+    d.innerHTML=`<div class="uav" style="background:${u.def.color};color:${u.def.tc}">${u.def.sym}</div>
+      <div style="flex:1"><div class="uname">${u.name}${airTag}${rescTag}</div>
+      <div class="usub">E:${Math.round(u.stamina/u.def.stam*100)}%</div></div>
+      <span class="ubadge ${sm[st]}">${sl[st]}</span>`;
+    el.appendChild(d);
+  });
+}
+
+let logLines=[];
+function addLog(msg, type=''){
+  logLines.unshift({tick, msg, type});
+  if(logLines.length>50) logLines.pop();
+  const el=document.getElementById('LOG');
+  el.innerHTML=logLines.slice(0,18).map(l=>{
+    const cls = l.type==='fire'?'log-fire':l.type==='rescue'?'log-rescue':l.type==='heli'?'log-heli':'';
+    return `<div class="log-e ${cls}"><span class="log-ts">t:${l.tick}</span>${l.msg}</div>`;
+  }).join('');
+}
+
+// ── CANVAS EVENTS ─────────────────────────────────────────
+cv.addEventListener('click', e=>{
+  if(!clickMode) return;
+  const rect=cv.getBoundingClientRect();
+  const x=e.clientX-rect.left, y=e.clientY-rect.top;
+  const c=Math.floor(x/CELL), r=Math.floor(y/CELL);
+  if(r<0||r>=ROWS||c<0||c>=COLS) return;
+
+  if(clickMode==='fire'){
+    for(let dr=-2;dr<=2;dr++) for(let dc=-2;dc<=2;dc++){
+      const nr=r+dr, nc=c+dc;
+      if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS&&!grid[nr][nc].burned&&vegGrid[nr][nc]!=='roca'){
+        grid[nr][nc].burning=true; grid[nr][nc].heat=.4+Math.random()*.5;
+        fires.push({r:nr,c:nc});
+      }
+    }
+    // animals near fire start fleeing
+    animals.forEach(a=>{
+      if(!a.rescued&&!a.lost&&Math.hypot(a.c-c,a.r-r)<10) a.fleeing=true;
+    });
+    const el=document.getElementById('ignTags');
+    if(el){
+      const sp=document.createElement('span'); sp.className='tag tag-fire';
+      sp.textContent='Foco['+(el.children.length+1)+'] '+vegGrid[r][c];
+      el.appendChild(sp);
+    }
+    addLog('Ignición ['+c+','+r+'] veg:'+vegGrid[r][c],'fire');
+    render(); updateStats();
+  }
+
+  if(clickMode==='water'){
+    const rad=Math.round(2+(100-hmVal)/20);
+    ctrlPts.push({r,c,radius:rad}); applyCtrl();
+    const el=document.getElementById('waterTxt');
+    if(el) el.textContent=ctrlPts.length+' puntos (radio ~'+rad+')';
+    addLog('Punto agua ['+c+','+r+'] r:'+rad,'');
+    render(); updateStats();
+  }
+
+  if(clickMode==='unit'){
+    unitCtr++;
+    const key=UKEYS[(unitCtr-1)%UKEYS.length];
+    const def=UDEFS[key];
+    units.push({
+      name:def.sym+'#'+unitCtr, def,
+      px:c*CELL+CELL/2, py:r*CELL+CELL/2,
+      tR:-1, tC:-1, status:'active',
+      stamina:def.stam, active:true
+    });
+    const el=document.getElementById('unitTxt');
+    if(el) el.textContent=units.length+' unidades desplegadas';
+    addLog(def.label+' #'+unitCtr+(def.air?' [AÉREA]':' [TERRESTRE]')+(def.canRescue?' [RESCATE]':''),'heli');
+    updateUnitList(); render(); updateStats();
+  }
+
+  if(clickMode==='priority'){
+    // click on animal to prioritize
+    let closest=null, cdist=30;
+    animals.forEach(a=>{
+      if(a.rescued||a.lost) return;
+      const d=Math.hypot(a.px-x, a.py-y);
+      if(d<cdist){cdist=d;closest=a;}
+    });
+    if(closest){
+      closest.priority=!closest.priority;
+      addLog((closest.priority?'★ Prioridad: ':'— Prioridad quitada: ')+closest.type.emoji+closest.type.name,'rescue');
+      render();
+    }
+  }
+});
+
+// wind drag
+let draggingWind=false;
+cv.addEventListener('mousedown',e=>{if(clickMode===null||clickMode==='wind') draggingWind=true;});
+cv.addEventListener('mousemove',e=>{
+  if(!draggingWind||clickMode!=='wind') return;
+  const rect=cv.getBoundingClientRect();
+  windAngle=Math.atan2(e.clientY-rect.top-38, e.clientX-rect.left-38);
+  render();
+});
+cv.addEventListener('mouseup',()=>draggingWind=false);
+
+// ── STEPS ─────────────────────────────────────────────────
+const STEPS=[
+  {
+    title:'Paso 1 · Ambiente y terreno',
+    desc:'Configura las condiciones ambientales. El mapa se genera con vegetación y fauna silvestre distribuidas automáticamente.',
+    btnTxt:'Generar terreno',btnCls:'pri',
+    body(){return `<div class="param"><div class="pr">Velocidad del viento <span class="pv" id="pws">25 km/h</span></div><input type="range" min="0" max="100" value="25" id="ws" oninput="wsVal=+this.value;document.getElementById('pws').textContent=this.value+' km/h'"></div>
+      <div class="param"><div class="pr">Humedad relativa <span class="pv" id="phm">35%</span></div><input type="range" min="5" max="100" value="35" id="hm" oninput="hmVal=+this.value;document.getElementById('phm').textContent=this.value+'%'"></div>
+      <div class="param"><div class="pr">Temperatura <span class="pv" id="ptp">28°C</span></div><input type="range" min="5" max="55" value="28" id="tp" oninput="tpVal=+this.value;document.getElementById('ptp').textContent=this.value+'°C'"></div>
+      <div class="param"><div class="pr">Pendiente <span class="pv" id="psl">15°</span></div><input type="range" min="0" max="60" value="15" id="sl" oninput="slVal=+this.value;document.getElementById('psl').textContent=this.value+'°'"></div>`;}
+  },
+  {
+    title:'Paso 2 · Colocar ignición',
+    desc:'Haz clic en el mapa para colocar focos de fuego. Los animales cercanos comenzarán a huir automáticamente cuando sientan el calor.',
+    btnTxt:'Listo, continuar',btnCls:'blu',
+    body(){return `<div style="font-size:9px;color:var(--muted);margin-bottom:8px">Haz clic sobre la vegetación para encender focos. Observa cómo los animales reaccionan.</div><div id="ignTags" class="tag-wrap"></div>`;}
+  },
+  {
+    title:'Paso 3 · Puntos fijos de agua',
+    desc:'Coloca estaciones de bombeo para crear barreras corta-fuego. Protegen zonas donde hay animales concentrados.',
+    btnTxt:'Listo, continuar',btnCls:'blu',
+    body(){return `<div style="font-size:9px;color:var(--muted);margin-bottom:6px">Haz clic en el mapa para colocar puntos de agua. Colócalos entre el fuego y los animales.</div><div id="waterTxt" style="font-size:9px;color:var(--water)">0 puntos colocados</div>`;}
+  },
+  {
+    title:'Paso 4 · Desplegar flota y brigadas',
+    desc:'Los helicópteros pueden rescatar animales además de combatir el fuego. Se asignan en rotación: H → T → B → S. Los marcados con R tienen capacidad de rescate.',
+    btnTxt:'Listo, continuar',btnCls:'pur',
+    body(){return `<div class="ugrid">
+      <div class="ucard"><div class="ucl" style="color:#60a5fa">H · Helicóptero ✈ R</div><div class="ucs">aéreo · resc. rng:7 · pow:75%</div></div>
+      <div class="ucard"><div class="ucl" style="color:#34d399">T · Avión Tanque ✈</div><div class="ucs">aéreo · pow:92% · sin rescate</div></div>
+      <div class="ucard"><div class="ucl" style="color:#a78bfa">B · Brigada</div><div class="ucs">terrestre · pow:45% · sin rescate</div></div>
+      <div class="ucard"><div class="ucl" style="color:#fbbf24">S · Cuadrilla R</div><div class="ucs">terrestre · resc. rng:3 · stam:130</div></div>
+    </div><div id="unitTxt" style="font-size:9px;color:var(--purple)">0 unidades desplegadas</div>`;}
+  },
+  {
+    title:'Paso 5 · Priorizar animales',
+    desc:'Marca animales en peligro para que las unidades con capacidad de rescate los busquen primero. Haz clic en los animales del mapa para marcarlos.',
+    btnTxt:'Listo, continuar',btnCls:'teal',
+    body(){return `<div style="font-size:9px;color:var(--muted);margin-bottom:8px">Selecciona la herramienta y haz clic sobre un animal en el mapa para marcarlo como prioritario.</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn sec" onclick="setClickMode('priority')" style="border-color:var(--teal);color:var(--teal)">☞ Activar selección</button>
+        <button class="btn sec" onclick="setClickMode(null)">Desactivar</button>
+      </div>
+      <div style="font-size:8px;color:var(--muted);margin-top:6px">Los animales con el anillo brillante son prioritarios para rescate.</div>`;}
+  },
+  {
+    title:'Paso 6 · Ejecutar simulación',
+    desc:'El fuego se propaga, los animales huyen, y las unidades combaten y rescatan autónomamente. Observa la bitácora para ver cada rescate en tiempo real.',
+    btnTxt:'Iniciar simulación',btnCls:'pri',
+    body(){return `<div style="font-size:9px;color:var(--muted);margin-bottom:10px">Los helicópteros priorizan el rescate de animales antes de combatir el fuego. El avión tanque solo combate.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn sec" id="btnP" onclick="toggleSim()" disabled>Pausar</button>
+        <button class="btn dan" onclick="resetAll()">Reiniciar todo</button>
+      </div>`;}
+  },
+];
+
+function buildStepper(){
+  const el=document.getElementById('STP'); el.innerHTML='';
+  STEPS.forEach((s,i)=>{
+    const si=document.createElement('div'); si.className='si';
+    const sc=document.createElement('div');
+    sc.className='sc'+(doneSt.has(i)?' done':i===currentStep?' act':' lock');
+    sc.textContent=doneSt.has(i)?'✓':(i+1);
+    if(doneSt.has(i)||i<=currentStep) sc.onclick=(ii=>()=>goStep(ii))(i);
+    si.appendChild(sc);
+    if(i<STEPS.length-1){
+      const sl=document.createElement('div');
+      sl.className='sl'+(doneSt.has(i)?' done':'');
+      si.appendChild(sl);
+    }
+    el.appendChild(si);
+  });
+}
+
+function buildCard(){
+  const el=document.getElementById('CARD'); el.innerHTML='';
+  const s=STEPS[currentStep];
+  const d=document.createElement('div'); d.className='step-card';
+  d.innerHTML=`<div class="step-hdr"><div class="step-num">${currentStep+1}</div><div class="step-title">${s.title}</div></div>
+    <div class="step-desc">${s.desc}</div>
+    <div class="step-body">${s.body()}</div>
+    <div class="step-btns">
+      <button class="btn ${s.btnCls}" onclick="completeStep(${currentStep})">${s.btnTxt}</button>
+      ${currentStep>0?`<button class="btn sec" onclick="goStep(${currentStep-1})">← Atrás</button>`:''}
+    </div>`;
+  el.appendChild(d);
+}
+
+function setClickMode(mode){
+  clickMode=mode;
+  const hints={
+    fire:'Clic en el mapa → ignición',
+    water:'Clic en el mapa → punto de agua',
+    unit:'Clic en el mapa → desplegar unidad',
+    priority:'Clic sobre un animal → marcar prioridad',
+    wind:'Arrastra para cambiar dirección del viento',
+    null:'Simulación activa',
+  };
+  cv.style.cursor=mode?'crosshair':'default';
+  document.getElementById('HINT').textContent=hints[mode]||hints['null'];
+}
+
+function goStep(i){
+  currentStep=i;
+  const stepModes={0:null,1:'fire',2:'water',3:'unit',4:null,5:null};
+  setClickMode(stepModes[i]);
+  buildStepper(); buildCard();
+}
+
+function completeStep(i){
+  if(i===1&&fires.length===0){addLog('Coloca al menos un foco.',''); return;}
+  if(i===3&&units.length===0){addLog('Despliega al menos una unidad.',''); return;}
+  if(i===5){startSim();const b=document.getElementById('btnP');if(b)b.disabled=false;return;}
+  doneSt.add(i); currentStep=Math.min(i+1,STEPS.length-1);
+  if(i===0){initGrids();render();addLog('Terreno generado · 20 animales distribuidos','');}
+  const stepModes={0:null,1:'fire',2:'water',3:'unit',4:'priority',5:null};
+  setClickMode(stepModes[currentStep]);
+  buildStepper(); buildCard();
+}
+
+function startSim(){
+  if(simRunning) return;
+  simRunning=true;
+  simIv=setInterval(simStep,160);
+  addLog('Simulación iniciada · combate + rescate activos','');
+  doneSt.add(5); buildStepper();
+}
+
+function toggleSim(){
+  if(simRunning){
+    clearInterval(simIv); simRunning=false;
+    const b=document.getElementById('btnP'); if(b)b.textContent='Reanudar';
+    addLog('Pausado','');
+  } else {
+    simIv=setInterval(simStep,160); simRunning=true;
+    const b=document.getElementById('btnP'); if(b)b.textContent='Pausar';
+    addLog('Reanudado','');
+  }
+}
+
+function resetAll(){
+  clearInterval(simIv); simRunning=false;
+  fires=[]; ctrlPts=[]; units=[]; unitCtr=0; tick=0;
+  doneSt.clear(); currentStep=0;
+  initGrids(); render(); setClickMode(null);
+  buildStepper(); buildCard(); updateStats(); updateUnitList();
+  document.getElementById('tickDisp').textContent='0';
+  const b=document.getElementById('btnP'); if(b){b.disabled=true;b.textContent='Pausar';}
+  addLog('Sistema reiniciado','');
+}
+
+// ── BOOT ──────────────────────────────────────────────────
+initGrids();
+buildStepper();
+buildCard();
+buildRescueGrid();
+setClickMode(null);
+render();
+updateStats();
+addLog('SIFA listo · 6 pasos · fauna + flota aérea activos','');
+</script>
+</body>
+</html>

@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ENERGY DRIVE ⚡</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ng:#00ff88;--nb:#00cfff;--ny:#ffe600;--no:#ff8c00;
+    --dk:#06080f;--dk2:#0d1120;--dk3:#131929;--card:#151d30;
+    --tx:#e0eaff;--danger:#ff3b5c;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--dk);color:var(--tx);font-family:'Rajdhani',sans-serif;overflow:hidden;height:100vh;width:100vw;user-select:none;}
+  .screen{display:none;width:100vw;height:100vh;position:absolute;top:0;left:0;}
+  .screen.active{display:flex;}
+
+  /* MENU */
+  #menu{flex-direction:column;align-items:center;justify-content:center;
+    background:radial-gradient(ellipse at 50% 30%,#0a1a2e,var(--dk) 70%);}
+  #menu::before{content:'';position:absolute;inset:0;pointer-events:none;
+    background:repeating-linear-gradient(90deg,transparent 0,transparent 60px,rgba(0,207,255,.03) 60px,rgba(0,207,255,.03) 61px),
+    repeating-linear-gradient(0deg,transparent 0,transparent 60px,rgba(0,207,255,.03) 60px,rgba(0,207,255,.03) 61px);}
+  .logo-wrap{text-align:center;margin-bottom:40px;animation:fadeDown .8s ease;position:relative;}
+  .logo-sub{font-size:13px;letter-spacing:5px;color:var(--nb);text-transform:uppercase;margin-bottom:6px;}
+  .logo-title{font-family:'Orbitron';font-weight:900;font-size:clamp(42px,8vw,88px);
+    background:linear-gradient(90deg,var(--ng),var(--nb),var(--ny));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    filter:drop-shadow(0 0 30px rgba(0,255,136,.5));line-height:1;}
+  .logo-icon{font-size:clamp(28px,5vw,52px);display:block;margin-bottom:4px;}
+  .menu-buttons{display:flex;flex-direction:column;gap:14px;animation:fadeUp .8s .2s both;position:relative;}
+  .btn-menu{font-family:'Orbitron';font-weight:700;font-size:14px;letter-spacing:2px;
+    padding:16px 60px;border:none;border-radius:4px;cursor:pointer;text-transform:uppercase;transition:all .2s;}
+  .btn-menu.primary{background:linear-gradient(90deg,var(--ng),#00cc6e);color:var(--dk);box-shadow:0 0 28px rgba(0,255,136,.4);}
+  .btn-menu.secondary{background:transparent;color:var(--nb);border:2px solid var(--nb);}
+  .btn-menu:hover{transform:scale(1.05);filter:brightness(1.15);}
+  .menu-tags{display:flex;gap:12px;margin-top:28px;animation:fadeUp .8s .4s both;position:relative;}
+  .tag{font-size:12px;letter-spacing:2px;padding:5px 14px;border-radius:20px;font-weight:700;text-transform:uppercase;}
+  .tag.solar{background:rgba(255,230,0,.12);color:var(--ny);border:1px solid rgba(255,230,0,.3);}
+  .tag.wind{background:rgba(0,207,255,.12);color:var(--nb);border:1px solid rgba(0,207,255,.3);}
+  .tag.regen{background:rgba(0,255,136,.12);color:var(--ng);border:1px solid rgba(0,255,136,.3);}
+
+  /* SETUP */
+  #setup{flex-direction:column;background:var(--dk2);padding:26px;overflow-y:auto;align-items:center;gap:16px;}
+  .setup-title{font-family:'Orbitron';font-size:clamp(15px,2.5vw,24px);color:var(--ng);text-align:center;}
+  .setup-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;width:100%;max-width:860px;}
+  .setup-section{background:var(--card);border-radius:12px;padding:16px;border:1px solid rgba(255,255,255,.05);}
+  .setup-section h3{font-family:'Orbitron';font-size:10px;letter-spacing:2px;color:var(--nb);margin-bottom:12px;text-transform:uppercase;}
+  .opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .opt-card{background:var(--dk3);border-radius:8px;padding:11px 8px;text-align:center;cursor:pointer;border:2px solid transparent;transition:all .2s;}
+  .opt-card:hover{border-color:rgba(0,255,136,.4);background:rgba(0,255,136,.05);}
+  .opt-card.selected{border-color:var(--ng);background:rgba(0,255,136,.1);box-shadow:0 0 12px rgba(0,255,136,.2);}
+  .opt-icon{font-size:22px;display:block;margin-bottom:3px;}
+  .opt-label{font-family:'Rajdhani';font-weight:700;font-size:12px;color:var(--tx);display:block;}
+  .opt-desc{font-family:'Rajdhani';font-size:10px;color:rgba(224,234,255,.4);display:block;margin-top:1px;}
+  .comp-list{display:flex;flex-direction:column;gap:7px;}
+  .comp-item{display:flex;align-items:center;justify-content:space-between;background:var(--dk3);border-radius:8px;padding:9px 11px;}
+  .comp-info{display:flex;align-items:center;gap:8px;}
+  .comp-ico{font-size:17px;}
+  .comp-name{font-family:'Rajdhani';font-weight:700;font-size:12px;}
+  .comp-stat{font-family:'Rajdhani';font-size:10px;color:rgba(224,234,255,.4);}
+  .comp-toggle{width:32px;height:17px;border-radius:9px;border:none;cursor:pointer;background:rgba(255,255,255,.1);position:relative;transition:all .3s;}
+  .comp-toggle.on{background:var(--ng);}
+  .comp-toggle::after{content:'';position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:white;transition:all .3s;}
+  .comp-toggle.on::after{left:17px;}
+  .stat-sliders{display:flex;flex-direction:column;gap:9px;}
+  .stat-row label{font-family:'Rajdhani';font-weight:700;font-size:11px;display:flex;justify-content:space-between;margin-bottom:2px;}
+  .stat-row label span{color:var(--ny);}
+  input[type=range]{width:100%;accent-color:var(--ng);cursor:pointer;}
+  .setup-btns{display:flex;gap:12px;justify-content:center;}
+  .btn-small{font-family:'Orbitron';font-size:10px;font-weight:700;letter-spacing:1px;padding:10px 26px;border-radius:6px;cursor:pointer;text-transform:uppercase;transition:all .2s;border:none;}
+  .btn-small.go{background:linear-gradient(90deg,var(--ng),#00bb60);color:var(--dk);box-shadow:0 0 18px rgba(0,255,136,.35);}
+  .btn-small.back{background:transparent;color:var(--tx);border:1px solid rgba(255,255,255,.2);}
+  .btn-small:hover{transform:scale(1.04);}
+
+  /* GAME */
+  #game{position:relative;}
+  #gameCanvas{display:block;position:absolute;top:0;left:0;}
+
+  /* HUD bottom */
+  #hud{position:absolute;bottom:0;left:0;right:0;display:none;pointer-events:none;padding:0 16px 12px;align-items:flex-end;gap:12px;}
+  #hud.visible{display:flex;}
+  #bat-panel{flex:1;background:rgba(6,8,15,.82);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:9px 13px;backdrop-filter:blur(10px);}
+  .bat-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+  .bat-label{font-family:'Orbitron';font-size:8px;letter-spacing:2px;color:rgba(224,234,255,.35);}
+  #bat-pct{font-family:'Orbitron';font-size:20px;font-weight:900;color:var(--ng);}
+  .bat-bar-bg{width:100%;height:11px;background:rgba(255,255,255,.07);border-radius:6px;overflow:hidden;}
+  #bat-bar{height:100%;border-radius:6px;transition:width .25s,background .4s;background:linear-gradient(90deg,var(--ng),#00cc6e);}
+  .gen-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:6px;}
+  .gen-chip{display:flex;align-items:center;background:rgba(255,255,255,.05);border-radius:14px;padding:3px 8px;}
+  .gen-txt{font-family:'Rajdhani';font-weight:700;font-size:11px;}
+  .hud-col{display:flex;flex-direction:column;gap:7px;flex-shrink:0;}
+  .hud-card{background:rgba(6,8,15,.82);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:7px 11px;backdrop-filter:blur(10px);min-width:86px;}
+  .hud-lbl{font-family:'Orbitron';font-size:7px;letter-spacing:2px;color:rgba(224,234,255,.33);text-transform:uppercase;}
+  .hud-val{font-family:'Orbitron';font-size:17px;font-weight:900;line-height:1.1;}
+  .hud-unit{font-family:'Rajdhani';font-size:10px;color:rgba(224,234,255,.4);margin-left:2px;}
+
+  /* Top bar */
+  #top-bar{position:absolute;top:0;left:0;right:0;display:none;
+    padding:9px 18px;flex-direction:row;align-items:center;justify-content:space-between;
+    background:linear-gradient(to bottom,rgba(6,8,15,.88),transparent);pointer-events:none;}
+  #top-bar.visible{display:flex;}
+  .top-item{font-family:'Orbitron';font-size:10px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:2px;}
+  .top-lbl{font-size:7px;letter-spacing:2px;color:rgba(224,234,255,.32);font-weight:400;}
+
+  /* Minimap */
+  #minimap{position:absolute;top:10px;right:14px;display:none;}
+  #minimap.visible{display:block;}
+  #minimapCanvas{border-radius:50%;border:1px solid rgba(255,255,255,.1);}
+
+  /* Alerts */
+  #alerts{position:absolute;top:62px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:5px;pointer-events:none;z-index:20;}
+  .alert-pill{font-family:'Orbitron';font-size:10px;font-weight:700;padding:6px 15px;border-radius:18px;text-align:center;animation:alertIn .3s ease;white-space:nowrap;}
+  .alert-danger{background:rgba(255,59,92,.9);color:white;box-shadow:0 0 16px rgba(255,59,92,.5);}
+  .alert-info{background:rgba(0,207,255,.9);color:var(--dk);}
+  .alert-good{background:rgba(0,255,136,.9);color:var(--dk);}
+
+  /* Controls hint */
+  #ctrl-hint{position:absolute;bottom:108px;left:50%;transform:translateX(-50%);display:flex;gap:7px;pointer-events:none;}
+  .ctrl-key{font-family:'Orbitron';font-size:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:5px;padding:4px 9px;color:rgba(224,234,255,.45);}
+
+  /* Mobile */
+  #mobile-ctrl{position:absolute;bottom:112px;left:10px;display:none;gap:6px;z-index:20;}
+  @media(max-width:680px){#mobile-ctrl{display:flex;}#ctrl-hint{display:none;}}
+  .m-btn{font-family:'Orbitron';font-size:11px;font-weight:700;background:rgba(13,17,32,.88);border:2px solid rgba(255,255,255,.14);color:var(--tx);border-radius:8px;padding:11px 15px;cursor:pointer;}
+  .m-btn:active{background:rgba(0,255,136,.15);border-color:var(--ng);}
+
+  /* Countdown */
+  #countdown{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(6,8,15,.5);z-index:30;flex-direction:column;gap:10px;}
+  #countdown.visible{display:flex;}
+  #cd-num{font-family:'Orbitron';font-weight:900;font-size:clamp(80px,18vw,160px);color:var(--ng);filter:drop-shadow(0 0 40px rgba(0,255,136,.7));line-height:1;}
+  #cd-sub{font-size:15px;letter-spacing:4px;color:rgba(224,234,255,.45);}
+
+  /* Results */
+  #results{flex-direction:column;align-items:center;justify-content:center;gap:20px;
+    background:radial-gradient(ellipse at 50% 40%,#0a1a2e,var(--dk) 70%);}
+  .results-title{font-family:'Orbitron';font-size:clamp(22px,4vw,46px);font-weight:900;
+    background:linear-gradient(90deg,var(--ny),var(--no));-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    filter:drop-shadow(0 0 16px rgba(255,230,0,.4));}
+  .results-pos{font-family:'Orbitron';font-size:clamp(54px,10vw,108px);font-weight:900;color:var(--ng);line-height:1;}
+  .results-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+  .res-card{background:var(--card);border-radius:12px;padding:15px 20px;text-align:center;border:1px solid rgba(255,255,255,.06);}
+  .res-icon{font-size:24px;display:block;margin-bottom:4px;}
+  .res-label{font-family:'Rajdhani';font-size:10px;letter-spacing:2px;color:rgba(224,234,255,.38);text-transform:uppercase;}
+  .res-val{font-family:'Orbitron';font-size:19px;font-weight:700;color:var(--ng);}
+  .res-tip{font-family:'Rajdhani';font-size:13px;color:rgba(224,234,255,.52);max-width:430px;text-align:center;
+    line-height:1.5;padding:12px 16px;background:var(--card);border-radius:10px;border-left:3px solid var(--nb);}
+  .res-tip strong{color:var(--nb);}
+
+  @keyframes fadeDown{from{opacity:0;transform:translateY(-18px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes alertIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+</style>
+</head>
+<body>
+
+<!-- MENU -->
+<div id="menu" class="screen active">
+  <div class="logo-wrap">
+    <span class="logo-icon">⚡🏎️🌱</span>
+    <div class="logo-sub">Ing. Fuentes de Energías Renovables · Janis C. Navarro Careaga</div>
+    <div class="logo-title">ENERGY DRIVE</div>
+  </div>
+  <div class="menu-buttons">
+    <button class="btn-menu primary" onclick="showScreen('setup')">🏁 Iniciar Carrera</button>
+    <button class="btn-menu secondary" onclick="showHowTo()">📖 ¿Cómo jugar?</button>
+  </div>
+  <div class="menu-tags">
+    <span class="tag solar">☀️ Solar</span>
+    <span class="tag wind">💨 Eólica</span>
+    <span class="tag regen">⚡ Regenerativa</span>
+  </div>
+</div>
+
+<!-- SETUP -->
+<div id="setup" class="screen">
+  <div class="setup-title">⚙️ CONFIGURA TU VEHÍCULO</div>
+  <div class="setup-grid">
+    <div class="setup-section">
+      <h3>🗺️ Escenario</h3>
+      <div class="opt-grid" id="scenario-opts">
+        <div class="opt-card selected" data-val="desert" onclick="selOpt(this,'scenario')">
+          <span class="opt-icon">🏜️</span><span class="opt-label">Desierto</span><span class="opt-desc">Alta radiación, calor extremo</span></div>
+        <div class="opt-card" data-val="coast" onclick="selOpt(this,'scenario')">
+          <span class="opt-icon">🌊</span><span class="opt-label">Costa</span><span class="opt-desc">Viento constante, humedad</span></div>
+        <div class="opt-card" data-val="mountain" onclick="selOpt(this,'scenario')">
+          <span class="opt-icon">⛰️</span><span class="opt-label">Montaña</span><span class="opt-desc">Pendientes, aire fino</span></div>
+        <div class="opt-card" data-val="city" onclick="selOpt(this,'scenario')">
+          <span class="opt-icon">🏙️</span><span class="opt-label">Ciudad</span><span class="opt-desc">Sombra, frenadas</span></div>
+      </div>
+    </div>
+    <div class="setup-section">
+      <h3>🎯 Modo</h3>
+      <div class="opt-grid" id="mode-opts">
+        <div class="opt-card selected" data-val="race" onclick="selOpt(this,'mode')" style="grid-column:span 2">
+          <span class="opt-icon">🏎️</span><span class="opt-label">Carrera Clásica</span><span class="opt-desc">El primero en meta gana</span></div>
+        <div class="opt-card" data-val="efficient" onclick="selOpt(this,'mode')" style="grid-column:span 2">
+          <span class="opt-icon">🌿</span><span class="opt-label">Modo Eficiente</span><span class="opt-desc">Gana quien usa menos energía</span></div>
+      </div>
+    </div>
+    <div class="setup-section">
+      <h3>🔋 Componentes</h3>
+      <div class="comp-list">
+        <div class="comp-item" data-comp="solar">
+          <div class="comp-info"><span class="comp-ico">☀️</span><div><div class="comp-name">Paneles Solares</div><div class="comp-stat">+Gen solar · +Peso</div></div></div>
+          <button class="comp-toggle on" onclick="toggleComp(this)"></button></div>
+        <div class="comp-item" data-comp="turbine">
+          <div class="comp-info"><span class="comp-ico">🌀</span><div><div class="comp-name">Turbina Eólica</div><div class="comp-stat">+Gen viento · +Resist.</div></div></div>
+          <button class="comp-toggle" onclick="toggleComp(this)"></button></div>
+        <div class="comp-item" data-comp="regen">
+          <div class="comp-info"><span class="comp-ico">⚡</span><div><div class="comp-name">Freno Regenerativo</div><div class="comp-stat">Recupera energía al frenar</div></div></div>
+          <button class="comp-toggle on" onclick="toggleComp(this)"></button></div>
+        <div class="comp-item" data-comp="bigbat">
+          <div class="comp-info"><span class="comp-ico">🔋</span><div><div class="comp-name">Batería Extra</div><div class="comp-stat">+Capacidad · +Peso</div></div></div>
+          <button class="comp-toggle" onclick="toggleComp(this)"></button></div>
+        <div class="comp-item" data-comp="biodiesel">
+          <div class="comp-info"><span class="comp-ico">🌿</span><div><div class="comp-name">Biodiesel Auxiliar</div><div class="comp-stat">+Potencia auxiliar</div></div></div>
+          <button class="comp-toggle" onclick="toggleComp(this)"></button></div>
+      </div>
+    </div>
+    <div class="setup-section">
+      <h3>⚙️ Ajustes</h3>
+      <div class="stat-sliders">
+        <div class="stat-row"><label>Aerodinámica <span id="aero-v">5</span></label>
+          <input type="range" min="1" max="10" value="5" id="aero" oninput="document.getElementById('aero-v').textContent=this.value"></div>
+        <div class="stat-row"><label>Peso (ligero→pesado) <span id="weight-v">5</span></label>
+          <input type="range" min="1" max="10" value="5" id="weight" oninput="document.getElementById('weight-v').textContent=this.value"></div>
+        <div class="stat-row"><label>Capacidad batería <span id="bat-v">6</span></label>
+          <input type="range" min="3" max="10" value="6" id="batcap" oninput="document.getElementById('bat-v').textContent=this.value"></div>
+        <div class="stat-row"><label>Potencia motor <span id="pow-v">5</span></label>
+          <input type="range" min="1" max="10" value="5" id="power" oninput="document.getElementById('pow-v').textContent=this.value"></div>
+      </div>
+    </div>
+  </div>
+  <div class="setup-btns">
+    <button class="btn-small back" onclick="showScreen('menu')">← Menú</button>
+    <button class="btn-small go" onclick="startGame()">⚡ ¡ARRANCAR!</button>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="game" class="screen">
+  <canvas id="gameCanvas"></canvas>
+  <div id="countdown"><div id="cd-num">3</div><div id="cd-sub">PREPARA EL MOTOR</div></div>
+  <div id="top-bar">
+    <div class="top-item"><span class="top-lbl">VUELTA</span><span id="top-lap" style="font-size:15px;color:var(--ny)">1/3</span></div>
+    <div class="top-item"><span class="top-lbl">POSICIÓN</span><span id="top-pos" style="font-size:21px;color:var(--ng)">P8</span></div>
+    <div class="top-item"><span class="top-lbl">ESCENARIO</span><span id="top-scene" style="font-size:12px">🏜️ Desierto</span></div>
+  </div>
+  <div id="minimap"><canvas id="minimapCanvas" width="86" height="86"></canvas></div>
+  <div id="hud">
+    <canvas id="speedo-canvas" width="130" height="86"></canvas>
+    <div id="bat-panel">
+      <div class="bat-top"><div class="bat-label">BATERÍA</div><div id="bat-pct">100%</div></div>
+      <div class="bat-bar-bg"><div id="bat-bar" style="width:100%"></div></div>
+      <div class="gen-row">
+        <div class="gen-chip"><span class="gen-txt" id="gen-solar" style="color:#ffe600">☀️ 0W</span></div>
+        <div class="gen-chip"><span class="gen-txt" id="gen-wind"  style="color:#00cfff">💨 0W</span></div>
+        <div class="gen-chip"><span class="gen-txt" id="gen-regen" style="color:#00ff88">⚡ 0W</span></div>
+        <div class="gen-chip"><span class="gen-txt" id="gen-cons"  style="color:#ff8c00">🔌 0W</span></div>
+      </div>
+    </div>
+    <div class="hud-col">
+      <div class="hud-card"><div class="hud-lbl">Velocidad</div>
+        <div class="hud-val"><span id="hud-speed">0</span><span class="hud-unit">km/h</span></div></div>
+      <div class="hud-card"><div class="hud-lbl">Temp. bat.</div>
+        <div class="hud-val" id="hud-temp">25<span class="hud-unit">°C</span></div></div>
+    </div>
+  </div>
+  <div id="alerts"></div>
+  <div id="ctrl-hint">
+    <div class="ctrl-key">↑ Acelerar</div><div class="ctrl-key">↓ Frenar</div>
+    <div class="ctrl-key">← → Girar</div><div class="ctrl-key">ESC Pausa</div>
+  </div>
+  <div id="mobile-ctrl">
+    <button class="m-btn" ontouchstart="keys.left=true" ontouchend="keys.left=false">◄</button>
+    <button class="m-btn" ontouchstart="keys.right=true" ontouchend="keys.right=false">►</button>
+    <button class="m-btn" ontouchstart="keys.up=true" ontouchend="keys.up=false">▲</button>
+    <button class="m-btn" ontouchstart="keys.down=true" ontouchend="keys.down=false">▼</button>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div id="results" class="screen">
+  <div class="results-title" id="res-title">¡CARRERA TERMINADA!</div>
+  <div class="results-pos" id="res-pos">🏆 P1</div>
+  <div class="results-grid" id="res-grid"></div>
+  <div class="res-tip" id="res-tip"></div>
+  <div class="setup-btns">
+    <button class="btn-small back" onclick="showScreen('menu')">🏠 Menú</button>
+    <button class="btn-small go" onclick="showScreen('setup')">🔄 Otra carrera</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+//  GLOBAL CONFIG
+// ═══════════════════════════════════════════
+const cfg = {
+  scenario:'desert', mode:'race',
+  solar:true, turbine:false, regen:true, bigbat:false, biodiesel:false,
+  aero:5, weight:5, batcap:6, power:5
+};
+let animId = null;
+const keys = {up:false,down:false,left:false,right:false};
+
+// ═══════════════════════════════════════════
+//  UI HELPERS
+// ═══════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  ['hud','top-bar','minimap'].forEach(e=>{
+    document.getElementById(e).classList[id==='game'?'add':'remove']('visible');
+  });
+}
+function selOpt(el,group){
+  document.querySelectorAll('#'+group+'-opts .opt-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected'); cfg[group]=el.dataset.val;
+}
+function toggleComp(btn){
+  btn.classList.toggle('on');
+  cfg[btn.closest('.comp-item').dataset.comp]=btn.classList.contains('on');
+}
+function showHowTo(){
+  alert("ENERGY DRIVE — CÓMO JUGAR\n\n🎮 CONTROLES:\n↑ Acelerar  ↓ Frenar/Regenerar  ← → Girar  ESC Pausar\n\n⚡ ENERGÍA:\n• Acelerar consume batería\n• Frenar regenera energía (si tienes el componente)\n• Paneles solares generan según la luz\n• La turbina aprovecha el viento\n• El calor extremo reduce la eficiencia\n\n🏆 MODOS:\n• Clásica: llega primero (3 vueltas)\n• Eficiente: usa menos energía total\n\n¡Diseña el vehículo más eficiente y gana la carrera!");
+}
+function startGame(){
+  cfg.aero=+document.getElementById('aero').value;
+  cfg.weight=+document.getElementById('weight').value;
+  cfg.batcap=+document.getElementById('batcap').value;
+  cfg.power=+document.getElementById('power').value;
+  showScreen('game');
+  initGame();
+}
+
+// ═══════════════════════════════════════════
+//  SCENARIO DATA
+// ═══════════════════════════════════════════
+const SC = {
+  desert:{
+    solarMult:1.7,windMult:0.25,tempBase:46,regenBonus:0,drag:0.016,
+    name:'🏜️ Desierto',
+    sky:['#c84a10','#e87030','#ffc060'],
+    groundNear:'#c08040',groundFar:'#e0b060',
+    roadNear:'#504030',roadFar:'#706050',
+    roadEdgeNear:'#d0a060',roadEdgeFar:'#e8c080',
+    fogColor:[255,160,60],fogDist:200,
+    stripColor:'#f0e0a0',
+    bgObjs:['🌵','🌵','🪨','🌵'],
+    tips:'<strong>Desierto:</strong> Los paneles solares son esenciales — la alta radiación puede cubrir hasta el 40% del consumo. Sin embargo, el calor extremo degrada la eficiencia de la batería.'
+  },
+  coast:{
+    solarMult:0.85,windMult:1.7,tempBase:27,regenBonus:0.12,drag:0.013,
+    name:'🌊 Costa',
+    sky:['#004488','#0077bb','#44aadd'],
+    groundNear:'#60a870',groundFar:'#80c890',
+    roadNear:'#303828',roadFar:'#505844',
+    roadEdgeNear:'#98b888',roadEdgeFar:'#b0d0a0',
+    fogColor:[80,160,200],fogDist:220,
+    stripColor:'#ffffff',
+    bgObjs:['🌴','🌊','🌴','⛵'],
+    tips:'<strong>Costa:</strong> La turbina eólica brilla en ambientes costeros. El viento constante genera energía gratis — así funcionan los parques eólicos offshore en el mundo real.'
+  },
+  mountain:{
+    solarMult:0.6,windMult:0.8,tempBase:17,regenBonus:0.2,drag:0.020,
+    name:'⛰️ Montaña',
+    sky:['#283848','#4a6878','#7a9aaa'],
+    groundNear:'#4a5840',groundFar:'#6a7860',
+    roadNear:'#282818',roadFar:'#383828',
+    roadEdgeNear:'#787860',roadEdgeFar:'#909070',
+    fogColor:[140,155,170],fogDist:160,
+    stripColor:'#ffffff',
+    bgObjs:['🌲','⛰️','🌲','🌲'],
+    tips:'<strong>Montaña:</strong> El freno regenerativo es clave en bajadas — recupera hasta el 20% de la energía. Funciona igual que el sistema regenerativo del metro de la CDMX.'
+  },
+  city:{
+    solarMult:0.28,windMult:0.2,tempBase:31,regenBonus:0.25,drag:0.011,
+    name:'🏙️ Ciudad',
+    sky:['#222233','#334455','#556677'],
+    groundNear:'#353540',groundFar:'#454550',
+    roadNear:'#1a1a1a',roadFar:'#2a2a2a',
+    roadEdgeNear:'#404040',roadEdgeFar:'#505050',
+    fogColor:[70,90,110],fogDist:180,
+    stripColor:'#ffff00',
+    bgObjs:['🏢','🏬','🏢','🚦'],
+    tips:'<strong>Ciudad:</strong> En entornos urbanos, el freno regenerativo supera a todo. Los autos eléctricos son más eficientes en ciudad que en autopista — ¡lo opuesto a los de gasolina!'
+  }
+};
+
+// ═══════════════════════════════════════════
+//  TRACK BUILDER
+// ═══════════════════════════════════════════
+const TRACK_LEN = 1800;
+function buildTrack(){
+  const t=[];
+  const push=(n,c,h)=>{for(let i=0;i<n;i++)t.push({curve:c,hill:h});};
+  push(100,0,0); push(70,0.7,0); push(60,0,0); push(80,-0.5,0);
+  push(50,0,0.5); push(50,0,-0.5); push(70,0.6,0); push(60,-0.4,0.3);
+  push(60,-0.4,-0.3); push(80,0,0); push(60,0.9,0); push(50,-0.7,0);
+  push(80,0,0); push(60,0.5,0.4); push(60,0.5,-0.4); push(100,0,0);
+  while(t.length<TRACK_LEN) t.push({curve:0,hill:0});
+  return t.slice(0,TRACK_LEN);
+}
+
+// ═══════════════════════════════════════════
+//  ALERTS
+// ═══════════════════════════════════════════
+const alertCD={};
+function maybeAlert(msg,type,key,ms=6000){
+  const now=Date.now();
+  if(alertCD[key]&&now-alertCD[key]<ms)return;
+  alertCD[key]=now;
+  const d=document.createElement('div');
+  d.className='alert-pill alert-'+type; d.textContent=msg;
+  document.getElementById('alerts').appendChild(d);
+  setTimeout(()=>d.remove(),3000);
+}
+
+// ═══════════════════════════════════════════
+//  SPEEDO
+// ═══════════════════════════════════════════
+function drawSpeedo(canvas,spd,maxSpd){
+  const ctx=canvas.getContext('2d');
+  const cx=65,cy=78,r=56;
+  ctx.clearRect(0,0,130,86);
+  ctx.beginPath();ctx.arc(cx,cy,r,Math.PI*.75,Math.PI*.25,false);
+  ctx.strokeStyle='rgba(255,255,255,.07)';ctx.lineWidth=9;ctx.stroke();
+  const pct=Math.min(spd/maxSpd,1);
+  const g=ctx.createLinearGradient(cx-r,cy,cx+r,cy);
+  g.addColorStop(0,'#00ff88');g.addColorStop(.5,'#ffe600');g.addColorStop(1,'#ff3b5c');
+  ctx.beginPath();ctx.arc(cx,cy,r,Math.PI*.75,Math.PI*.75+pct*Math.PI*1.5,false);
+  ctx.strokeStyle=g;ctx.lineWidth=9;ctx.stroke();
+  const na=Math.PI*.75+pct*Math.PI*1.5;
+  ctx.save();ctx.translate(cx,cy);ctx.rotate(na);
+  ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(r-12,0);
+  ctx.strokeStyle='white';ctx.lineWidth=1.8;ctx.stroke();ctx.restore();
+  ctx.fillStyle='white';ctx.font='bold 18px Orbitron,monospace';ctx.textAlign='center';
+  ctx.fillText(Math.round(spd),cx,cy-12);
+  ctx.font='8px Orbitron,monospace';ctx.fillStyle='rgba(224,234,255,.38)';
+  ctx.fillText('km/h',cx,cy-1);
+}
+
+// ═══════════════════════════════════════════
+//  MINIMAP
+// ═══════════════════════════════════════════
+function drawMinimap(canvas,playerPos,rivals){
+  const ctx=canvas.getContext('2d'),W=86,H=86,cx=43,cy=43,r=36;
+  ctx.clearRect(0,0,W,H);
+  ctx.save();ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.clip();
+  ctx.fillStyle='rgba(6,8,15,.82)';ctx.fillRect(0,0,W,H);
+  ctx.beginPath();ctx.ellipse(cx,cy,r-5,r-12,0,0,Math.PI*2);
+  ctx.strokeStyle='rgba(255,255,255,.14)';ctx.lineWidth=4;ctx.stroke();
+  rivals.forEach(rv=>{
+    const a=(rv.pos/TRACK_LEN)*Math.PI*2-Math.PI/2;
+    ctx.fillStyle=rv.color;ctx.beginPath();
+    ctx.arc(cx+(r-9)*Math.cos(a),cy+(r-11)*Math.sin(a),2.5,0,Math.PI*2);ctx.fill();
+  });
+  const pa=(playerPos/TRACK_LEN)*Math.PI*2-Math.PI/2;
+  ctx.fillStyle='#00ff88';ctx.beginPath();
+  ctx.arc(cx+(r-9)*Math.cos(pa),cy+(r-11)*Math.sin(pa),5,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='white';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.restore();
+}
+
+// ═══════════════════════════════════════════
+//  COLOR UTILS
+// ═══════════════════════════════════════════
+function hexToRgb(h){
+  const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);
+  return [r,g,b];
+}
+function lerpHex(a,b,t){
+  const [ar,ag,ab]=hexToRgb(a),[br,bg,bb]=hexToRgb(b);
+  return 'rgb('+Math.round(ar+(br-ar)*t)+','+Math.round(ag+(bg-ag)*t)+','+Math.round(ab+(bb-ab)*t)+')';
+}
+
+// ═══════════════════════════════════════════
+//  INIT GAME
+// ═══════════════════════════════════════════
+function initGame(){
+  if(animId){cancelAnimationFrame(animId);animId=null;}
+
+  const canvas=document.getElementById('gameCanvas');
+  canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+
+  const sc=SC[cfg.scenario];
+  const track=buildTrack();
+  const maxBat=cfg.batcap*12+(cfg.bigbat?60:0);
+  const maxSpeedKmh=100+cfg.power*14-cfg.weight*4+cfg.aero*3;
+
+  // Player
+  const P={
+    pos:0,          // distance along track (increments each frame)
+    speed:0,        // m/s
+    steer:0,        // lateral position -1..1
+    battery:maxBat,
+    lap:1,
+    energyUsed:0,
+    time:0,
+    position:8,
+    finished:false,
+  };
+
+  // Rivals
+  const RCOLS=['#ff4466','#ff8800','#aa44ff','#4488ff','#ff44aa','#44ffaa','#ff6655'];
+  const rivals=Array.from({length:7},(_,i)=>({
+    pos:(i+1)*(TRACK_LEN/8),
+    speed:26+Math.random()*14,
+    color:RCOLS[i],
+    lane:(Math.random()-.5)*.5,
+    lap:1,finished:false
+  }));
+
+  // Env
+  let envT=0,cloudF=1,windF=1,paused=false,lastTime=null,countingDown=true;
+
+  // Camera / projection constants
+  const HORIZON_Y   = H*0.40;
+  const DRAW_SEGS   = 220;        // how many segments ahead to draw
+  const CAM_DEPTH   = 0.85;       // perspective strength
+  const ROAD_W_NEAR = W*0.55;     // road half-width at bottom of screen
+  const ROAD_W_FAR  = W*0.007;    // road half-width at horizon
+  // Scroll speed — how many segments per second per m/s
+  const SEG_SPEED   = 2.5;
+
+  // Keyboard
+  document.onkeydown=e=>{
+    if(e.key==='ArrowUp'   ||e.key==='w'){keys.up=true;}
+    if(e.key==='ArrowDown' ||e.key==='s'){keys.down=true;}
+    if(e.key==='ArrowLeft' ||e.key==='a'){keys.left=true;}
+    if(e.key==='ArrowRight'||e.key==='d'){keys.right=true;}
+    if(e.key==='Escape'){paused=!paused;}
+    e.preventDefault();
+  };
+  document.onkeyup=e=>{
+    if(e.key==='ArrowUp'   ||e.key==='w'){keys.up=false;}
+    if(e.key==='ArrowDown' ||e.key==='s'){keys.down=false;}
+    if(e.key==='ArrowLeft' ||e.key==='a'){keys.left=false;}
+    if(e.key==='ArrowRight'||e.key==='d'){keys.right=false;}
+  };
+
+  // Countdown
+  const cdEl=document.getElementById('countdown');
+  const cdNum=document.getElementById('cd-num');
+  cdEl.classList.add('visible'); cdNum.style.color='#00ff88';
+  cdNum.textContent='3';
+  let tick=0;
+  const cdi=setInterval(()=>{
+    tick++;
+    if(tick===1){cdNum.textContent='2';}
+    else if(tick===2){cdNum.textContent='1';}
+    else if(tick===3){cdNum.textContent='GO!';cdNum.style.color='#ffe600';}
+    else{cdEl.classList.remove('visible');countingDown=false;clearInterval(cdi);}
+  },900);
+
+  // ── GAME LOOP ──
+  function gameLoop(ts){
+    if(!document.getElementById('game').classList.contains('active'))return;
+    const dt=lastTime?Math.min((ts-lastTime)/1e3,0.05):0.016;
+    lastTime=ts;
+    if(!countingDown&&!paused&&!P.finished) update(dt);
+    render();
+    animId=requestAnimationFrame(gameLoop);
+  }
+
+  // ── UPDATE ──
+  function update(dt){
+    envT+=dt;
+    cloudF=Math.max(0.05,(0.5+0.5*Math.sin(envT*.09))*sc.solarMult);
+    windF =Math.max(0.05,(0.4+0.6*(0.5+0.5*Math.sin(envT*.06)))*sc.windMult);
+    const temp=sc.tempBase+5*Math.sin(envT*.04);
+
+    // Physics
+    const maxMS=maxSpeedKmh/3.6;
+    if(keys.up&&P.battery>0){P.speed=Math.min(P.speed+cfg.power*.7*dt,maxMS);}
+    if(keys.down){P.speed=Math.max(P.speed-7*dt,0);}
+    P.speed*=(1-sc.drag-(1-cfg.aero/10)*.004-cfg.weight*.001);
+    if(!keys.up&&!keys.down){P.speed*=(1-sc.drag*.4);}
+
+    const steerRate=1.5*dt;
+    if(keys.left){P.steer=Math.max(P.steer-steerRate,-1);}
+    if(keys.right){P.steer=Math.min(P.steer+steerRate,1);}
+    if(!keys.left&&!keys.right){P.steer*=0.96;}
+
+    P.pos+=P.speed*SEG_SPEED*dt;
+    P.time+=dt;
+
+    // Laps
+    if(P.pos>=TRACK_LEN*P.lap){
+      P.lap++;
+      if(P.lap>3){P.finished=true;endGame();return;}
+      maybeAlert('🔄 Vuelta '+(P.lap-1)+' completada!','info','lap'+P.lap,100);
+    }
+
+    // Energy
+    const solarGen =cfg.solar   ?cloudF*16:0;
+    const windGen  =cfg.turbine ?windF*13:0;
+    const regenGen =(cfg.regen&&keys.down&&P.speed>1)?(20+sc.regenBonus*28):0;
+    const bioBonus =cfg.biodiesel?5:0;
+    const spdKmh   =P.speed*3.6;
+    const cons     =keys.up?(7+spdKmh*.16+cfg.weight*.5):.8;
+    const tempPen  =temp>38?(temp-38)*.33:0;
+    const net      =(solarGen+windGen+regenGen+bioBonus-cons-tempPen)*dt;
+    P.battery=Math.max(0,Math.min(maxBat,P.battery+net));
+    if(keys.up)P.energyUsed+=cons*dt;
+
+    // Rivals
+    rivals.forEach(r=>{
+      r.pos+=r.speed*dt;
+      r.lane+=(Math.random()-.5)*.025;
+      r.lane=Math.max(-.85,Math.min(.85,r.lane));
+    });
+
+    // Position
+    let ahead=rivals.filter(r=>r.pos>P.pos).length;
+    P.position=ahead+1;
+
+    // Alerts
+    const bp=P.battery/maxBat;
+    if(bp<0.12) maybeAlert('🔴 ¡BATERÍA CRÍTICA! Reduce velocidad','danger','crit');
+    else if(bp<0.28) maybeAlert('⚠️ Batería baja — frena para regenerar','danger','low');
+    if(cloudF>0.8&&cfg.solar) maybeAlert('☀️ ¡Alta radiación solar disponible!','good','sun');
+    if(windF>0.8&&cfg.turbine) maybeAlert('💨 ¡Viento fuerte — turbina al máximo!','good','wind2');
+    if(temp>43) maybeAlert('🌡️ Temperatura crítica — eficiencia reducida','danger','temp');
+    if(P.battery===0) maybeAlert('💀 Sin energía — el motor se apaga','danger','dead');
+
+    // HUD
+    drawSpeedo(document.getElementById('speedo-canvas'),spdKmh,maxSpeedKmh);
+    const pct=Math.round(bp*100);
+    const batPctEl=document.getElementById('bat-pct');
+    batPctEl.textContent=pct+'%';
+    batPctEl.style.color=bp<.2?'#ff3b5c':bp<.5?'#ffe600':'#00ff88';
+    const bar=document.getElementById('bat-bar');
+    bar.style.width=pct+'%';
+    bar.style.background=bp<.2?'linear-gradient(90deg,#ff3b5c,#ff6680)':bp<.5?'linear-gradient(90deg,#ffe600,#ffaa00)':'linear-gradient(90deg,#00ff88,#00cc6e)';
+    document.getElementById('gen-solar').textContent='☀️ '+Math.round(solarGen)+'W';
+    document.getElementById('gen-wind').textContent ='💨 '+Math.round(windGen)+'W';
+    document.getElementById('gen-regen').textContent='⚡ '+Math.round(regenGen)+'W';
+    document.getElementById('gen-cons').textContent ='🔌 '+Math.round(cons)+'W';
+    document.getElementById('hud-speed').textContent=Math.round(spdKmh);
+    document.getElementById('hud-temp').innerHTML=Math.round(temp)+'<span class="hud-unit">°C</span>';
+    document.getElementById('top-pos').textContent='P'+P.position;
+    document.getElementById('top-lap').textContent=Math.min(P.lap,3)+'/3';
+    document.getElementById('top-scene').textContent=sc.name;
+    drawMinimap(document.getElementById('minimapCanvas'),P.pos%TRACK_LEN,rivals);
+  }
+
+  // ═══════════════════════════════════════════
+  //  PSEUDO-3D RENDERER
+  // ═══════════════════════════════════════════
+  function render(){
+    ctx.clearRect(0,0,W,H);
+    if(paused){renderPaused();return;}
+
+    const spdKmh=P.speed*3.6;
+
+    // ── Sky ──
+    const skyG=ctx.createLinearGradient(0,0,0,HORIZON_Y);
+    skyG.addColorStop(0,sc.sky[0]);
+    skyG.addColorStop(0.6,sc.sky[1]);
+    skyG.addColorStop(1,sc.sky[2]);
+    ctx.fillStyle=skyG; ctx.fillRect(0,0,W,HORIZON_Y+2);
+
+    // Sun glow
+    {
+      const sx=W*.76,sy=HORIZON_Y*.3,sunA=Math.min(.25+cloudF*.5,.75);
+      const sg=ctx.createRadialGradient(sx,sy,0,sx,sy,58);
+      sg.addColorStop(0,'rgba(255,240,160,'+sunA+')');
+      sg.addColorStop(.5,'rgba(255,180,60,'+(sunA*.5)+')');
+      sg.addColorStop(1,'transparent');
+      ctx.fillStyle=sg; ctx.beginPath(); ctx.arc(sx,sy,58,0,Math.PI*2); ctx.fill();
+    }
+
+    // Clouds
+    if(cloudF<0.6*sc.solarMult){
+      ctx.save(); ctx.globalAlpha=.4;
+      [[.2,HORIZON_Y*.22,55],[.55,HORIZON_Y*.12,70],[.82,HORIZON_Y*.28,42]].forEach(([xf,y,r])=>{
+        const cx2=((xf*W+envT*15)%W+W)%W;
+        ctx.fillStyle='rgba(255,255,255,.55)';
+        ctx.beginPath();ctx.ellipse(cx2,y,r,r*.32,0,0,Math.PI*2);ctx.fill();
+        ctx.beginPath();ctx.ellipse(cx2+r*.5,y+4,r*.65,.22*r,0,0,Math.PI*2);ctx.fill();
+      });
+      ctx.restore();
+    }
+
+    // Background scenery (parallax)
+    {
+      ctx.save();
+      const bY=HORIZON_Y*.88;
+      sc.bgObjs.forEach((obj,i)=>{
+        const xBase=[.04,.18,.82,.96][i]*W;
+        const shift=((envT*spdKmh*(i<2?.5:-.5))%W+W)%W;
+        const drawX=i<2?(xBase+shift)%W:(xBase-shift+W)%W;
+        ctx.font=(22+i*3)+'px serif';
+        ctx.globalAlpha=.75;
+        ctx.fillText(obj,drawX,bY);
+      });
+      ctx.restore();
+    }
+
+    // ── Road segments (pseudo-3D projection) ──
+    // Camera is at player's position; we project forward segments onto screen
+    const camPos=P.pos%TRACK_LEN;
+    const camDepth=0.84;
+
+    // Accumulate curve/hill offsets
+    let cameraX=P.steer;   // lateral camera offset due to steering
+    let cameraY=0;
+    let curveAcc=0;
+
+    // We'll store each segment's projected data before drawing (bottom-up)
+    const segs=[];
+    let x=0,dx=0,y=0,dy=0;
+
+    for(let i=0;i<DRAW_SEGS;i++){
+      const si=Math.floor(camPos+i)%TRACK_LEN;
+      const seg=track[si];
+      dx+=seg.curve*.006;
+      x+=dx;
+      dy+=seg.hill*.008;
+      y+=dy;
+
+      const depth=i+1;
+      const scale=camDepth/depth;
+
+      // Screen Y of this segment's top
+      const screenY=Math.round(HORIZON_Y-(y*1000*scale)/W);
+      if(screenY>H) continue;  // below screen
+
+      // Road center X on screen (with perspective + steering + curve)
+      const roadCX=W/2 + (x-cameraX)*scale*W*.7;
+      // Road half-width at this depth
+      const hw=Math.max(1,scale*W*.52);
+
+      segs.push({screenY,roadCX,hw,depth,i,segIdx:si});
+    }
+
+    // Draw from far to near (painter's algorithm)
+    segs.sort((a,b)=>a.screenY-b.screenY);
+
+    let prevY=HORIZON_Y;
+
+    for(let k=0;k<segs.length;k++){
+      const s=segs[k];
+      const nextS=segs[k+1];
+      const segBottom=nextS?nextS.screenY:H;
+      const segTop=s.screenY;
+      if(segTop>=segBottom||segTop>H)continue;
+
+      const t=s.i/DRAW_SEGS;       // 0=near, 1=far
+      const fogT=Math.pow(t,.9);
+
+      // Alternating strip color
+      const isLight=Math.floor(s.i/5)%2===0;
+
+      // Ground color
+      const gc=lerpHex(sc.groundNear,sc.groundFar,t);
+      const gc2=sc.fogColor;
+      ctx.fillStyle=`rgb(${Math.round(hexToRgb(gc)[0]*(1-fogT)+gc2[0]*fogT)},${Math.round(hexToRgb(gc)[1]*(1-fogT)+gc2[1]*fogT)},${Math.round(hexToRgb(gc)[2]*(1-fogT)+gc2[2]*fogT)})`;
+      ctx.fillRect(0,segTop,W,segBottom-segTop);
+
+      // Road surface
+      const rc=isLight?lerpHex(sc.roadNear,sc.roadFar,t):lerpHex(sc.roadNear,sc.roadFar,t);
+      const rcRgb=hexToRgb(rc);
+      ctx.fillStyle=`rgb(${Math.round(rcRgb[0]*(1-fogT*.7)+gc2[0]*fogT*.7)},${Math.round(rcRgb[1]*(1-fogT*.7)+gc2[1]*fogT*.7)},${Math.round(rcRgb[2]*(1-fogT*.7)+gc2[2]*fogT*.7)})`;
+
+      const x1=s.roadCX-s.hw, x2=s.roadCX+s.hw;
+      let prevX1=x1,prevX2=x2;
+      if(k>0){
+        const ps=segs[k-1];
+        prevX1=ps.roadCX-ps.hw; prevX2=ps.roadCX+ps.hw;
+      }
+      ctx.beginPath();
+      ctx.moveTo(prevX1,segBottom);ctx.lineTo(prevX2,segBottom);
+      ctx.lineTo(x2,segTop);ctx.lineTo(x1,segTop);
+      ctx.closePath();ctx.fill();
+
+      // Road edge strips
+      const ec=isLight?sc.roadEdgeFar:sc.roadEdgeNear;
+      const hw2=s.hw*.07;
+      ctx.fillStyle=ec;
+      // Left edge
+      ctx.fillRect(x1-hw2*2,segTop,hw2*2,segBottom-segTop);
+      // Right edge
+      ctx.fillRect(x2,segTop,hw2*2,segBottom-segTop);
+
+      // Center dash
+      if(isLight&&segBottom-segTop>1){
+        const dc=hexToRgb(sc.stripColor);
+        ctx.fillStyle=`rgba(${dc[0]},${dc[1]},${dc[2]},${.8*(1-fogT)})`;
+        ctx.fillRect(s.roadCX-s.hw*.03,segTop,s.hw*.06,segBottom-segTop);
+      }
+
+      // Rivals on road
+      if(s.i>2){
+        rivals.forEach(rv=>{
+          const rvSeg=Math.floor(rv.pos%TRACK_LEN);
+          if(Math.abs(rvSeg-s.segIdx)<3){
+            const rsx=s.roadCX+rv.lane*s.hw*.8;
+            const rsh=Math.max(4,(segBottom-segTop)*2.2);
+            const rsw=Math.max(3,(segBottom-segTop)*1.4);
+            drawRivalCar(ctx,rsx,segTop,rsw,rsh,rv.color,fogT);
+          }
+        });
+      }
+    }
+
+    // ── Finish line across road ──
+    {
+      const finIdx=0;
+      const fi=segs.find(s=>Math.abs(s.segIdx-finIdx)<3&&s.i<60);
+      if(fi){
+        const sq=Math.max(2,(H-fi.screenY)/20);
+        ctx.save();
+        for(let ci=0;ci<10;ci++){
+          ctx.fillStyle=ci%2?'white':'black';
+          ctx.fillRect(fi.roadCX-fi.hw+ci*(fi.hw*.2),fi.screenY,fi.hw*.2,sq*1.5);
+        }
+        ctx.restore();
+      }
+    }
+
+    // ── Cockpit overlay ──
+    renderCockpit(spdKmh,P.steer,P.battery/maxBat);
+  }
+
+  // ── RIVAL CAR (simple 3D box) ──
+  function drawRivalCar(ctx,cx,sy,cw,ch,color,fog){
+    if(ch<3||cw<3)return;
+    ctx.save();
+    // Body
+    ctx.fillStyle=color;
+    ctx.globalAlpha=1-fog*.7;
+    ctx.beginPath();
+    ctx.roundRect(cx-cw/2,sy-ch,cw,ch,Math.max(1,cw*.15));
+    ctx.fill();
+    // Windshield
+    ctx.fillStyle='rgba(160,220,255,.45)';
+    ctx.fillRect(cx-cw*.28,sy-ch*.85,cw*.56,ch*.3);
+    // Headlights
+    ctx.fillStyle='rgba(255,255,160,.9)';
+    ctx.fillRect(cx-cw*.4,sy-ch*.18,cw*.16,ch*.12);
+    ctx.fillRect(cx+cw*.24,sy-ch*.18,cw*.16,ch*.12);
+    ctx.restore();
+  }
+
+  // ── COCKPIT ──
+  function renderCockpit(spdKmh,steer,batPct){
+    const cockW=W,cockH=H;
+
+    // Dashboard fade from bottom
+    const dashH=cockH*.26;
+    const dg=ctx.createLinearGradient(0,cockH-dashH,0,cockH);
+    dg.addColorStop(0,'rgba(8,12,22,0)');
+    dg.addColorStop(.25,'rgba(8,12,22,.9)');
+    dg.addColorStop(1,'rgba(4,6,12,1)');
+    ctx.fillStyle=dg; ctx.fillRect(0,cockH-dashH,cockW,dashH);
+
+    // A-pillars
+    ctx.fillStyle='rgba(8,12,22,1)';
+    // Left pillar
+    ctx.beginPath();
+    ctx.moveTo(0,HORIZON_Y*.65);
+    ctx.lineTo(cockW*.13,HORIZON_Y*.65);
+    ctx.lineTo(cockW*.055,cockH-dashH);
+    ctx.lineTo(0,cockH-dashH);
+    ctx.closePath(); ctx.fill();
+    // Right pillar
+    ctx.beginPath();
+    ctx.moveTo(cockW,HORIZON_Y*.65);
+    ctx.lineTo(cockW*.87,HORIZON_Y*.65);
+    ctx.lineTo(cockW*.945,cockH-dashH);
+    ctx.lineTo(cockW,cockH-dashH);
+    ctx.closePath(); ctx.fill();
+
+    // Hood — the front of the car
+    const hoodY=cockH-dashH*.72;
+    ctx.fillStyle='rgba(16,20,32,.95)';
+    ctx.beginPath();
+    ctx.moveTo(cockW*.08,hoodY);
+    ctx.lineTo(cockW*.92,hoodY);
+    ctx.lineTo(cockW*.88,cockH-dashH*.18);
+    ctx.lineTo(cockW*.12,cockH-dashH*.18);
+    ctx.closePath(); ctx.fill();
+
+    // Hood neon lines (green accent)
+    ctx.strokeStyle='rgba(0,255,136,.35)';
+    ctx.lineWidth=1.5;
+    ctx.beginPath();
+    ctx.moveTo(cockW*.46,hoodY); ctx.lineTo(cockW*.46,cockH-dashH*.2);
+    ctx.moveTo(cockW*.54,hoodY); ctx.lineTo(cockW*.54,cockH-dashH*.2);
+    ctx.stroke();
+
+    // Battery glow on hood when low
+    if(batPct<.25){
+      const pulseA=(.25-batPct)*4*(.5+.5*Math.sin(Date.now()*.008));
+      ctx.strokeStyle='rgba(255,59,92,'+pulseA*.4+')';
+      ctx.lineWidth=3;
+      ctx.strokeRect(cockW*.12,hoodY,cockW*.76,cockH-dashH*.18-hoodY);
+    }
+
+    // Steering wheel
+    const swX=cockW*.5+steer*28;
+    const swY=cockH-dashH*.12;
+    const swR=Math.min(cockW,cockH)*.115;
+
+    ctx.save();
+    ctx.translate(swX,swY);
+    ctx.rotate(steer*.65);
+
+    // Rim
+    ctx.beginPath(); ctx.arc(0,0,swR,0,Math.PI*2);
+    ctx.strokeStyle='rgba(22,26,40,1)'; ctx.lineWidth=swR*.2; ctx.stroke();
+    ctx.strokeStyle='rgba(60,70,100,.8)';  ctx.lineWidth=swR*.16; ctx.stroke();
+
+    // Spokes
+    [0, Math.PI*.65, Math.PI*1.35].forEach(a=>{
+      ctx.save(); ctx.rotate(a);
+      ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(swR*.88,0);
+      ctx.strokeStyle='rgba(22,26,40,1)'; ctx.lineWidth=swR*.13; ctx.stroke();
+      ctx.strokeStyle='rgba(60,70,100,.7)'; ctx.lineWidth=swR*.09; ctx.stroke();
+      ctx.restore();
+    });
+
+    // Center hub
+    ctx.beginPath(); ctx.arc(0,0,swR*.2,0,Math.PI*2);
+    ctx.fillStyle='#0d1120'; ctx.fill();
+    ctx.strokeStyle='rgba(0,255,136,.6)'; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.fillStyle='#00ff88';
+    ctx.font='bold '+(swR*.22)+'px serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('⚡',0,0);
+
+    ctx.restore();
+
+    // Critical battery screen flash
+    if(batPct<0.1&&Math.sin(Date.now()*.015)>.5){
+      ctx.fillStyle='rgba(255,59,92,.07)';
+      ctx.fillRect(0,0,W,H);
+    }
+  }
+
+  function renderPaused(){
+    ctx.fillStyle='rgba(6,8,15,.55)';ctx.fillRect(0,0,W,H);
+    ctx.font='bold '+Math.min(W,H)*.08+'px Orbitron,monospace';
+    ctx.fillStyle='white';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('PAUSA',W/2,H/2);
+    ctx.font=Math.min(W,H)*.026+'px Rajdhani,sans-serif';
+    ctx.fillStyle='rgba(224,234,255,.48)';
+    ctx.fillText('Presiona ESC para continuar',W/2,H/2+H*.07);
+  }
+
+  // ── END GAME ──
+  function endGame(){
+    cancelAnimationFrame(animId);animId=null;
+    document.onkeydown=null;document.onkeyup=null;
+    const batPct=Math.round(P.battery/maxBat*100);
+    const eff=Math.max(0,Math.round(100-(P.energyUsed/(maxBat*3))*80));
+    const pos=P.position;
+    const posStr=pos===1?'🏆 P1':pos===2?'🥈 P2':pos===3?'🥉 P3':'P'+pos;
+    document.getElementById('res-title').textContent=cfg.mode==='efficient'?'🌿 MODO EFICIENTE':'🏁 ¡CARRERA TERMINADA!';
+    document.getElementById('res-pos').textContent=posStr;
+    document.getElementById('res-grid').innerHTML=`
+      <div class="res-card"><span class="res-icon">⚡</span><span class="res-label">Batería final</span><span class="res-val">${batPct}%</span></div>
+      <div class="res-card"><span class="res-icon">🌿</span><span class="res-label">Eficiencia</span><span class="res-val">${eff}%</span></div>
+      <div class="res-card"><span class="res-icon">⏱️</span><span class="res-label">Tiempo</span><span class="res-val">${Math.round(P.time)}s</span></div>`;
+    document.getElementById('res-tip').innerHTML='💡 <strong>Dato educativo:</strong> '+sc.tips;
+    document.getElementById('hud').classList.remove('visible');
+    document.getElementById('top-bar').classList.remove('visible');
+    document.getElementById('minimap').classList.remove('visible');
+    showScreen('results');
+  }
+
+  animId=requestAnimationFrame(gameLoop);
+}
+
+// Resize
+window.addEventListener('resize',()=>{
+  const c=document.getElementById('gameCanvas');
+  if(c){c.width=window.innerWidth;c.height=window.innerHeight;}
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador de Dispersión de Incendios Forestales</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;600;700&family=IBM+Plex+Mono:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep: #050a0e;
+    --bg-panel: #0b1318;
+    --bg-card: #111d24;
+    --bg-hover: #162028;
+    --border: #1e3040;
+    --border-bright: #2a4a60;
+    --fire-1: #ff2200;
+    --fire-2: #ff6600;
+    --fire-3: #ffaa00;
+    --fire-4: #ffdd00;
+    --ember: #ff4400;
+    --accent-cyan: #00e5ff;
+    --accent-teal: #00b894;
+    --accent-blue: #0081cf;
+    --text-primary: #e8f4f8;
+    --text-secondary: #7a9eb5;
+    --text-muted: #3d5a6e;
+    --smoke: #6b8a9a;
+    --safe: #00b894;
+    --warning: #fdcb6e;
+    --danger: #d63031;
+    --water: #0096c7;
+    --firebreak: #6c5ce7;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 400;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(255,80,0,0.04) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(0,144,255,0.04) 0%, transparent 60%);
+  }
+
+  /* HEADER */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 28px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(11,19,24,0.95);
+    backdrop-filter: blur(10px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    position: relative;
+  }
+  .logo-icon svg { width: 100%; height: 100%; }
+  .header-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-primary);
+  }
+  .header-title span { color: var(--fire-2); }
+  .header-subtitle {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-top: 1px;
+  }
+  .status-bar {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+  .status-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+  }
+  .status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent-teal);
+    box-shadow: 0 0 8px var(--accent-teal);
+    animation: pulse-dot 2s infinite;
+  }
+  .status-dot.fire { background: var(--fire-2); box-shadow: 0 0 8px var(--fire-2); }
+  @keyframes pulse-dot {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* LAYOUT */
+  .app-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr 280px;
+    grid-template-rows: 1fr;
+    height: calc(100vh - 61px);
+  }
+
+  /* PANELS */
+  .panel {
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: var(--bg-panel);
+  }
+  .panel:last-child { border-right: none; border-left: 1px solid var(--border); }
+  .panel::-webkit-scrollbar { width: 4px; }
+  .panel::-webkit-scrollbar-track { background: transparent; }
+  .panel::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
+
+  .panel-section {
+    border-bottom: 1px solid var(--border);
+    padding: 0;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    cursor: pointer;
+    user-select: none;
+    background: var(--bg-card);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .section-header:hover { background: var(--bg-hover); }
+  .section-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent-cyan);
+    flex: 1;
+  }
+  .section-icon { font-size: 0.9rem; }
+  .section-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+
+  /* CONTROLS */
+  .control-group { display: flex; flex-direction: column; gap: 6px; }
+  .control-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 0.06em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .control-value {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--fire-3);
+    font-weight: 600;
+    min-width: 50px;
+    text-align: right;
+  }
+  .control-value.safe { color: var(--safe); }
+  .control-value.warning { color: var(--warning); }
+  .control-value.danger { color: var(--danger); }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--border-bright);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--fire-2);
+    box-shadow: 0 0 8px var(--fire-2);
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.3); }
+  input[type=range].water-range::-webkit-slider-thumb { background: var(--water); box-shadow: 0 0 8px var(--water); }
+  input[type=range].safe-range::-webkit-slider-thumb { background: var(--safe); box-shadow: 0 0 8px var(--safe); }
+  input[type=range].firebreak-range::-webkit-slider-thumb { background: var(--firebreak); box-shadow: 0 0 8px var(--firebreak); }
+
+  select, input[type=text] {
+    width: 100%;
+    background: var(--bg-deep);
+    border: 1px solid var(--border-bright);
+    color: var(--text-primary);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.85rem;
+    padding: 7px 10px;
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  select:focus, input[type=text]:focus { border-color: var(--accent-cyan); }
+  select option { background: var(--bg-card); }
+
+  /* BUTTONS */
+  .btn-row { display: flex; gap: 8px; }
+  .btn {
+    flex: 1;
+    padding: 9px 12px;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .btn-fire {
+    background: linear-gradient(135deg, #c0392b, #e74c3c);
+    color: white;
+    border-color: var(--fire-1);
+    box-shadow: 0 0 12px rgba(255,34,0,0.3);
+  }
+  .btn-fire:hover {
+    background: linear-gradient(135deg, #e74c3c, #ff6600);
+    box-shadow: 0 0 20px rgba(255,100,0,0.5);
+    transform: translateY(-1px);
+  }
+  .btn-stop {
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    border-color: var(--border-bright);
+  }
+  .btn-stop:hover { border-color: var(--text-secondary); color: var(--text-primary); }
+  .btn-reset {
+    background: var(--bg-deep);
+    color: var(--text-muted);
+    border-color: var(--border);
+  }
+  .btn-reset:hover { border-color: var(--text-secondary); color: var(--text-secondary); }
+  .btn-water {
+    background: linear-gradient(135deg, #0077b6, #0096c7);
+    color: white;
+    border-color: var(--water);
+    box-shadow: 0 0 10px rgba(0,150,199,0.3);
+  }
+  .btn-water:hover { box-shadow: 0 0 18px rgba(0,150,199,0.5); transform: translateY(-1px); }
+  .btn-firebreak {
+    background: linear-gradient(135deg, #4a3980, #6c5ce7);
+    color: white;
+    border-color: var(--firebreak);
+    box-shadow: 0 0 10px rgba(108,92,231,0.3);
+  }
+  .btn-firebreak:hover { box-shadow: 0 0 18px rgba(108,92,231,0.5); transform: translateY(-1px); }
+  .btn-full {
+    width: 100%;
+    padding: 10px;
+  }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+
+  /* TOOL TOGGLE */
+  .tool-toggle {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-deep);
+    padding: 4px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+  .tool-btn {
+    flex: 1;
+    padding: 6px 8px;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: transparent;
+    color: var(--text-muted);
+    text-align: center;
+  }
+  .tool-btn.active {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border-color: var(--border-bright);
+  }
+  .tool-btn.tool-fire.active { color: var(--fire-2); border-color: var(--fire-2); }
+  .tool-btn.tool-water.active { color: var(--water); border-color: var(--water); }
+  .tool-btn.tool-break.active { color: var(--firebreak); border-color: var(--firebreak); }
+
+  /* CANVAS AREA */
+  .canvas-area {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-deep);
+    position: relative;
+  }
+  .canvas-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-panel);
+  }
+  .toolbar-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .toolbar-sep { width: 1px; height: 20px; background: var(--border); }
+  .speed-btns { display: flex; gap: 4px; }
+  .speed-btn {
+    padding: 4px 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .speed-btn.active { background: var(--bg-hover); border-color: var(--accent-cyan); color: var(--accent-cyan); }
+  .canvas-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  #simCanvas {
+    border: 1px solid var(--border-bright);
+    border-radius: 4px;
+    cursor: crosshair;
+    box-shadow:
+      0 0 0 1px var(--border),
+      0 20px 60px rgba(0,0,0,0.6),
+      inset 0 0 100px rgba(0,0,0,0.3);
+    image-rendering: pixelated;
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+  }
+  .canvas-overlay-info {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 20px;
+    background: rgba(5,10,14,0.9);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 16px;
+    pointer-events: none;
+  }
+  .overlay-stat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+  }
+  .overlay-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .overlay-label { color: var(--text-muted); }
+  .overlay-val { color: var(--text-primary); font-weight: 600; }
+
+  /* RIGHT PANEL - STATS */
+  .stat-block {
+    background: var(--bg-deep);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .stat-block-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+  .stat-block-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .stat-block-value.fire-val { color: var(--fire-2); }
+  .stat-block-value.burn-val { color: var(--text-secondary); }
+  .stat-block-value.saved-val { color: var(--safe); }
+  .stat-block-sub {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+  }
+
+  /* Progress bar */
+  .burn-progress {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .burn-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--fire-1), var(--fire-2), var(--fire-3));
+    border-radius: 3px;
+    transition: width 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .burn-fill::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%; right: 0; bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: shimmer 1.5s infinite;
+  }
+  @keyframes shimmer {
+    from { transform: translateX(0%); }
+    to { transform: translateX(200%); }
+  }
+
+  /* Legend */
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    padding: 3px 0;
+  }
+  .legend-swatch {
+    width: 14px; height: 14px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* Event log */
+  .event-log {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    max-height: 160px;
+    overflow-y: auto;
+  }
+  .event-log::-webkit-scrollbar { width: 3px; }
+  .event-log::-webkit-scrollbar-thumb { background: var(--border); }
+  .log-entry {
+    display: flex;
+    gap: 8px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.62rem;
+    padding: 3px 0;
+    border-bottom: 1px solid rgba(30,48,64,0.5);
+    animation: fadeIn 0.3s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: none; } }
+  .log-time { color: var(--text-muted); flex-shrink: 0; }
+  .log-msg { color: var(--text-secondary); flex: 1; }
+  .log-msg.fire { color: var(--fire-2); }
+  .log-msg.water { color: var(--water); }
+  .log-msg.break { color: var(--firebreak); }
+  .log-msg.info { color: var(--accent-cyan); }
+
+  /* Checkbox */
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+  }
+  .checkbox-row input[type=checkbox] {
+    width: 14px; height: 14px;
+    accent-color: var(--accent-cyan);
+    cursor: pointer;
+  }
+  .checkbox-row:hover { color: var(--text-primary); }
+
+  /* Badge */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 2px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .badge-running { background: rgba(255,100,0,0.15); color: var(--fire-2); border: 1px solid rgba(255,100,0,0.3); }
+  .badge-stopped { background: rgba(122,158,181,0.1); color: var(--text-muted); border: 1px solid var(--border); }
+  .badge-paused { background: rgba(253,203,110,0.1); color: var(--warning); border: 1px solid rgba(253,203,110,0.3); }
+
+  /* Wind arrow */
+  #windArrow {
+    transition: transform 0.3s;
+    font-size: 1.2rem;
+    display: inline-block;
+  }
+  .wind-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-deep);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 8px 12px;
+    margin-top: 4px;
+  }
+  .wind-val {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--accent-cyan);
+    font-weight: 600;
+  }
+
+  /* Tooltip */
+  .tooltip {
+    position: absolute;
+    background: var(--bg-card);
+    border: 1px solid var(--border-bright);
+    border-radius: 3px;
+    padding: 6px 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    pointer-events: none;
+    z-index: 1000;
+    display: none;
+    white-space: nowrap;
+  }
+
+  .section-collapse-icon { color: var(--text-muted); font-size: 0.7rem; transition: transform 0.2s; }
+  .section-collapse-icon.collapsed { transform: rotate(-90deg); }
+  .section-body-wrapper { overflow: hidden; }
+
+  /* Fire station icon */
+  .station-marker {
+    position: absolute;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <div class="logo-icon">
+      <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="18,2 34,30 2,30" fill="none" stroke="#ff6600" stroke-width="1.5" opacity="0.6"/>
+        <path d="M18 26 C18 26 10 20 10 14 C10 10 13 8 16 10 C17 11 18 13 18 13 C18 13 20 8 22 8 C26 8 28 12 26 17 C25 20 18 26 18 26Z" fill="url(#flameGrad)"/>
+        <defs>
+          <linearGradient id="flameGrad" x1="18" y1="26" x2="18" y2="8" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#ff2200"/>
+            <stop offset="60%" stop-color="#ff6600"/>
+            <stop offset="100%" stop-color="#ffdd00"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+    <div>
+      <div class="header-title">PYRO<span>SIM</span></div>
+      <div class="header-subtitle">Simulador de Dispersión de Incendios Forestales</div>
+    </div>
+  </div>
+  <div class="status-bar">
+    <div class="status-item">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">INACTIVO</span>
+    </div>
+    <div class="status-item" id="simTimeDisplay">
+      <span>T:</span>
+      <span id="simTimerLabel">00:00</span>
+    </div>
+    <span id="runBadge" class="badge badge-stopped">DETENIDO</span>
+  </div>
+</header>
+
+<div class="app-layout">
+
+  <!-- LEFT PANEL: Parameters -->
+  <div class="panel" id="leftPanel">
+
+    <!-- Simulation Controls -->
+    <div class="panel-section">
+      <div class="section-header" onclick="toggleSection(this)">
+        <span class="section-icon">⚙</span>
+        <span class="section-label">Control de Simulación</span>
+        <span class="section-collapse-icon">▼</span>
+      </div>
+      <div class="section-body-wrapper">
+        <div class="section-body">
+          <div class="btn-row">
+            <button class="btn btn-fire" id="btnStart" onclick="startSim()">▶ INICIAR</button>
+            <button class="btn btn-stop" id="btnPause" onclick="pauseSim()" disabled>⏸ PAUSA</button>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-reset btn-full" id="btnReset" onclick="resetSim()">↺ REINICIAR</button>
+          </div>
+          <div class="control-group">
+            <div class="control-label">
+              Velocidad de simulación
+              <span class="control-value" id="speedLabel">1×</span>
+            </div>
+            <div class="speed-btns">
+              <button class="speed-btn active" onclick="setSpeed(1,this)">1×</button>
+              <button class="speed-btn" onclick="setSpeed(2,this)">2×</button>
+              <button class="speed-btn" onclick="setSpeed(5,this)">5×</button>
+              <button class="speed-btn" onclick="setSpeed(10,this)">10×</button>
+            </div>
+          </div>
+          <label class="checkbox-row">
+            <input type="checkbox" id="showSmoke" checked> Mostrar humo
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" id="showEmbers" checked> Mostrar brasas volantes
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fire Parameters -->
+    <div class="panel-section">
+      <div class="section-header" onclick="toggleSection(this)">
+        <span class="section-icon">🔥</span>
+        <span class="section-label">Parámetros de Incendio</span>
+        <span class="section-collapse-icon">▼</span>
+      </div>
+      <div class="section-body-wrapper">
+        <div class="section-body">
+          <div class="control-group">
+            <div class="control-label">Posible causa
+            </div>
+            <select id="causaSelect">
+              <option>Actividades agrícolas</option>
+              <option>Fogatas</option>
+              <option>Intencional</option>
+              <option>Actividades pecuarias</option>
+              <option>Desconocidas</option>
+              <option>Naturales</option>
+              <option>Otras actividades productivas</option>
+              <option>Fumadores</option>
+              <option>Quema de basureros</option>
+              <option>Cazadores</option>
+              <option>Residuos de aprovechamiento forestal</option>
+              <option>Festividades y rituales</option>
+              <option>Transportes</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <div class="control-label">Tipo de vegetación</div>
+            <select id="vegSelect" onchange="updateVegParams()">
+              <option value="bosque_pino">Bosque de Pino</option>
+              <option value="bosque_encino">Bosque de Encino</option>
+              <option value="bosque_pino_encino">Bosque de Pino-Encino</option>
+              <option value="selva_baja">Selva Baja Caducifolia</option>
+              <option value="pastizal">Pastizal Natural</option>
+              <option value="matorral">Matorral Crasicaule</option>
+              <option value="bosque_oyamel">Bosque de Oyamel</option>
+              <option value="manglar">Manglar</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <div class="control-label">
+              Intensidad inicial del fuego
+              <span class="control-value danger" id="intensityLabel">75%</span>
+            </div>
+            <input type="range" id="intensitySlider" min="10" max="100" value="75"
+              oninput="updateLabel('intensityLabel',this.value,'%','danger')">
+          </div>
+          <div class="control-group">
+            <div class="control-label">
+              Humedad de combustible (%)
+              <span class="control-value safe" id="humLabel">25%</span>
+            </div>
+            <input type="range" id="humSlider" min="5" max="90" value="25"
+              oninput="updateLabel('humLabel',this.value,'%','safe')">
+          </div>
+          <div class="control-group">
+            <div class="control-label">
+              Temperatura ambiental (°C)
+              <span class="control-value warning" id="tempLabel">32°C</span>
+            </div>
+            <input type="range" id="tempSlider" min="5" max="50" value="32"
+              oninput="updateLabel('tempLabel',this.value,'°C','warning')">
+          </div>
+          <div class="control-group">
+            <div class="control-label">
+              Clasificación de impacto
+            </div>
+            <select id="clasificacionSelect">
+              <option>Impacto Mínimo</option>
+              <option selected>Impacto Moderado</option>
+              <option>Impacto Severo</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Wind Parameters -->
+    <div class="panel-section">
+      <div class="section-header" onclick="toggleSection(this)">
+        <span class="section-icon">💨</span>
+        <span class="section-label">Viento</span>
+        <span class="section-collapse-icon">▼</span>
+      </div>
+      <div class="section-body-wrapper">
+        <div class="section-body">
+          <div class="control-group">
+            <div class="control-label">
+              Velocidad del viento (km/h)
+              <span class="control-value" id="windSpeedLabel">25 km/h</span>
+            </div>
+            <input type="range" id="windSpeedSlider" min="0" max="120" value="25"
+              oninput="updateWindSpeed(this.value)">
+          </div>
+          <div class="control-group">
+            <div class="control-label">
+              Dirección del viento
+              <span class="control-value" id="windDirLabel">NE 45°</span>
+            </div>
+            <input type="range" id="windDirSlider" min="0" max="359" value="45"
+              oninput="updateWindDir(this.value)">
+          </div>
+          <div class="wind-display">
+            <span id="windArrow">→</span>
+            <div>
+              <div class="wind-val" id="windDisplayVal">25 km/h • NE</div>
+              <div style="font-size:0.65rem;color:var(--text-muted);font-family:'IBM Plex Mono',monospace;">Factor ráfaga: <span id="gustFactor">1.0×</span></div>
+            </div>
+          </div>
+          <div class="control-group">
+            <div class="control-label">
+              Factor de ráfagas
+              <span class="control-value" id="gustLabel">1.0×</span>
+            </div>
+            <input type="range" id="gustSlider" min="10" max="30" value="10"
+              oninput="updateGust(this.value)">
+          </div>
+          <label class="checkbox-row">
+            <input type="checkbox" id="windVariation"> Variación aleatoria de viento
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Terrain -->
+    <div class="panel-section">
+      <div class="section-header" onclick="toggleSection(this)">
+        <span class="section-icon">⛰</span>
+        <span class="section-label">Terreno</span>
+        <span class="section-collapse-icon">▼</span>
+      </div>
+      <div class="section-body-wrapper">
+        <div class="section-body">
+          <div class="control-group">
+            <div class="control-label">Tipo de terreno</div>
+            <select id="terrainSelect" onchange="generateTerrain()">
+              <option value="flat">Plano</option>
+              <option value="hills" selected>Colinas</option>
+              <option value="valley">Valle</option>
+              <option value="canyon">Cañón</option>
+              <option value="ridge">Cresta montañosa</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <div class="control-label">
+              Pendiente máx. (°)
+              <span class="control-value" id="slopeLabel">20°</span>
+            </div>
+            <input type="range" id="slopeSlider" min="0" max="60" value="20"
+              oninput="updateLabel('slopeLabel',this.value,'°','warning')" class="safe-range">
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-reset btn-full" onclick="generateTerrain()">↺ Regenerar terreno</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end left panel -->
+
+  <!-- CENTER: Canvas -->
+  <div class="canvas-area">
+    <div class="canvas-toolbar">
+      <span class="toolbar-label">HERRAMIENTA ACTIVA:</span>
+      <div class="tool-toggle">
+        <button class="tool-btn tool-fire active" id="toolIgnite" onclick="setTool('ignite',this)">🔥 IGNICIÓN</button>
+        <button class="tool-btn tool-water" id="toolWater" onclick="setTool('water',this)">💧 AGUA</button>
+        <button class="tool-btn tool-break" id="toolBreak" onclick="setTool('break',this)">🛡 CORTAFUEGO</button>
+      </div>
+      <div class="toolbar-sep"></div>
+      <span class="toolbar-label">TAMAÑO PINCEL:</span>
+      <input type="range" id="brushSize" min="1" max="8" value="3" style="width:80px;">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--accent-cyan);" id="brushSizeLabel">3</span>
+      <div class="toolbar-sep"></div>
+      <span class="toolbar-label">ESTACIÓN:</span>
+      <button class="tool-btn" id="toolStation" onclick="setTool('station',this)">🚒 COLOCAR</button>
+    </div>
+    <div class="canvas-wrapper">
+      <canvas id="simCanvas"></canvas>
+      <div class="canvas-overlay-info" id="overlayInfo">
+        <div class="overlay-stat">
+          <div class="overlay-dot" style="background:var(--fire-2);box-shadow:0 0 6px var(--fire-2);"></div>
+          <span class="overlay-label">Activo:</span>
+          <span class="overlay-val" id="oFireCells">0</span>
+        </div>
+        <div class="overlay-stat">
+          <div class="overlay-dot" style="background:#555;"></div>
+          <span class="overlay-label">Quemado:</span>
+          <span class="overlay-val" id="oBurnedCells">0</span>
+        </div>
+        <div class="overlay-stat">
+          <div class="overlay-dot" style="background:var(--water);"></div>
+          <span class="overlay-label">Agua:</span>
+          <span class="overlay-val" id="oWaterCells">0</span>
+        </div>
+        <div class="overlay-stat">
+          <div class="overlay-dot" style="background:var(--firebreak);"></div>
+          <span class="overlay-label">Cortafuego:</span>
+          <span class="overlay-val" id="oBreakCells">0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL: Stats & Stations -->
+  <div class="panel">
+
+    <!-- Stats -->
+    <div class="panel-section">
+      <div class="section-header" onclick="toggleSection(this)">
+        <span class="section-icon">📊</span>
+        <span class="section-label">Estadísticas en Vivo</span>
+        <span class="section-collapse-icon">▼</span>
+      </div>
+      <div class="section-body-wrapper">
+        <div class="section-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div class="stat-block">
+              <div class="stat-block-label">Celdas activas</div>
+              <div class="stat-block-value fire-val" id="statFire">0</div>
+              <div class="stat-block-sub">en combustión</div>
+            </div>
+            <div class="stat-block">
+              <div class="stat-block-label">Área quemada</div>
+              <div class="stat-block-value burn-val" id="statBurned">0</div>
+              <div class="stat-block-sub">ha estimadas</div>
+            </div>
+            <div class="stat-block">
+              <div class="stat-block-label">Velocidad av.</div>
+              <div class="stat-block-value warning" id="statSpeed" style="color:var(--warning);">0</div>
+              <div class="stat-block-sub">m/min estimado</div>
+            </div>
+            <div class="stat-block">
+              <div class="stat-block-label">Controlado</div>
+              <div class="stat-block-value saved-val" id="statControl">0%</div>
+              <div class="stat-block-sub">del perímetro</div>
+            </div>
+          </div>
+          <div>
+            <div class="control-label" style="margin-bottom:6px;">
+              Progresión del incendio
+              <span class="control-value danger" id="burnPct">0%</span>
+            </div>
+            <div class="burn-progress">
+              <div class="burn-fill" id="burnFill" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fire Stations -->
+    <div class="panel-section">
+      <div class="section-header" onclick="toggleSection(this)">
+        <span class="section-icon">🚒</span>
+        <span class="section-label">Estaciones de Control</span>
+        <span class="section-collapse-icon">▼</span>
+      </div>
+      <div class="section-body-wrapper">
+        <div class="section-body">
+          <div style="font-size:0.78rem;color:var(--text-muted);line-height:1.5;">
+            Coloca estaciones en el mapa para combatir el incendio activamente.
+          </div>
+          <div class="control-group">
+            <div class="control-label">Capacidad de agua (L)</div>
+            <input type="range" id="stationWater" min="500" max="10000" step="500" value="3000"
+              oninput="updateStationParams()" class="water-range">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--water);text-align:right;" id="stationWaterLabel">3,000 L</div>
+          </div>
+          <div class="control-group">
+            <div class="control-label">Radio de acción (celdas)</div>
+            <input type="range" id="stationRadius" min="2" max="12" value="5"
+              oninput="updateStationParams()" class="water-range">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--water);text-align:right;" id="stationRadiusLabel">5 celdas</div>
+          </div>
+          <div class="control-group">
+            <div class="control-label">Efectividad de extinción</div>
+            <input type="range" id="stationEff" min="10" max="100" value="60"
+              oninput="updateStationParams()" class="water-range">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--water);text-align:right;" id="stationEffLabel">60%</div>
+          </div>
+          <div class="control-group">
+            <div class="control-label">Tiempo de respuesta (min)</div>
+            <input type="range" id="stationResponse" min="1" max="30" value="5"
+              oninput="updateStationParams()">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--accent-cyan);text-align:right;" id="stationResponseLabel">5 min</div>
+          </div>
+          <div class="control-group">
+            <div class="control-label">Personal (personas/estación)</div>
+            <input type="range" id="stationPersonnel" min="2" max="20" value="6"
+              oninput="updateStationParams()">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--accent-cyan);text-align:right;" id="stationPersonnelLabel">6 personas</div>
+          </div>
+          <div style="height:1px;background:var(--border);"></div>
+          <div id="stationList" style="display:flex;flex-direction:column;gap:6px;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--text-muted);text-align:center;padding:8px;">
+              Sin estaciones colocadas
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="panel-section">
+      <div class="section-header" onclick="toggleSection(this)">
+        <span class="section-icon">📋</span>
+        <span class="section-label">Leyenda</span>
+        <span class="section-collapse-icon">▼</span>
+      </div>
+      <div class="section-body-wrapper">
+        <div class="section-body">
+          <div class="legend-item"><div class="legend-swatch" style="background:#1a4a1a;border:1px solid #2d6b2d;"></div>Vegetación sin quemar</div>
+          <div class="legend-item"><div class="legend-swatch" style="background:linear-gradient(135deg,#ff2200,#ff6600);"></div>Fuego activo (alta intens.)</div>
+          <div class="legend-item"><div class="legend-swatch" style="background:linear-gradient(135deg,#ff6600,#ffaa00);"></div>Fuego activo (media intens.)</div>
+          <div class="legend-item"><div class="legend-swatch" style="background:#2a1a10;"></div>Área quemada</div>
+          <div class="legend-item"><div class="legend-swatch" style="background:#1a1a3a;border:1px solid var(--water);"></div>Zona húmeda / agua</div>
+          <div class="legend-item"><div class="legend-swatch" style="background:#2a1e4a;border:1px solid var(--firebreak);"></div>Cortafuego</div>
+          <div class="legend-item"><div class="legend-swatch" style="background:#3d1515;border:1px solid var(--danger);"></div>Alta intensidad / peligro</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Event Log -->
+    <div class="panel-section">
+      <div class="section-header" onclick="toggleSection(this)">
+        <span class="section-icon">📝</span>
+        <span class="section-label">Registro de Eventos</span>
+        <span class="section-collapse-icon">▼</span>
+      </div>
+      <div class="section-body-wrapper">
+        <div class="section-body">
+          <div class="event-log" id="eventLog">
+            <div class="log-entry">
+              <span class="log-time">00:00</span>
+              <span class="log-msg info">Sistema listo. Coloca fuego o estaciones en el mapa.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end right panel -->
+
+</div><!-- end app-layout -->
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+// ==================== SIMULATION ENGINE ====================
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+
+const GRID_W = 120;
+const GRID_H = 90;
+let CELL_SIZE;
+
+// Cell states
+const EMPTY = 0, FUEL = 1, BURNING = 2, BURNED = 3, WET = 4, FIREBREAK = 5;
+
+let grid = [], elevation = [], moisture = [], intensity = [];
+let stations = [];
+let particles = []; // embers/smoke
+let simRunning = false, simPaused = false;
+let simInterval = null;
+let simStep = 0;
+let activeTool = 'ignite';
+let brushSize = 3;
+let simSpeed = 1;
+let isDrawing = false;
+
+// Vegetation flammability map
+const VEG_PARAMS = {
+  bosque_pino:      { flam: 0.85, spread: 0.78, color: [30, 90, 30] },
+  bosque_encino:    { flam: 0.72, spread: 0.65, color: [35, 80, 35] },
+  bosque_pino_encino: { flam: 0.80, spread: 0.72, color: [28, 85, 28] },
+  selva_baja:       { flam: 0.90, spread: 0.85, color: [20, 100, 30] },
+  pastizal:         { flam: 0.95, spread: 0.92, color: [50, 110, 30] },
+  matorral:         { flam: 0.80, spread: 0.70, color: [60, 100, 40] },
+  bosque_oyamel:    { flam: 0.75, spread: 0.68, color: [20, 70, 40] },
+  manglar:          { flam: 0.30, spread: 0.25, color: [20, 90, 60] },
+};
+
+let vegParams = VEG_PARAMS.bosque_pino;
+
+// Wind
+let windSpeed = 25, windDir = 45, gustFactor = 1.0;
+let windDx, windDy;
+updateWindVectors();
+
+function updateWindVectors() {
+  const rad = (windDir * Math.PI) / 180;
+  windDx = Math.cos(rad);
+  windDy = Math.sin(rad);
+}
+
+// Station params
+let stationParams = { water: 3000, radius: 5, eff: 0.6, response: 5, personnel: 6 };
+
+// ==================== INIT ====================
+function initCanvas() {
+  const wrapper = canvas.parentElement;
+  const maxW = wrapper.clientWidth - 32;
+  const maxH = wrapper.clientHeight - 80;
+  CELL_SIZE = Math.min(Math.floor(maxW / GRID_W), Math.floor(maxH / GRID_H));
+  canvas.width = GRID_W * CELL_SIZE;
+  canvas.height = GRID_H * CELL_SIZE;
+}
+
+function initGrid() {
+  grid = new Array(GRID_H).fill(null).map(() => new Array(GRID_W).fill(FUEL));
+  intensity = new Array(GRID_H).fill(null).map(() => new Array(GRID_W).fill(0));
+  moisture = new Array(GRID_H).fill(null).map(() => new Array(GRID_W).fill(0));
+  generateTerrain();
+  particles = [];
+}
+
+function generateTerrain() {
+  const type = document.getElementById('terrainSelect').value;
+  elevation = new Array(GRID_H).fill(null).map(() => new Array(GRID_W).fill(0));
+
+  // Perlin-ish noise using simple sinusoidal layers
+  for (let y = 0; y < GRID_H; y++) {
+    for (let x = 0; x < GRID_W; x++) {
+      let e = 0;
+      const nx = x / GRID_W, ny = y / GRID_H;
+      switch(type) {
+        case 'flat':
+          e = 0.1 + 0.05 * Math.sin(nx * 8) * Math.cos(ny * 8);
+          break;
+        case 'hills':
+          e = 0.3 * Math.sin(nx * Math.PI * 2) * Math.sin(ny * Math.PI * 1.5)
+            + 0.2 * Math.sin(nx * Math.PI * 5 + 1) * Math.cos(ny * Math.PI * 4 + 0.5)
+            + 0.1 * Math.cos(nx * 10) * Math.sin(ny * 7);
+          e = Math.abs(e);
+          break;
+        case 'valley':
+          e = 0.5 * Math.abs(nx - 0.5) + 0.1 * Math.sin(ny * Math.PI * 4);
+          break;
+        case 'canyon':
+          const cx = Math.abs(nx - 0.5);
+          e = cx < 0.15 ? 0.05 : 0.4 + 0.2 * Math.sin(ny * 5);
+          break;
+        case 'ridge':
+          e = 0.6 * Math.sin(nx * Math.PI) + 0.15 * Math.sin(ny * 8);
+          break;
+      }
+      elevation[y][x] = Math.max(0, Math.min(1, e));
+    }
+  }
+
+  // Add water bodies based on low elevation
+  for (let y = 0; y < GRID_H; y++) {
+    for (let x = 0; x < GRID_W; x++) {
+      if (elevation[y][x] < 0.05 && Math.random() < 0.4) {
+        grid[y][x] = WET;
+      } else {
+        grid[y][x] = FUEL;
+      }
+      intensity[y][x] = 0;
+    }
+  }
+  redraw();
+}
+
+// ==================== DRAWING ====================
+function getVegColor(x, y) {
+  const vc = vegParams.color;
+  const elev = elevation[y] ? elevation[y][x] || 0 : 0;
+  const r = Math.floor(vc[0] * (0.7 + elev * 0.5));
+  const g = Math.floor(vc[1] * (0.7 + elev * 0.4));
+  const b = Math.floor(vc[2] * (0.8 + elev * 0.3));
+  return `rgb(${Math.min(255,r)},${Math.min(255,g)},${Math.min(255,b)})`;
+}
+
+function getFireColor(inten) {
+  // inten 0..1
+  if (inten > 0.8) return `rgb(255,${Math.floor(inten*40)},0)`;
+  if (inten > 0.5) return `rgb(255,${Math.floor(80 + inten*120)},0)`;
+  return `rgb(255,${Math.floor(130 + inten*100)},${Math.floor(inten*30)})`;
+}
+
+function redraw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  for (let y = 0; y < GRID_H; y++) {
+    for (let x = 0; x < GRID_W; x++) {
+      const state = grid[y][x];
+      const inten = intensity[y][x] || 0;
+      const elev = elevation[y] ? elevation[y][x] || 0 : 0;
+
+      let color;
+      switch(state) {
+        case FUEL:
+          // Shade by elevation
+          const base = vegParams.color;
+          const shade = 0.5 + elev * 0.7;
+          color = `rgb(${Math.floor(base[0]*shade)},${Math.floor(base[1]*shade)},${Math.floor(base[2]*shade)})`;
+          break;
+        case BURNING:
+          color = getFireColor(inten);
+          break;
+        case BURNED:
+          const bShade = 0.4 + elev * 0.3;
+          color = `rgb(${Math.floor(42*bShade)},${Math.floor(26*bShade)},${Math.floor(16*bShade)})`;
+          break;
+        case WET:
+          color = `rgb(${Math.floor(10+elev*30)},${Math.floor(40+elev*40)},${Math.floor(80+elev*60)})`;
+          break;
+        case FIREBREAK:
+          color = `rgb(${Math.floor(42+elev*20)},${Math.floor(30+elev*20)},${Math.floor(74+elev*20)})`;
+          break;
+        default: color = '#111';
+      }
+
+      ctx.fillStyle = color;
+      ctx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+
+      // Glow for burning
+      if (state === BURNING && inten > 0.4 && CELL_SIZE > 3) {
+        ctx.fillStyle = `rgba(255,${Math.floor(inten*100)},0,0.15)`;
+        ctx.fillRect((x-1)*CELL_SIZE, (y-1)*CELL_SIZE, CELL_SIZE*3, CELL_SIZE*3);
+      }
+    }
+  }
+
+  // Draw particles
+  if (document.getElementById('showSmoke').checked || document.getElementById('showEmbers').checked) {
+    drawParticles();
+  }
+
+  // Draw stations
+  drawStations();
+}
+
+function drawParticles() {
+  particles.forEach(p => {
+    if (p.type === 'ember' && document.getElementById('showEmbers').checked) {
+      ctx.save();
+      ctx.globalAlpha = p.life;
+      ctx.fillStyle = `rgb(255,${Math.floor(80+p.life*100)},0)`;
+      ctx.shadowBlur = 6;
+      ctx.shadowColor = '#ff4400';
+      ctx.beginPath();
+      ctx.arc(p.x * CELL_SIZE, p.y * CELL_SIZE, Math.max(1, CELL_SIZE * 0.4 * p.life), 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    } else if (p.type === 'smoke' && document.getElementById('showSmoke').checked) {
+      ctx.save();
+      ctx.globalAlpha = p.life * 0.25;
+      ctx.fillStyle = `rgb(100,120,130)`;
+      ctx.beginPath();
+      ctx.arc(p.x * CELL_SIZE, p.y * CELL_SIZE, CELL_SIZE * (0.8 + (1-p.life) * 2), 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    }
+  });
+}
+
+function drawStations() {
+  stations.forEach((s, i) => {
+    const px = s.x * CELL_SIZE + CELL_SIZE/2;
+    const py = s.y * CELL_SIZE + CELL_SIZE/2;
+
+    // Action radius
+    ctx.save();
+    ctx.globalAlpha = s.active ? 0.12 : 0.05;
+    ctx.fillStyle = '#0096c7';
+    ctx.beginPath();
+    ctx.arc(px, py, s.radius * CELL_SIZE, 0, Math.PI*2);
+    ctx.fill();
+    ctx.globalAlpha = s.active ? 0.5 : 0.2;
+    ctx.strokeStyle = '#0096c7';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.stroke();
+    ctx.restore();
+
+    // Station icon
+    const sz = Math.max(12, CELL_SIZE * 2.5);
+    ctx.save();
+    ctx.globalAlpha = s.waterLeft > 0 ? 1 : 0.4;
+    ctx.fillStyle = s.active ? '#0096c7' : '#0055aa';
+    ctx.shadowBlur = s.active ? 14 : 4;
+    ctx.shadowColor = '#00e5ff';
+    ctx.beginPath();
+    ctx.roundRect(px - sz/2, py - sz/2, sz, sz, sz*0.2);
+    ctx.fill();
+    ctx.font = `${sz*0.7}px serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowBlur = 0;
+    ctx.fillText('🚒', px, py);
+    ctx.restore();
+
+    // Water bar
+    const barW = sz * 1.2;
+    const barH = 3;
+    const waterPct = s.waterLeft / s.waterTotal;
+    ctx.fillStyle = '#0a1a2a';
+    ctx.fillRect(px - barW/2, py + sz/2 + 3, barW, barH);
+    ctx.fillStyle = waterPct > 0.3 ? '#0096c7' : '#e74c3c';
+    ctx.fillRect(px - barW/2, py + sz/2 + 3, barW * waterPct, barH);
+  });
+}
+
+// ==================== SIMULATION STEP ====================
+function simTick() {
+  for (let s = 0; s < simSpeed; s++) {
+    doStep();
+  }
+  updateParticles();
+  redraw();
+  updateStats();
+}
+
+function doStep() {
+  simStep++;
+
+  // Wind variation
+  if (document.getElementById('windVariation').checked && simStep % 20 === 0) {
+    windDir += (Math.random() - 0.5) * 30;
+    windDir = ((windDir % 360) + 360) % 360;
+    updateWindVectors();
+    updateWindDisplay();
+  }
+
+  const hum = parseInt(document.getElementById('humSlider').value) / 100;
+  const temp = parseInt(document.getElementById('tempSlider').value);
+  const intens = parseInt(document.getElementById('intensitySlider').value) / 100;
+  const gust = gustFactor;
+  const windMag = windSpeed / 30;
+
+  const newGrid = grid.map(row => [...row]);
+  const newIntensity = intensity.map(row => [...row]);
+
+  for (let y = 0; y < GRID_H; y++) {
+    for (let x = 0; x < GRID_W; x++) {
+      if (grid[y][x] === BURNING) {
+        const curInt = intensity[y][x];
+
+        // Decrease intensity over time (cell burns out)
+        newIntensity[y][x] = curInt - (0.02 + hum * 0.03);
+
+        if (newIntensity[y][x] <= 0) {
+          newGrid[y][x] = BURNED;
+          newIntensity[y][x] = 0;
+          // Spawn smoke
+          spawnParticle(x, y, 'smoke');
+          continue;
+        }
+
+        // Try to spread to neighbors
+        const spreadDirs = [
+          {dx:0,dy:-1}, {dx:0,dy:1}, {dx:-1,dy:0}, {dx:1,dy:0},
+          {dx:-1,dy:-1}, {dx:1,dy:-1}, {dx:-1,dy:1}, {dx:1,dy:1}
+        ];
+
+        for (const {dx, dy} of spreadDirs) {
+          const nx = x + dx, ny = y + dy;
+          if (nx < 0 || nx >= GRID_W || ny < 0 || ny >= GRID_H) continue;
+          if (grid[ny][nx] !== FUEL) continue;
+
+          // Wind contribution
+          const dotWind = dx * windDx + dy * windDy;
+          const windBonus = 1 + windMag * gust * Math.max(0, dotWind) * 2;
+
+          // Slope contribution
+          const elevDiff = (elevation[ny][nx] || 0) - (elevation[y][x] || 0);
+          const slopeBonus = 1 + elevDiff * 3;
+
+          // Temp contribution
+          const tempBonus = 1 + (temp - 20) / 80;
+
+          // Base spread probability
+          const diagonal = Math.abs(dx) + Math.abs(dy) === 2 ? 0.7 : 1.0;
+          const prob = vegParams.spread * curInt * (1 - hum * 0.8) * windBonus * Math.max(0.1, slopeBonus) * tempBonus * diagonal * 0.18;
+
+          if (Math.random() < prob) {
+            newGrid[ny][nx] = BURNING;
+            newIntensity[ny][nx] = Math.min(1, intens * (0.6 + Math.random() * 0.4));
+
+            // Occasional ember
+            if (Math.random() < windMag * 0.15 && windSpeed > 20) {
+              spawnEmber(x, y);
+            }
+          }
+        }
+
+        // Long-range ember spotting
+        if (document.getElementById('showEmbers').checked && Math.random() < windMag * curInt * 0.005) {
+          const ex = Math.floor(x + windDx * (5 + Math.random() * 15));
+          const ey = Math.floor(y + windDy * (5 + Math.random() * 15));
+          if (ex >= 0 && ex < GRID_W && ey >= 0 && ey < GRID_H && grid[ey][ex] === FUEL) {
+            if (Math.random() < vegParams.flam * (1-hum)) {
+              newGrid[ey][ex] = BURNING;
+              newIntensity[ey][ex] = Math.min(1, intens * 0.5);
+              logEvent(`🔥 Brasa aterrizó en (${ex},${ey})`, 'fire');
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Apply station suppression
+  stations.forEach(s => {
+    if (s.waterLeft <= 0) { s.active = false; return; }
+    s.active = false;
+    for (let dy = -s.radius; dy <= s.radius; dy++) {
+      for (let dx = -s.radius; dx <= s.radius; dx++) {
+        const nx = s.x + dx, ny = s.y + dy;
+        if (nx < 0 || nx >= GRID_W || ny < 0 || ny >= GRID_H) continue;
+        if (Math.sqrt(dx*dx+dy*dy) > s.radius) continue;
+        if (newGrid[ny][nx] === BURNING) {
+          s.active = true;
+          if (Math.random() < stationParams.eff) {
+            newIntensity[ny][nx] -= 0.12 * stationParams.eff;
+            if (newIntensity[ny][nx] <= 0) {
+              newGrid[ny][nx] = WET;
+              newIntensity[ny][nx] = 0;
+              s.waterLeft = Math.max(0, s.waterLeft - 15);
+            }
+          }
+        }
+      }
+    }
+  });
+
+  grid = newGrid;
+  intensity = newIntensity;
+}
+
+// ==================== PARTICLES ====================
+function spawnParticle(x, y, type) {
+  if (particles.length > 400) return;
+  particles.push({
+    x: x + Math.random(), y: y + Math.random(),
+    vx: (Math.random()-0.5)*0.3 + windDx*0.3,
+    vy: -0.3 - Math.random()*0.3 + windDy*0.1,
+    life: 0.9 + Math.random()*0.1, type
+  });
+}
+
+function spawnEmber(x, y) {
+  if (particles.length > 400) return;
+  particles.push({
+    x: x, y: y,
+    vx: windDx * (1 + Math.random()) + (Math.random()-0.5)*0.5,
+    vy: windDy * (1 + Math.random()) + (Math.random()-0.5)*0.5,
+    life: 1.0, type: 'ember'
+  });
+}
+
+function updateParticles() {
+  particles = particles.filter(p => p.life > 0.05);
+  particles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life -= p.type === 'smoke' ? 0.015 : 0.025;
+    p.vx *= 0.98;
+    p.vy *= 0.98;
+  });
+}
+
+// ==================== CONTROLS ====================
+function startSim() {
+  if (simPaused) {
+    simPaused = false;
+    simInterval = setInterval(simTick, 80);
+    document.getElementById('btnStart').disabled = true;
+    document.getElementById('btnPause').disabled = false;
+    setStatus('running');
+    logEvent('▶ Simulación reanudada', 'info');
+    return;
+  }
+  simRunning = true;
+  simPaused = false;
+  document.getElementById('btnStart').disabled = true;
+  document.getElementById('btnPause').disabled = false;
+  simInterval = setInterval(simTick, 80);
+  setStatus('running');
+  logEvent('▶ Simulación iniciada', 'info');
+}
+
+function pauseSim() {
+  clearInterval(simInterval);
+  simPaused = true;
+  simRunning = false;
+  document.getElementById('btnStart').disabled = false;
+  document.getElementById('btnStart').innerHTML = '▶ REANUDAR';
+  document.getElementById('btnPause').disabled = true;
+  setStatus('paused');
+  logEvent('⏸ Simulación pausada', 'info');
+}
+
+function resetSim() {
+  clearInterval(simInterval);
+  simRunning = false;
+  simPaused = false;
+  simStep = 0;
+  stations = [];
+  particles = [];
+  document.getElementById('btnStart').disabled = false;
+  document.getElementById('btnStart').innerHTML = '▶ INICIAR';
+  document.getElementById('btnPause').disabled = true;
+  setStatus('stopped');
+  initGrid();
+  updateStats();
+  updateStationList();
+  logEvent('↺ Simulación reiniciada', 'info');
+}
+
+function setSpeed(sp, btn) {
+  simSpeed = sp;
+  document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('speedLabel').textContent = sp + '×';
+  if (simRunning && !simPaused) {
+    clearInterval(simInterval);
+    simInterval = setInterval(simTick, 80);
+  }
+}
+
+function setTool(tool, btn) {
+  activeTool = tool;
+  document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function setStatus(state) {
+  const dot = document.getElementById('statusDot');
+  const text = document.getElementById('statusText');
+  const badge = document.getElementById('runBadge');
+  if (state === 'running') {
+    dot.className = 'status-dot fire';
+    text.textContent = 'EN EJECUCIÓN';
+    badge.className = 'badge badge-running';
+    badge.textContent = 'ACTIVO';
+  } else if (state === 'paused') {
+    dot.className = 'status-dot';
+    dot.style.background = 'var(--warning)';
+    dot.style.boxShadow = '0 0 8px var(--warning)';
+    text.textContent = 'PAUSADO';
+    badge.className = 'badge badge-paused';
+    badge.textContent = 'PAUSADO';
+  } else {
+    dot.className = 'status-dot';
+    dot.style.background = 'var(--accent-teal)';
+    dot.style.boxShadow = '0 0 8px var(--accent-teal)';
+    text.textContent = 'INACTIVO';
+    badge.className = 'badge badge-stopped';
+    badge.textContent = 'DETENIDO';
+  }
+}
+
+// ==================== CANVAS INTERACTION ====================
+canvas.addEventListener('mousedown', e => { isDrawing = true; handleDraw(e); });
+canvas.addEventListener('mousemove', e => { if (isDrawing) handleDraw(e); });
+canvas.addEventListener('mouseup', () => { isDrawing = false; });
+canvas.addEventListener('mouseleave', () => { isDrawing = false; });
+
+function handleDraw(e) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const mx = Math.floor((e.clientX - rect.left) * scaleX / CELL_SIZE);
+  const my = Math.floor((e.clientY - rect.top) * scaleY / CELL_SIZE);
+
+  const r = brushSize;
+
+  if (activeTool === 'station') {
+    if (!isDrawing) return;
+    placeStation(mx, my);
+    isDrawing = false;
+    return;
+  }
+
+  for (let dy = -r; dy <= r; dy++) {
+    for (let dx = -r; dx <= r; dx++) {
+      if (dx*dx + dy*dy > r*r) continue;
+      const nx = mx + dx, ny = my + dy;
+      if (nx < 0 || nx >= GRID_W || ny < 0 || ny >= GRID_H) continue;
+
+      if (activeTool === 'ignite' && grid[ny][nx] === FUEL) {
+        grid[ny][nx] = BURNING;
+        intensity[ny][nx] = parseInt(document.getElementById('intensitySlider').value) / 100;
+        logEvent(`🔥 Ignición en (${nx},${ny})`, 'fire');
+      } else if (activeTool === 'water') {
+        if (grid[ny][nx] === BURNING || grid[ny][nx] === FUEL) {
+          grid[ny][nx] = WET;
+          intensity[ny][nx] = 0;
+        }
+      } else if (activeTool === 'break') {
+        if (grid[ny][nx] !== BURNING) {
+          grid[ny][nx] = FIREBREAK;
+          intensity[ny][nx] = 0;
+        }
+      }
+    }
+  }
+
+  redraw();
+}
+
+function placeStation(x, y) {
+  const s = {
+    x, y,
+    radius: stationParams.radius,
+    waterLeft: stationParams.water,
+    waterTotal: stationParams.water,
+    eff: stationParams.eff,
+    personnel: stationParams.personnel,
+    response: stationParams.response,
+    active: false,
+    id: Date.now()
+  };
+  stations.push(s);
+  updateStationList();
+  logEvent(`🚒 Estación #${stations.length} colocada en (${x},${y})`, 'water');
+  redraw();
+}
+
+// ==================== PARAMS ====================
+function updateLabel(id, val, suffix, cls) {
+  const el = document.getElementById(id);
+  el.textContent = val + suffix;
+  el.className = 'control-value ' + (cls || '');
+}
+
+function updateVegParams() {
+  vegParams = VEG_PARAMS[document.getElementById('vegSelect').value];
+  redraw();
+}
+
+function updateWindSpeed(v) {
+  windSpeed = parseInt(v);
+  document.getElementById('windSpeedLabel').textContent = v + ' km/h';
+  updateWindDisplay();
+}
+
+function updateWindDir(v) {
+  windDir = parseInt(v);
+  updateWindVectors();
+  const dirs = ['N','NE','E','SE','S','SO','O','NO'];
+  const dirName = dirs[Math.round(windDir / 45) % 8];
+  document.getElementById('windDirLabel').textContent = `${dirName} ${v}°`;
+  updateWindDisplay();
+}
+
+function updateGust(v) {
+  gustFactor = v / 10;
+  document.getElementById('gustLabel').textContent = gustFactor.toFixed(1) + '×';
+  document.getElementById('gustFactor').textContent = gustFactor.toFixed(1) + '×';
+}
+
+function updateWindDisplay() {
+  const dirs = ['N','NE','E','SE','S','SO','O','NO'];
+  const dirName = dirs[Math.round(windDir / 45) % 8];
+  document.getElementById('windDisplayVal').textContent = `${windSpeed} km/h • ${dirName}`;
+  // Rotate arrow
+  document.getElementById('windArrow').style.transform = `rotate(${windDir}deg)`;
+}
+
+function updateStationParams() {
+  stationParams = {
+    water: parseInt(document.getElementById('stationWater').value),
+    radius: parseInt(document.getElementById('stationRadius').value),
+    eff: parseInt(document.getElementById('stationEff').value) / 100,
+    response: parseInt(document.getElementById('stationResponse').value),
+    personnel: parseInt(document.getElementById('stationPersonnel').value)
+  };
+  document.getElementById('stationWaterLabel').textContent = stationParams.water.toLocaleString() + ' L';
+  document.getElementById('stationRadiusLabel').textContent = stationParams.radius + ' celdas';
+  document.getElementById('stationEffLabel').textContent = (stationParams.eff * 100).toFixed(0) + '%';
+  document.getElementById('stationResponseLabel').textContent = stationParams.response + ' min';
+  document.getElementById('stationPersonnelLabel').textContent = stationParams.personnel + ' personas';
+}
+
+function updateStationList() {
+  const list = document.getElementById('stationList');
+  if (stations.length === 0) {
+    list.innerHTML = '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.65rem;color:var(--text-muted);text-align:center;padding:8px;">Sin estaciones colocadas</div>';
+    return;
+  }
+  list.innerHTML = stations.map((s, i) => `
+    <div style="background:var(--bg-deep);border:1px solid var(--border);border-radius:3px;padding:8px;display:flex;align-items:center;gap:8px;">
+      <div style="font-size:1.1rem;">🚒</div>
+      <div style="flex:1;">
+        <div style="font-size:0.78rem;font-weight:600;color:var(--water);">Estación #${i+1}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:var(--text-muted);">(${s.x},${s.y}) • R:${s.radius} • ${s.personnel}p</div>
+        <div style="height:3px;background:var(--border);border-radius:2px;margin-top:4px;">
+          <div style="height:100%;background:${s.waterLeft/s.waterTotal > 0.3 ? 'var(--water)' : 'var(--danger)'};border-radius:2px;width:${Math.round(s.waterLeft/s.waterTotal*100)}%;transition:width 0.5s;"></div>
+        </div>
+      </div>
+      <button onclick="removeStation(${i})" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:0.8rem;padding:4px;">✕</button>
+    </div>
+  `).join('');
+}
+
+function removeStation(i) {
+  logEvent(`🚒 Estación #${i+1} retirada`, 'water');
+  stations.splice(i, 1);
+  updateStationList();
+  redraw();
+}
+
+// ==================== STATS ====================
+function updateStats() {
+  let fireCells = 0, burnedCells = 0, wetCells = 0, breakCells = 0, fuelCells = 0;
+  for (let y = 0; y < GRID_H; y++) {
+    for (let x = 0; x < GRID_W; x++) {
+      switch(grid[y][x]) {
+        case BURNING: fireCells++; break;
+        case BURNED: burnedCells++; break;
+        case WET: wetCells++; break;
+        case FIREBREAK: breakCells++; break;
+        case FUEL: fuelCells++; break;
+      }
+    }
+  }
+  const total = GRID_W * GRID_H;
+  const burnedPct = Math.round((burnedCells + fireCells) / total * 100);
+
+  document.getElementById('statFire').textContent = fireCells;
+  document.getElementById('statBurned').textContent = (burnedCells * 0.25).toFixed(1);
+  document.getElementById('oFireCells').textContent = fireCells;
+  document.getElementById('oBurnedCells').textContent = burnedCells;
+  document.getElementById('oWaterCells').textContent = wetCells;
+  document.getElementById('oBreakCells').textContent = breakCells;
+  document.getElementById('burnPct').textContent = burnedPct + '%';
+  document.getElementById('burnFill').style.width = burnedPct + '%';
+
+  const speed = (fireCells * 0.3 * (windSpeed / 20)).toFixed(1);
+  document.getElementById('statSpeed').textContent = speed;
+
+  const controlled = Math.min(100, Math.round(stations.length * 15 + (breakCells / Math.max(1,fireCells)) * 10));
+  document.getElementById('statControl').textContent = controlled + '%';
+
+  // Timer
+  const mins = Math.floor(simStep / 60).toString().padStart(2,'0');
+  const secs = (simStep % 60).toString().padStart(2,'0');
+  document.getElementById('simTimerLabel').textContent = mins + ':' + secs;
+
+  updateStationList();
+
+  if (fireCells === 0 && burnedCells > 0 && simRunning) {
+    logEvent('✅ Incendio extinguido. Simulación completa.', 'info');
+    clearInterval(simInterval);
+    simRunning = false;
+    setStatus('stopped');
+  }
+}
+
+// ==================== LOGGING ====================
+let logCount = 0;
+function logEvent(msg, type) {
+  logCount++;
+  if (logCount > 60) return; // prevent spam
+  const log = document.getElementById('eventLog');
+  const mins = Math.floor(simStep / 60).toString().padStart(2,'0');
+  const secs = (simStep % 60).toString().padStart(2,'0');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = `<span class="log-time">${mins}:${secs}</span><span class="log-msg ${type||''}">${msg}</span>`;
+  log.insertBefore(entry, log.firstChild);
+  while (log.children.length > 40) log.removeChild(log.lastChild);
+  setTimeout(() => { logCount = Math.max(0, logCount-1); }, 1000);
+}
+
+// ==================== SECTION TOGGLE ====================
+function toggleSection(header) {
+  const body = header.nextElementSibling;
+  const icon = header.querySelector('.section-collapse-icon');
+  const isCollapsed = body.style.maxHeight === '0px';
+  body.style.maxHeight = isCollapsed ? '600px' : '0px';
+  body.style.overflow = 'hidden';
+  body.style.transition = 'max-height 0.3s ease';
+  icon.classList.toggle('collapsed', !isCollapsed);
+}
+
+// Init all sections open
+document.querySelectorAll('.section-body-wrapper').forEach(el => {
+  el.style.maxHeight = '600px';
+  el.style.overflow = 'hidden';
+  el.style.transition = 'max-height 0.3s ease';
+});
+
+// Brush size
+document.getElementById('brushSize').addEventListener('input', function() {
+  brushSize = parseInt(this.value);
+  document.getElementById('brushSizeLabel').textContent = brushSize;
+});
+
+// ==================== INIT ====================
+window.addEventListener('resize', () => { initCanvas(); redraw(); });
+initCanvas();
+initGrid();
+updateWindDisplay();
+updateStationParams();
+
+// Draw initial grid
+redraw();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Isla Renovable — Supervivencia Energética</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ocean: #0a1628;
+    --deep: #0d2137;
+    --teal: #00d4aa;
+    --green: #39ff14;
+    --amber: #ffb347;
+    --red: #ff4757;
+    --sky: #74b9ff;
+    --sand: #ffeaa7;
+    --purple: #a29bfe;
+    --white: #f0f8ff;
+    --card: rgba(0,212,170,0.08);
+    --border: rgba(0,212,170,0.25);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--ocean);
+    color: var(--white);
+    font-family: 'Exo 2', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ===== PANTALLAS ===== */
+  .screen { display:none; width:100%; min-height:100vh; }
+  .screen.active { display:flex; flex-direction:column; }
+
+  /* ===== PANTALLA INICIO ===== */
+  #screen-intro {
+    align-items:center; justify-content:center;
+    background: radial-gradient(ellipse at 50% 80%, #0d3b2e 0%, #0a1628 60%);
+    position:relative; overflow:hidden;
+  }
+  .ocean-bg {
+    position:absolute; bottom:0; left:0; right:0; height:35%;
+    background: linear-gradient(180deg, transparent, #0d2b4a 40%, #071525);
+  }
+  .wave {
+    position:absolute; bottom:0; width:200%; height:120px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 120'%3E%3Cpath fill='%2300d4aa' fill-opacity='0.15' d='M0,64 C360,120 720,0 1080,64 C1260,96 1380,48 1440,64 L1440,120 L0,120 Z'/%3E%3C/svg%3E") repeat-x;
+    animation: waveAnim 6s linear infinite;
+  }
+  .wave2 {
+    position:absolute; bottom:10px; width:200%; height:100px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 100'%3E%3Cpath fill='%2300d4aa' fill-opacity='0.08' d='M0,40 C360,80 720,0 1080,40 C1260,60 1380,20 1440,40 L1440,100 L0,100 Z'/%3E%3C/svg%3E") repeat-x;
+    animation: waveAnim 9s linear infinite reverse;
+  }
+  @keyframes waveAnim { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+  .stars {
+    position:absolute; top:0; left:0; right:0; height:60%;
+    background-image: radial-gradient(1px 1px at 10% 10%, white, transparent),
+      radial-gradient(1px 1px at 30% 20%, white, transparent),
+      radial-gradient(1px 1px at 50% 5%, white, transparent),
+      radial-gradient(1px 1px at 70% 15%, white, transparent),
+      radial-gradient(1px 1px at 90% 8%, white, transparent),
+      radial-gradient(1.5px 1.5px at 20% 35%, #74b9ff, transparent),
+      radial-gradient(1.5px 1.5px at 60% 30%, #74b9ff, transparent),
+      radial-gradient(1px 1px at 80% 40%, white, transparent),
+      radial-gradient(1px 1px at 15% 50%, white, transparent),
+      radial-gradient(1px 1px at 45% 45%, white, transparent);
+  }
+  .island-svg { position:relative; z-index:2; margin-bottom: 10px; }
+  .title-block { text-align:center; z-index:2; position:relative; }
+  .title-block h1 {
+    font-family:'Orbitron',sans-serif; font-size:clamp(2rem,5vw,3.5rem);
+    font-weight:900; letter-spacing:4px;
+    background: linear-gradient(135deg, var(--teal), var(--green), var(--sky));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    text-shadow: none; margin-bottom:8px;
+  }
+  .title-block p {
+    font-size:1rem; color:rgba(240,248,255,0.6);
+    letter-spacing:3px; text-transform:uppercase; margin-bottom:40px;
+  }
+  .btn-start {
+    background: linear-gradient(135deg, var(--teal), #00b894);
+    color: var(--ocean); border:none; padding:16px 48px;
+    font-family:'Orbitron',sans-serif; font-size:1rem; font-weight:700;
+    letter-spacing:2px; border-radius:4px; cursor:pointer;
+    text-transform:uppercase;
+    box-shadow: 0 0 30px rgba(0,212,170,0.5);
+    transition: all 0.3s;
+  }
+  .btn-start:hover { transform:scale(1.05); box-shadow:0 0 50px rgba(0,212,170,0.8); }
+
+  /* ===== HUD PRINCIPAL ===== */
+  #hud {
+    position:sticky; top:0; z-index:100;
+    background: rgba(10,22,40,0.95);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 20px;
+    display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+    backdrop-filter: blur(10px);
+  }
+  .hud-title {
+    font-family:'Orbitron',sans-serif; font-size:0.8rem;
+    color:var(--teal); letter-spacing:2px; margin-right:auto;
+  }
+  .hud-stat {
+    display:flex; align-items:center; gap:6px;
+    font-size:0.78rem; font-weight:600;
+    background: var(--card); border:1px solid var(--border);
+    padding:5px 12px; border-radius:3px;
+  }
+  .hud-stat .val { font-family:'Orbitron',sans-serif; color:var(--teal); }
+  .energy-bar-wrap { display:flex; align-items:center; gap:8px; flex:1; min-width:200px; max-width:300px; }
+  .energy-bar-bg {
+    flex:1; height:8px; background:rgba(255,255,255,0.1);
+    border-radius:4px; overflow:hidden;
+  }
+  .energy-bar-fill {
+    height:100%; background: linear-gradient(90deg, var(--teal), var(--green));
+    border-radius:4px; transition: width 0.5s;
+    box-shadow: 0 0 8px var(--teal);
+  }
+  #energy-pct { font-family:'Orbitron',sans-serif; font-size:0.75rem; color:var(--green); min-width:38px; }
+
+  /* ===== PANTALLA JUEGO ===== */
+  #screen-game { flex-direction:column; }
+  .game-layout {
+    display:grid; grid-template-columns:280px 1fr 260px;
+    gap:0; flex:1; min-height:0;
+  }
+
+  /* PANEL IZQUIERDO */
+  .panel-left {
+    background: var(--deep);
+    border-right:1px solid var(--border);
+    padding:16px; overflow-y:auto;
+    display:flex; flex-direction:column; gap:14px;
+  }
+  .panel-title {
+    font-family:'Orbitron',sans-serif; font-size:0.7rem;
+    color:var(--teal); letter-spacing:3px; text-transform:uppercase;
+    padding-bottom:8px; border-bottom:1px solid var(--border);
+  }
+
+  /* ISLA / MAPA CENTRAL */
+  .island-view {
+    position:relative; overflow:hidden;
+    background: radial-gradient(ellipse at 50% 100%, #0d3b2e 0%, #0a1e35 60%);
+    min-height:500px;
+  }
+  #island-canvas { width:100%; height:100%; position:absolute; top:0; left:0; }
+  .island-overlay {
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    pointer-events:none;
+  }
+  .day-night-indicator {
+    position:absolute; top:12px; right:12px;
+    background:rgba(0,0,0,0.5); border:1px solid var(--border);
+    padding:6px 12px; border-radius:3px;
+    font-size:0.75rem; letter-spacing:2px;
+    pointer-events:all;
+  }
+  .climate-indicator {
+    position:absolute; top:12px; left:12px;
+    background:rgba(0,0,0,0.5); border:1px solid var(--border);
+    padding:6px 12px; border-radius:3px; font-size:0.8rem;
+  }
+  .log-box {
+    position:absolute; bottom:12px; left:12px; right:12px;
+    background:rgba(10,22,40,0.85); border:1px solid var(--border);
+    padding:10px; border-radius:4px; max-height:120px; overflow-y:auto;
+    pointer-events:all;
+  }
+  .log-entry { font-size:0.72rem; color:rgba(240,248,255,0.7); margin-bottom:4px; }
+  .log-entry.good { color:var(--green); }
+  .log-entry.bad  { color:var(--red); }
+  .log-entry.info { color:var(--sky); }
+
+  /* PANEL DERECHO */
+  .panel-right {
+    background: var(--deep);
+    border-left:1px solid var(--border);
+    padding:16px; overflow-y:auto;
+    display:flex; flex-direction:column; gap:14px;
+  }
+
+  /* CARDS DE TECNOLOGÍA */
+  .tech-card {
+    background: var(--card); border:1px solid var(--border);
+    border-radius:6px; padding:12px;
+    transition: all 0.25s; cursor:pointer;
+    position:relative;
+  }
+  .tech-card:hover:not(.locked) { border-color:var(--teal); box-shadow:0 0 15px rgba(0,212,170,0.2); }
+  .tech-card.locked { opacity:0.45; cursor:not-allowed; }
+  .tech-card.active { border-color:var(--green); background:rgba(57,255,20,0.08); }
+  .tech-card .tc-header { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .tech-card .tc-icon { font-size:1.4rem; }
+  .tech-card .tc-name { font-size:0.82rem; font-weight:600; }
+  .tech-card .tc-desc { font-size:0.7rem; color:rgba(240,248,255,0.55); margin-bottom:8px; }
+  .tech-card .tc-stats { display:flex; gap:8px; flex-wrap:wrap; }
+  .stat-pill {
+    font-size:0.65rem; padding:2px 8px; border-radius:2px;
+    background:rgba(0,0,0,0.3); border:1px solid var(--border);
+  }
+  .stat-pill.cost { border-color: var(--amber); color:var(--amber); }
+  .stat-pill.power { border-color: var(--green); color:var(--green); }
+  .stat-pill.level { border-color: var(--purple); color:var(--purple); }
+  .lock-badge {
+    position:absolute; top:8px; right:8px;
+    font-size:0.65rem; background:rgba(255,71,87,0.2);
+    border:1px solid var(--red); color:var(--red);
+    padding:2px 6px; border-radius:2px;
+  }
+  .active-badge {
+    position:absolute; top:8px; right:8px;
+    font-size:0.65rem; background:rgba(57,255,20,0.15);
+    border:1px solid var(--green); color:var(--green);
+    padding:2px 6px; border-radius:2px;
+  }
+
+  /* RECURSOS */
+  .resource-row {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:7px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:0.78rem;
+  }
+  .resource-row:last-child { border-bottom:none; }
+  .res-name { color:rgba(240,248,255,0.7); }
+  .res-val { font-family:'Orbitron',sans-serif; font-size:0.72rem; color:var(--teal); }
+
+  /* BOTONES ACCIÓN */
+  .action-btn {
+    width:100%; padding:10px; border:1px solid var(--border);
+    background: var(--card); color:var(--white);
+    font-family:'Exo 2',sans-serif; font-size:0.8rem; font-weight:600;
+    border-radius:4px; cursor:pointer; transition:all 0.2s;
+    letter-spacing:1px; text-transform:uppercase;
+    margin-bottom:6px;
+  }
+  .action-btn:hover { border-color:var(--teal); color:var(--teal); background:rgba(0,212,170,0.12); }
+  .action-btn.primary { border-color:var(--teal); color:var(--teal); }
+  .action-btn.danger { border-color:var(--red); color:var(--red); }
+  .action-btn:disabled { opacity:0.35; cursor:not-allowed; }
+
+  /* NOTIFICACIONES */
+  #notif-container {
+    position:fixed; top:70px; right:20px; z-index:999;
+    display:flex; flex-direction:column; gap:8px;
+    pointer-events:none;
+  }
+  .notif {
+    background: rgba(10,22,40,0.95); border-radius:4px;
+    padding:10px 16px; font-size:0.78rem;
+    border-left:3px solid var(--teal);
+    box-shadow:0 4px 20px rgba(0,0,0,0.5);
+    animation: slideIn 0.3s ease, fadeOut 0.4s ease 2.6s forwards;
+    max-width:280px;
+  }
+  .notif.success { border-color:var(--green); }
+  .notif.error   { border-color:var(--red); }
+  .notif.warn    { border-color:var(--amber); }
+  @keyframes slideIn { from{transform:translateX(40px);opacity:0} to{transform:translateX(0);opacity:1} }
+  @keyframes fadeOut { from{opacity:1} to{opacity:0} }
+
+  /* PROGRESO NIVEL */
+  .level-section { text-align:center; }
+  .level-circle {
+    width:70px; height:70px; border-radius:50%;
+    border:3px solid var(--teal);
+    background: radial-gradient(circle, rgba(0,212,170,0.15), transparent);
+    display:flex; align-items:center; justify-content:center;
+    margin:0 auto 8px;
+    font-family:'Orbitron',sans-serif; font-size:1.4rem;
+    font-weight:900; color:var(--teal);
+    box-shadow:0 0 20px rgba(0,212,170,0.4);
+  }
+  .level-name { font-size:0.75rem; color:rgba(240,248,255,0.6); letter-spacing:2px; margin-bottom:10px; }
+  .xp-bar-bg { height:6px; background:rgba(255,255,255,0.1); border-radius:3px; overflow:hidden; }
+  .xp-bar-fill { height:100%; background:linear-gradient(90deg,var(--purple),var(--sky)); transition:width 0.5s; }
+
+  /* CLIMA */
+  .climate-card {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:6px; padding:12px; text-align:center;
+  }
+  .climate-card .big-icon { font-size:2.5rem; margin-bottom:6px; }
+  .climate-card .climate-name { font-size:0.85rem; font-weight:600; margin-bottom:4px; }
+  .climate-card .climate-effect { font-size:0.68rem; color:rgba(240,248,255,0.55); }
+
+  /* MISION */
+  .mission-card {
+    background:linear-gradient(135deg,rgba(0,212,170,0.05),rgba(116,185,255,0.05));
+    border:1px solid rgba(0,212,170,0.3); border-radius:6px; padding:12px;
+  }
+  .mission-title { font-family:'Orbitron',sans-serif; font-size:0.65rem; color:var(--teal); letter-spacing:2px; margin-bottom:6px; }
+  .mission-desc { font-size:0.78rem; margin-bottom:8px; }
+  .mission-prog { height:5px; background:rgba(255,255,255,0.1); border-radius:3px; overflow:hidden; }
+  .mission-prog-fill { height:100%; background:var(--amber); border-radius:3px; transition:width 0.5s; }
+
+  /* WIN SCREEN */
+  #screen-win {
+    background:radial-gradient(ellipse at 50% 50%, #0d3b2e, #0a1628);
+    align-items:center; justify-content:center; flex-direction:column; gap:20px;
+  }
+  #screen-win h2 {
+    font-family:'Orbitron',sans-serif; font-size:clamp(2rem,5vw,3rem);
+    background:linear-gradient(135deg,var(--teal),var(--green));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    text-align:center;
+  }
+  #screen-win p { color:rgba(240,248,255,0.7); text-align:center; max-width:500px; line-height:1.7; }
+
+  /* RESPONSIVE */
+  @media(max-width:900px) {
+    .game-layout { grid-template-columns:1fr; }
+    .panel-left, .panel-right { max-height:260px; }
+    .island-view { min-height:300px; }
+  }
+
+  /* Divider */
+  .divider { height:1px; background:var(--border); margin:4px 0; }
+  .small-label { font-size:0.65rem; color:rgba(240,248,255,0.4); letter-spacing:2px; text-transform:uppercase; margin-bottom:4px; }
+</style>
+</head>
+<body>
+
+<!-- NOTIFICACIONES -->
+<div id="notif-container"></div>
+
+<!-- ============ PANTALLA INTRO ============ -->
+<div id="screen-intro" class="screen active">
+  <div class="stars"></div>
+  <div class="ocean-bg"></div>
+  <div class="wave"></div>
+  <div class="wave2"></div>
+  <div class="island-svg">
+    <svg width="220" height="160" viewBox="0 0 220 160" xmlns="http://www.w3.org/2000/svg">
+      <!-- agua -->
+      <ellipse cx="110" cy="140" rx="105" ry="18" fill="#0d3b5e" opacity="0.8"/>
+      <!-- isla -->
+      <ellipse cx="110" cy="110" rx="90" ry="38" fill="#2d6a4f"/>
+      <ellipse cx="110" cy="105" rx="78" ry="30" fill="#40916c"/>
+      <!-- palmera izq -->
+      <rect x="50" y="55" width="5" height="55" rx="2" fill="#1b4332"/>
+      <ellipse cx="52" cy="52" rx="22" ry="12" fill="#52b788" transform="rotate(-15,52,52)"/>
+      <ellipse cx="52" cy="52" rx="18" ry="10" fill="#74c69d" transform="rotate(10,52,52)"/>
+      <!-- palmera der -->
+      <rect x="155" y="62" width="5" height="48" rx="2" fill="#1b4332"/>
+      <ellipse cx="157" cy="58" rx="20" ry="11" fill="#52b788" transform="rotate(15,157,58)"/>
+      <ellipse cx="157" cy="58" rx="16" ry="9" fill="#74c69d" transform="rotate(-10,157,58)"/>
+      <!-- molino viento pequeño -->
+      <rect x="106" y="65" width="3" height="38" fill="#adb5bd"/>
+      <g transform="translate(107,67) rotate(30)">
+        <rect x="-2" y="-18" width="4" height="18" rx="1" fill="white" opacity="0.9"/>
+        <rect x="-2" y="-18" width="4" height="18" rx="1" fill="white" opacity="0.9" transform="rotate(120)"/>
+        <rect x="-2" y="-18" width="4" height="18" rx="1" fill="white" opacity="0.9" transform="rotate(240)"/>
+      </g>
+      <!-- sol (panel solar) -->
+      <rect x="75" y="88" width="24" height="16" rx="2" fill="#023e8a" opacity="0.9"/>
+      <rect x="75" y="88" width="11" height="7" rx="1" fill="#0077b6" opacity="0.7"/>
+      <rect x="88" y="88" width="11" height="7" rx="1" fill="#0077b6" opacity="0.7"/>
+      <rect x="75" y="97" width="11" height="7" rx="1" fill="#0077b6" opacity="0.7"/>
+      <rect x="88" y="97" width="11" height="7" rx="1" fill="#0077b6" opacity="0.7"/>
+      <!-- cabaña -->
+      <rect x="120" y="92" width="28" height="20" fill="#8B5E3C"/>
+      <polygon points="118,92 148,92 133,80" fill="#6B4226"/>
+      <!-- brillo de energía -->
+      <circle cx="107" cy="67" r="4" fill="none" stroke="#00d4aa" stroke-width="1.5" opacity="0.8">
+        <animate attributeName="r" values="4;8;4" dur="2s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.8;0.2;0.8" dur="2s" repeatCount="indefinite"/>
+      </circle>
+    </svg>
+  </div>
+  <div class="title-block">
+    <h1>ISLA RENOVABLE</h1>
+    <p>Supervivencia Energética — Ingeniería Verde</p>
+    <button class="btn-start" onclick="startGame()">⚡ Comenzar Misión</button>
+  </div>
+</div>
+
+<!-- ============ PANTALLA JUEGO ============ -->
+<div id="screen-game" class="screen">
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="hud-title">🏝️ ISLA RENOVABLE</div>
+    <div class="hud-stat">🪵 <span>Madera:</span><span class="val" id="hud-wood">0</span></div>
+    <div class="hud-stat">🪨 <span>Piedra:</span><span class="val" id="hud-stone">0</span></div>
+    <div class="hud-stat">⚙️ <span>Metal:</span><span class="val" id="hud-metal">0</span></div>
+    <div class="hud-stat">💰 <span>Monedas:</span><span class="val" id="hud-coins">50</span></div>
+    <div class="energy-bar-wrap">
+      <span style="font-size:0.72rem;">⚡</span>
+      <div class="energy-bar-bg"><div class="energy-bar-fill" id="energy-fill" style="width:0%"></div></div>
+      <span id="energy-pct">0%</span>
+    </div>
+  </div>
+
+  <div class="game-layout">
+
+    <!-- PANEL IZQUIERDO: Tecnologías -->
+    <div class="panel-left">
+      <div class="panel-title">🔋 Sistemas de Energía</div>
+
+      <div class="small-label">Disponibles</div>
+      <div id="tech-list">
+        <!-- generado por JS -->
+      </div>
+
+      <div class="divider"></div>
+      <div class="panel-title" style="margin-top:8px;">🌱 Nivel del Jugador</div>
+      <div class="level-section">
+        <div class="level-circle" id="level-circle">1</div>
+        <div class="level-name" id="level-name">EXPLORADOR</div>
+        <div class="small-label">XP: <span id="xp-val">0</span> / <span id="xp-next">100</span></div>
+        <div class="xp-bar-bg"><div class="xp-bar-fill" id="xp-fill" style="width:0%"></div></div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="panel-title" style="margin-top:4px;">⚡ Producción / Consumo</div>
+      <div class="resource-row"><span class="res-name">Producción:</span><span class="res-val" id="stat-prod">0 kWh</span></div>
+      <div class="resource-row"><span class="res-name">Consumo:</span><span class="res-val" id="stat-cons">20 kWh</span></div>
+      <div class="resource-row"><span class="res-name">Balance:</span><span class="res-val" id="stat-bal">-20 kWh</span></div>
+      <div class="resource-row"><span class="res-name">Instalaciones:</span><span class="res-val" id="stat-inst">0</span></div>
+    </div>
+
+    <!-- ISLA CENTRAL -->
+    <div class="island-view">
+      <canvas id="island-canvas"></canvas>
+      <div class="climate-indicator" id="climate-indicator">☀️ Soleado</div>
+      <div class="day-night-indicator" id="day-night">🌞 DÍA — Turno <span id="turn-num">1</span></div>
+      <div class="log-box" id="log-box">
+        <div class="log-entry info">▶ Bienvenida a tu isla. Recolecta recursos y construye sistemas renovables.</div>
+        <div class="log-entry info">▶ Empieza con paneles solares o un pequeño aerogenerador.</div>
+      </div>
+    </div>
+
+    <!-- PANEL DERECHO: Recursos y Acciones -->
+    <div class="panel-right">
+      <div class="panel-title">🌤️ Clima Actual</div>
+      <div class="climate-card" id="climate-card">
+        <div class="big-icon" id="climate-icon">☀️</div>
+        <div class="climate-name" id="climate-name">Soleado</div>
+        <div class="climate-effect" id="climate-effect">+40% eficiencia solar</div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="panel-title">🎯 Misión Actual</div>
+      <div class="mission-card" id="mission-card">
+        <div class="mission-title">MISIÓN</div>
+        <div class="mission-desc" id="mission-desc">Alcanza 25% de autosuficiencia energética</div>
+        <div style="font-size:0.7rem;color:var(--teal);margin-bottom:6px;" id="mission-reward">🏆 Recompensa: +30 monedas, +50 XP</div>
+        <div class="mission-prog"><div class="mission-prog-fill" id="mission-fill" style="width:0%"></div></div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="panel-title">🎮 Acciones</div>
+      <button class="action-btn primary" onclick="collectResources()">⛏️ Recolectar Recursos</button>
+      <button class="action-btn" onclick="advanceTurn()">⏭️ Avanzar Turno</button>
+      <button class="action-btn" id="btn-upgrade" onclick="upgradeIsland()" disabled>🔧 Mejorar Isla (+eficiencia)</button>
+      <button class="action-btn danger" onclick="resetGame()">🔄 Reiniciar</button>
+
+      <div class="divider"></div>
+      <div class="panel-title">📦 Inventario</div>
+      <div class="resource-row"><span class="res-name">🪵 Madera:</span><span class="res-val" id="inv-wood">0</span></div>
+      <div class="resource-row"><span class="res-name">🪨 Piedra:</span><span class="res-val" id="inv-stone">0</span></div>
+      <div class="resource-row"><span class="res-name">⚙️ Metal:</span><span class="res-val" id="inv-metal">0</span></div>
+      <div class="resource-row"><span class="res-name">💰 Monedas:</span><span class="res-val" id="inv-coins">50</span></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ PANTALLA VICTORIA ============ -->
+<div id="screen-win" class="screen">
+  <div class="stars"></div>
+  <svg width="120" height="100" viewBox="0 0 120 100">
+    <ellipse cx="60" cy="80" rx="55" ry="16" fill="#0d3b2e" opacity="0.7"/>
+    <ellipse cx="60" cy="65" rx="45" ry="22" fill="#40916c"/>
+    <rect x="50" y="30" width="4" height="38" fill="#adb5bd"/>
+    <g transform="translate(52,32) rotate(0)">
+      <rect x="-2" y="-15" width="4" height="15" rx="1" fill="white" opacity="0.95"/>
+      <rect x="-2" y="-15" width="4" height="15" rx="1" fill="white" opacity="0.95" transform="rotate(120)"/>
+      <rect x="-2" y="-15" width="4" height="15" rx="1" fill="white" opacity="0.95" transform="rotate(240)"/>
+      <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="4s" repeatCount="indefinite"/>
+    </g>
+    <rect x="28" y="52" width="20" height="13" rx="1" fill="#023e8a" opacity="0.9"/>
+    <rect x="70" y="50" width="18" height="12" rx="1" fill="#023e8a" opacity="0.9"/>
+    <circle cx="52" cy="32" r="6" fill="none" stroke="#00d4aa" stroke-width="1.5">
+      <animate attributeName="r" values="6;14;6" dur="2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="1;0;1" dur="2s" repeatCount="indefinite"/>
+    </circle>
+  </svg>
+  <h2>🏆 ¡ISLA AUTOSUFICIENTE!</h2>
+  <p>¡Lo lograste! Tu isla ahora funciona al <strong style="color:var(--green)">100%</strong> con energías renovables.<br>
+  Has demostrado que es posible vivir sin combustibles fósiles. 🌍💚</p>
+  <div id="win-stats" style="font-family:'Orbitron',sans-serif;font-size:0.8rem;color:var(--teal);text-align:center;line-height:2;"></div>
+  <button class="btn-start" onclick="resetGame()">🔄 Jugar de Nuevo</button>
+</div>
+
+<script>
+// ============================================================
+//  ESTADO DEL JUEGO
+// ============================================================
+const TECHNOLOGIES = [
+  {
+    id:'solar_basic', name:'Panel Solar Básico', icon:'☀️',
+    desc:'Genera energía en días soleados.',
+    cost:{coins:15, wood:5, stone:2, metal:0},
+    power:10, reqLevel:1, category:'solar', count:0, max:5
+  },
+  {
+    id:'wind_basic', name:'Aerogenerador Pequeño', icon:'💨',
+    desc:'Funciona con viento ligero.',
+    cost:{coins:20, wood:8, stone:3, metal:2},
+    power:12, reqLevel:1, category:'wind', count:0, max:4
+  },
+  {
+    id:'solar_advanced', name:'Panel Solar Avanzado', icon:'🔆',
+    desc:'Alta eficiencia, funciona hasta con nubes.',
+    cost:{coins:35, wood:5, stone:5, metal:8},
+    power:22, reqLevel:2, category:'solar', count:0, max:4
+  },
+  {
+    id:'wind_turbine', name:'Turbina Eólica Grande', icon:'🌀',
+    desc:'Gran potencia. Necesita terreno plano.',
+    cost:{coins:45, wood:10, stone:8, metal:15},
+    power:30, reqLevel:2, category:'wind', count:0, max:3
+  },
+  {
+    id:'hydro', name:'Micro Hidráulica', icon:'💧',
+    desc:'Energía constante del agua. Desbloquea nivel 3.',
+    cost:{coins:60, wood:15, stone:20, metal:10},
+    power:40, reqLevel:3, category:'hydro', count:0, max:2
+  },
+  {
+    id:'biogas', name:'Biogás', icon:'🌿',
+    desc:'Convierte materia orgánica en energía.',
+    cost:{coins:55, wood:12, stone:8, metal:12},
+    power:25, reqLevel:3, category:'bio', count:0, max:3
+  },
+  {
+    id:'tidal', name:'Energía Mareomotriz', icon:'🌊',
+    desc:'Tecnología avanzada del océano. Nivel 4.',
+    cost:{coins:80, wood:10, stone:25, metal:30},
+    power:60, reqLevel:4, category:'tidal', count:0, max:2
+  },
+  {
+    id:'geothermal', name:'Geotérmica', icon:'🌋',
+    desc:'Calor de la Tierra. Altísima eficiencia.',
+    cost:{coins:100, wood:5, stone:30, metal:40},
+    power:80, reqLevel:4, category:'geo', count:0, max:1
+  }
+];
+
+const CLIMATES = [
+  {name:'Soleado',       icon:'☀️',  effect:'+40% solar',    solar:1.4, wind:0.8},
+  {name:'Parcialmente Nublado', icon:'⛅', effect:'+10% solar / viento normal', solar:1.1, wind:1.0},
+  {name:'Nublado',       icon:'☁️',  effect:'-30% solar, +20% viento', solar:0.7, wind:1.2},
+  {name:'Ventoso',       icon:'🌬️', effect:'+50% eólico, -10% solar', solar:0.9, wind:1.5},
+  {name:'Lluvia',        icon:'🌧️', effect:'+60% hidro, -40% solar',  solar:0.6, wind:1.1, hydro:1.6},
+  {name:'Tormenta',      icon:'⛈️', effect:'¡Peligro! -20% todo',     solar:0.5, wind:0.5, penalty:true},
+  {name:'Noche Despejada',icon:'🌙', effect:'+10% eólico nocturno',   solar:0.0, wind:1.1}
+];
+
+const LEVELS = [
+  {name:'EXPLORADOR',  xpNeeded:0},
+  {name:'INGENIERO Jr.',xpNeeded:100},
+  {name:'TÉCNICO',      xpNeeded:250},
+  {name:'INGENIERO',    xpNeeded:500},
+  {name:'MAESTRO',      xpNeeded:900}
+];
+
+const MISSIONS = [
+  {desc:'Alcanza 25% de autosuficiencia',    target:25,  reward:{coins:30,xp:50}},
+  {desc:'Alcanza 50% de autosuficiencia',    target:50,  reward:{coins:50,xp:100}},
+  {desc:'Instala 5 sistemas renovables',     target:5,   type:'install', reward:{coins:40,xp:80}},
+  {desc:'Alcanza 75% de autosuficiencia',    target:75,  reward:{coins:70,xp:150}},
+  {desc:'¡100% AUTOSUFICIENCIA!',            target:100, reward:{coins:200,xp:500}}
+];
+
+let G = {};
+
+function initState() {
+  G = {
+    resources: {wood:0, stone:0, metal:0, coins:50},
+    energy: {production:0, consumption:20},
+    level: 1, xp: 0,
+    turn: 1,
+    climate: CLIMATES[0],
+    techs: JSON.parse(JSON.stringify(TECHNOLOGIES)),
+    missionIdx: 0,
+    upgradeLevel: 0,
+    totalInstalled: 0,
+    dayMode: true,
+    wins: 0
+  };
+}
+
+// ============================================================
+//  CANVAS ISLA
+// ============================================================
+let canvasAnim;
+function initCanvas() {
+  const c = document.getElementById('island-canvas');
+  const ctx = c.getContext('2d');
+  function resize() { c.width = c.offsetWidth; c.height = c.offsetHeight; }
+  window.addEventListener('resize', resize);
+  resize();
+
+  let t = 0;
+  function draw() {
+    ctx.clearRect(0,0,c.width,c.height);
+    const W = c.width, H = c.height;
+
+    // sky gradient
+    const sky = ctx.createLinearGradient(0,0,0,H*0.6);
+    if(G.dayMode) {
+      sky.addColorStop(0,'#1a3a5c'); sky.addColorStop(1,'#0d2137');
+    } else {
+      sky.addColorStop(0,'#05101f'); sky.addColorStop(1,'#0a1628');
+    }
+    ctx.fillStyle = sky; ctx.fillRect(0,0,W,H*0.6);
+
+    // ocean
+    const ocean = ctx.createLinearGradient(0,H*0.55,0,H);
+    ocean.addColorStop(0,'#0d3b5e'); ocean.addColorStop(1,'#071525');
+    ctx.fillStyle = ocean; ctx.fillRect(0,H*0.55,W,H*0.45);
+
+    // waves
+    ctx.strokeStyle = 'rgba(0,212,170,0.2)'; ctx.lineWidth = 1.5;
+    for(let i=0;i<3;i++) {
+      ctx.beginPath();
+      for(let x=0;x<W;x+=2) {
+        const y = H*0.58 + Math.sin((x/80)+t+i*1.2)*8 + i*18;
+        if(x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+    }
+
+    // isla base
+    const cx = W/2, cy = H*0.62;
+    const grad = ctx.createRadialGradient(cx,cy,20,cx,cy,W*0.32);
+    grad.addColorStop(0,'#40916c'); grad.addColorStop(0.6,'#2d6a4f'); grad.addColorStop(1,'#1b4332');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, W*0.36, H*0.22, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    // Sand edge
+    ctx.fillStyle = 'rgba(255,234,167,0.25)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy+10, W*0.34, H*0.16, 0, 0, Math.PI);
+    ctx.fill();
+
+    // Cabaña
+    const hx = cx+W*0.08, hy = cy-H*0.04;
+    ctx.fillStyle = '#8B5E3C';
+    ctx.fillRect(hx-18, hy, 36, 24);
+    ctx.fillStyle = '#6B4226';
+    ctx.beginPath(); ctx.moveTo(hx-22,hy); ctx.lineTo(hx+22,hy); ctx.lineTo(hx,hy-20); ctx.closePath(); ctx.fill();
+
+    // Sol / Luna
+    if(G.dayMode) {
+      ctx.fillStyle = '#ffd700'; ctx.shadowColor='#ffd700'; ctx.shadowBlur=20;
+      ctx.beginPath(); ctx.arc(W*0.82, H*0.1, 18, 0, Math.PI*2); ctx.fill();
+      ctx.shadowBlur = 0;
+    } else {
+      ctx.fillStyle = '#e0e0ff'; ctx.shadowColor='#a0a0ff'; ctx.shadowBlur=15;
+      ctx.beginPath(); ctx.arc(W*0.82, H*0.1, 15, 0, Math.PI*2); ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+
+    // Palmeras
+    drawPalm(ctx, cx-W*0.18, cy-H*0.07, 55, t);
+    drawPalm(ctx, cx+W*0.2, cy-H*0.05, 48, t+1);
+
+    // Sistemas instalados
+    let sx = cx - W*0.22;
+    G.techs.forEach(tech => {
+      for(let i=0;i<tech.count;i++) {
+        drawTech(ctx, tech, sx, cy-H*0.12, t);
+        sx += 30;
+        if(sx > cx+W*0.22) sx = cx - W*0.18;
+      }
+    });
+
+    // Energía pulsante si hay producción
+    if(G.energy.production > 0) {
+      const ep = G.energy.production/100;
+      const r = 15 + Math.sin(t*3)*4;
+      ctx.strokeStyle = `rgba(0,212,170,${0.3+ep*0.4})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(cx, cy-H*0.1, r, 0, Math.PI*2); ctx.stroke();
+    }
+
+    t += 0.02;
+    canvasAnim = requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+function drawPalm(ctx, x, y, h, t) {
+  ctx.strokeStyle = '#1b4332'; ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(x, y+h);
+  ctx.bezierCurveTo(x+5,y+h*0.6, x-5,y+h*0.3, x,y);
+  ctx.stroke();
+  const leafCol = ['#52b788','#74c69d','#40916c'];
+  for(let i=0;i<3;i++) {
+    const angle = (i/3)*Math.PI*2 + t*0.3;
+    ctx.fillStyle = leafCol[i%3];
+    ctx.beginPath();
+    ctx.ellipse(x+Math.cos(angle)*18, y+Math.sin(angle)*8, 16, 6, angle, 0, Math.PI*2);
+    ctx.fill();
+  }
+}
+
+function drawTech(ctx, tech, x, y, t) {
+  ctx.save();
+  ctx.translate(x, y);
+  if(tech.category==='solar') {
+    ctx.fillStyle='#023e8a'; ctx.fillRect(-10,-7,20,14);
+    ctx.fillStyle='#0077b6'; ctx.fillRect(-9,-6,9,6); ctx.fillRect(1,-6,9,6);
+    ctx.fillStyle='#0077b6'; ctx.fillRect(-9,1,9,6); ctx.fillRect(1,1,9,6);
+    ctx.shadowColor='#74b9ff'; ctx.shadowBlur=8;
+    ctx.strokeStyle='rgba(116,185,255,0.6)'; ctx.lineWidth=1; ctx.strokeRect(-10,-7,20,14);
+    ctx.shadowBlur=0;
+  } else if(tech.category==='wind') {
+    ctx.strokeStyle='#adb5bd'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(0,10); ctx.lineTo(0,-10); ctx.stroke();
+    ctx.fillStyle='white';
+    const rot = t*2;
+    for(let b=0;b<3;b++) {
+      const ba = rot + b*(Math.PI*2/3);
+      ctx.save(); ctx.rotate(ba);
+      ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-3,-12); ctx.lineTo(3,-12); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+  } else if(tech.category==='hydro') {
+    ctx.fillStyle='#0096c7'; ctx.beginPath(); ctx.arc(0,0,8,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#00b4d8'; ctx.lineWidth=1.5;
+    for(let i=0;i<6;i++) {
+      ctx.save(); ctx.rotate(i/6*Math.PI*2+t);
+      ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-7); ctx.stroke();
+      ctx.restore();
+    }
+  } else if(tech.category==='bio') {
+    ctx.fillStyle='#2d6a4f'; ctx.beginPath();
+    ctx.arc(0,-5,7,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#52b788'; ctx.beginPath();
+    ctx.arc(-4,-9,5,0,Math.PI*2); ctx.fill();
+    ctx.arc(4,-9,5,0,Math.PI*2); ctx.fill();
+  } else if(tech.category==='tidal') {
+    ctx.strokeStyle='#0096c7'; ctx.lineWidth=2;
+    for(let i=0;i<3;i++) {
+      ctx.beginPath();
+      ctx.arc(0,0, 5+i*4, 0+t, Math.PI+t); ctx.stroke();
+    }
+  } else if(tech.category==='geo') {
+    ctx.fillStyle='#d62828';
+    ctx.beginPath(); ctx.moveTo(0,-12); ctx.lineTo(-8,6); ctx.lineTo(8,6); ctx.closePath(); ctx.fill();
+    ctx.shadowColor='#e85d04'; ctx.shadowBlur=10+Math.sin(t*4)*5;
+    ctx.fillStyle='#e85d04';
+    ctx.beginPath(); ctx.moveTo(0,-8); ctx.lineTo(-4,4); ctx.lineTo(4,4); ctx.closePath(); ctx.fill();
+    ctx.shadowBlur=0;
+  }
+  ctx.restore();
+}
+
+// ============================================================
+//  UI UPDATES
+// ============================================================
+function updateHUD() {
+  document.getElementById('hud-wood').textContent  = G.resources.wood;
+  document.getElementById('hud-stone').textContent = G.resources.stone;
+  document.getElementById('hud-metal').textContent = G.resources.metal;
+  document.getElementById('hud-coins').textContent = G.resources.coins;
+  document.getElementById('inv-wood').textContent  = G.resources.wood;
+  document.getElementById('inv-stone').textContent = G.resources.stone;
+  document.getElementById('inv-metal').textContent = G.resources.metal;
+  document.getElementById('inv-coins').textContent = G.resources.coins;
+
+  const pct = Math.min(100, Math.round((G.energy.production / G.energy.consumption)*100));
+  document.getElementById('energy-fill').style.width = pct+'%';
+  document.getElementById('energy-pct').textContent = pct+'%';
+  document.getElementById('stat-prod').textContent = G.energy.production+' kWh';
+  document.getElementById('stat-cons').textContent = G.energy.consumption+' kWh';
+  const bal = G.energy.production - G.energy.consumption;
+  const balEl = document.getElementById('stat-bal');
+  balEl.textContent = (bal>=0?'+':'')+bal+' kWh';
+  balEl.style.color = bal>=0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('stat-inst').textContent = G.totalInstalled;
+
+  document.getElementById('turn-num').textContent = G.turn;
+  const dn = document.getElementById('day-night');
+  dn.textContent = (G.dayMode?'🌞 DÍA':'🌙 NOCHE') + ' — Turno ' + G.turn;
+
+  updateLevel();
+  updateMission();
+  updateClimate();
+}
+
+function updateLevel() {
+  const lv = G.level;
+  document.getElementById('level-circle').textContent = lv;
+  document.getElementById('level-name').textContent = LEVELS[lv-1]?.name || 'MAESTRO';
+  const cur  = G.xp;
+  const prev = LEVELS[lv-1]?.xpNeeded || 0;
+  const next = LEVELS[lv]?.xpNeeded || 9999;
+  const pct  = lv >= LEVELS.length ? 100 : Math.round((cur-prev)/(next-prev)*100);
+  document.getElementById('xp-val').textContent  = cur;
+  document.getElementById('xp-next').textContent = next;
+  document.getElementById('xp-fill').style.width = pct+'%';
+  document.getElementById('btn-upgrade').disabled = G.upgradeLevel >= G.level;
+}
+
+function updateMission() {
+  const m = MISSIONS[G.missionIdx];
+  if(!m) return;
+  document.getElementById('mission-desc').textContent = m.desc;
+  document.getElementById('mission-reward').textContent = `🏆 Recompensa: +${m.reward.coins} monedas, +${m.reward.xp} XP`;
+  const pct = m.type==='install'
+    ? Math.min(100,Math.round(G.totalInstalled/m.target*100))
+    : Math.min(100,Math.round((G.energy.production/G.energy.consumption*100)/m.target*100));
+  document.getElementById('mission-fill').style.width = pct+'%';
+}
+
+function updateClimate() {
+  document.getElementById('climate-icon').textContent    = G.climate.icon;
+  document.getElementById('climate-name').textContent    = G.climate.name;
+  document.getElementById('climate-effect').textContent  = G.climate.effect;
+  document.getElementById('climate-indicator').textContent = G.climate.icon+' '+G.climate.name;
+}
+
+function renderTechs() {
+  const list = document.getElementById('tech-list');
+  list.innerHTML = '';
+  G.techs.forEach(tech => {
+    const locked = tech.reqLevel > G.level;
+    const active = tech.count > 0;
+    const maxed  = tech.count >= tech.max;
+    const div = document.createElement('div');
+    div.className = 'tech-card'+(locked?' locked':'')+(active?' active':'');
+    div.innerHTML = `
+      ${locked ? `<div class="lock-badge">🔒 Nv${tech.reqLevel}</div>` : (active ? `<div class="active-badge">✔ ×${tech.count}</div>`:'')}
+      <div class="tc-header"><span class="tc-icon">${tech.icon}</span><span class="tc-name">${tech.name}</span></div>
+      <div class="tc-desc">${tech.desc}</div>
+      <div class="tc-stats">
+        <span class="stat-pill power">⚡ +${tech.power} kWh</span>
+        <span class="stat-pill cost">💰 ${tech.cost.coins}</span>
+        ${tech.cost.wood>0 ?`<span class="stat-pill">🪵 ${tech.cost.wood}</span>`:''}
+        ${tech.cost.metal>0?`<span class="stat-pill">⚙️ ${tech.cost.metal}</span>`:''}
+        <span class="stat-pill level">Nv.${tech.reqLevel}</span>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:8px;">
+        <button class="action-btn primary" style="margin:0;padding:7px;font-size:0.72rem;" onclick="buildTech('${tech.id}')" ${locked||maxed?'disabled':''}>
+          ${maxed?'MAX':'+ Instalar'}
+        </button>
+        ${active?`<button class="action-btn danger" style="margin:0;padding:7px;font-size:0.72rem;" onclick="removeTech('${tech.id}')">− Quitar</button>`:''}
+      </div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+// ============================================================
+//  ACCIONES
+// ============================================================
+function buildTech(id) {
+  const tech = G.techs.find(t=>t.id===id);
+  if(!tech || tech.reqLevel>G.level || tech.count>=tech.max) return;
+  const r = G.resources;
+  if(r.coins<tech.cost.coins||r.wood<tech.cost.wood||r.stone<tech.cost.stone||r.metal<tech.cost.metal) {
+    notify('Recursos insuficientes para construir '+tech.name,'error');
+    addLog('⚠ Recursos insuficientes para '+tech.name,'bad');
+    return;
+  }
+  r.coins -= tech.cost.coins; r.wood -= tech.cost.wood;
+  r.stone -= tech.cost.stone; r.metal -= tech.cost.metal;
+  tech.count++;
+  G.totalInstalled++;
+  recalcEnergy();
+  addXP(20);
+  renderTechs();
+  updateHUD();
+  notify('✅ '+tech.name+' instalado. +'+tech.power+' kWh','success');
+  addLog('✔ Instalado: '+tech.name+' (+'+tech.power+' kWh)','good');
+  checkMissions();
+}
+
+function removeTech(id) {
+  const tech = G.techs.find(t=>t.id===id);
+  if(!tech||tech.count<=0) return;
+  tech.count--;
+  G.totalInstalled--;
+  recalcEnergy();
+  renderTechs();
+  updateHUD();
+  notify('🗑️ '+tech.name+' removido','warn');
+  addLog('↩ Removido: '+tech.name,'info');
+}
+
+function recalcEnergy() {
+  const c = G.climate;
+  let prod = 0;
+  G.techs.forEach(tech => {
+    if(tech.count===0) return;
+    let mult = 1;
+    if(tech.category==='solar') mult = c.solar??1;
+    else if(tech.category==='wind') mult = c.wind??1;
+    else if(tech.category==='hydro') mult = c.hydro??1;
+    if(c.penalty) mult *= 0.8;
+    prod += tech.power * tech.count * mult * (1 + G.upgradeLevel*0.05);
+  });
+  G.energy.production = Math.round(prod);
+  G.energy.consumption = 20 + G.totalInstalled * 2;
+}
+
+function collectResources() {
+  const bonus = Math.floor(Math.random()*4)+2;
+  G.resources.wood  += bonus + Math.floor(Math.random()*3);
+  G.resources.stone += bonus + Math.floor(Math.random()*3);
+  G.resources.metal += Math.floor(Math.random()*2)+1;
+  G.resources.coins += 5 + Math.floor(Math.random()*8);
+  addXP(5);
+  updateHUD();
+  notify('⛏️ Recursos recolectados!','success');
+  addLog('⛏ Recolectados: +madera +piedra +metal +monedas','info');
+}
+
+function advanceTurn() {
+  G.turn++;
+  G.dayMode = !G.dayMode;
+  // Cambio de clima
+  const chance = Math.random();
+  if(chance < 0.6) G.climate = CLIMATES[Math.floor(Math.random()*4)];
+  else if(chance < 0.85) G.climate = CLIMATES[4 + Math.floor(Math.random()*2)];
+  else G.climate = CLIMATES[6];
+  recalcEnergy();
+  // Ganancia pasiva de monedas
+  const passive = Math.max(0, Math.round((G.energy.production - G.energy.consumption)/5));
+  G.resources.coins += passive;
+  if(passive>0) addLog(`💰 Ingresos pasivos: +${passive} monedas`,'good');
+  if(G.climate.penalty) {
+    addLog('⛈ ¡TORMENTA! Eficiencia reducida temporalmente.','bad');
+    notify('⛈ ¡Tormenta! Reducción de eficiencia.','warn');
+  } else {
+    addLog(`🔄 Turno ${G.turn}: ${G.climate.icon} ${G.climate.name}`,'info');
+  }
+  addXP(8);
+  updateHUD();
+  renderTechs();
+  checkMissions();
+}
+
+function upgradeIsland() {
+  if(G.upgradeLevel >= G.level) return;
+  const cost = (G.upgradeLevel+1)*20;
+  if(G.resources.coins < cost) { notify('Necesitas '+cost+' monedas para mejorar','error'); return; }
+  G.resources.coins -= cost;
+  G.upgradeLevel++;
+  recalcEnergy();
+  addXP(30);
+  updateHUD();
+  renderTechs();
+  notify('🔧 ¡Isla mejorada! +5% eficiencia global','success');
+  addLog('🔧 Mejora de isla aplicada. Nivel: '+G.upgradeLevel,'good');
+}
+
+function addXP(amount) {
+  G.xp += amount;
+  const lv = LEVELS;
+  while(G.level < lv.length && G.xp >= (lv[G.level]?.xpNeeded||9999)) {
+    G.level++;
+    notify(`🎉 ¡Nivel ${G.level}! Nuevas tecnologías desbloqueadas!`,'success');
+    addLog(`🎉 ¡Nivel ${G.level} alcanzado! ${LEVELS[G.level-1]?.name}`,'good');
+  }
+}
+
+function checkMissions() {
+  const m = MISSIONS[G.missionIdx];
+  if(!m) return;
+  const pct = Math.round((G.energy.production/G.energy.consumption)*100);
+  let done = false;
+  if(m.type==='install') done = G.totalInstalled >= m.target;
+  else done = pct >= m.target;
+  if(done) {
+    G.resources.coins += m.reward.coins;
+    addXP(m.reward.xp);
+    notify(`🏆 ¡Misión completada! +${m.reward.coins}💰 +${m.reward.xp}XP`,'success');
+    addLog(`🏆 Misión completada: ${m.desc}`,'good');
+    G.missionIdx++;
+    if(pct >= 100 && G.missionIdx >= MISSIONS.length-1) {
+      setTimeout(showWin, 800);
+    }
+    updateHUD();
+  }
+}
+
+function showWin() {
+  const pct = Math.round((G.energy.production/G.energy.consumption)*100);
+  showScreen('win');
+  document.getElementById('win-stats').innerHTML =
+    `Turno ${G.turn} | Nivel ${G.level} | ${G.totalInstalled} sistemas instalados<br>XP total: ${G.xp} | Energía: ${pct}%`;
+}
+
+// ============================================================
+//  MISC
+// ============================================================
+function addLog(msg, type='') {
+  const box = document.getElementById('log-box');
+  const el = document.createElement('div');
+  el.className = 'log-entry '+type;
+  const t = `[T${G.turn}] `;
+  el.textContent = t + msg;
+  box.appendChild(el);
+  box.scrollTop = box.scrollHeight;
+  if(box.children.length > 30) box.removeChild(box.firstChild);
+}
+
+function notify(msg, type='') {
+  const c = document.getElementById('notif-container');
+  const el = document.createElement('div');
+  el.className = 'notif '+type;
+  el.textContent = msg;
+  c.appendChild(el);
+  setTimeout(()=>el.remove(), 3100);
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+}
+
+function startGame() {
+  initState();
+  showScreen('game');
+  renderTechs();
+  updateHUD();
+  if(canvasAnim) cancelAnimationFrame(canvasAnim);
+  requestAnimationFrame(()=>{ initCanvas(); });
+  addLog('🌴 Bienvenida, Ingeniera. Construye tu isla renovable.','info');
+  addLog('💡 Consejo: Empieza con paneles solares o un aerogenerador pequeño.','info');
+}
+
+function resetGame() {
+  if(canvasAnim) cancelAnimationFrame(canvasAnim);
+  showScreen('intro');
+}
+</script>
+</body>
+</html>
