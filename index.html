@@ -167,7 +167,6 @@
         }
 
         .game-item:hover {
-<<<<<<< HEAD
             background: #e8f4f8;
             border-left-color: #3498db;
             transform: translateX(3px);
@@ -179,7 +178,6 @@
             align-items: center;
             gap: 10px;
             margin-bottom: 8px;
-=======
             background: #E3F4FB;
             border-left-color: #009FD4;
             transform: translateX(5px);
@@ -188,7 +186,6 @@
         .program-section.prevention .game-item:hover {
             background: #FDECEC;
             border-left-color: #CC1E1E;
->>>>>>> 3c52ad9876954b968cbb2ad2bc3dfad1d01181ce
         }
 
         .game-number {
@@ -387,17 +384,168 @@
     </div>
 
     <script>
-        // Cargar datos de juegos desde JSON
-        async function loadGamesData() {
-            try {
-                const response = await fetch('games-data.json');
-                const data = await response.json();
-                renderPrograms(data.games);
-            } catch (error) {
-                console.error('Error cargando datos de juegos:', error);
-                // Mostrar contenido estático si falla el JSON
-                renderStaticContent();
-            }
+        // Datos de juegos incrustados directamente (compatible con GitHub Pages)
+        const gamesData = {
+            "games": [
+                {
+                    "id": 1,
+                    "title": "Gestiona tu Empresa",
+                    "program": "Ingeniería en Pesquerías",
+                    "author": "Rachel Perez Gonzalez",
+                    "description": "Simulador de gestión empresarial donde los jugadores toman decisiones sobre operaciones pesqueras, presupuesto y recursos.",
+                    "htmlFile": "ingeniería en pesquerías/juegos/gestiona_tu_empresa.html",
+                    "keywords": ["gestión", "empresa", "pesca"]
+                },
+                {
+                    "id": 2,
+                    "title": "Mar Sustentable",
+                    "program": "Ingeniería en Pesquerías",
+                    "author": "Angel Josue Chaidez Hernandez",
+                    "description": "Juego educativo que enseña sobre la sostenibilidad de los recursos marinos y el equilibrio ecosistémico.",
+                    "htmlFile": "ingeniería en pesquerías/juegos/mar_sustentable (1).html",
+                    "keywords": ["sostenibilidad", "mar", "ecosistema"]
+                },
+                {
+                    "id": 3,
+                    "title": "Pesca Detective",
+                    "program": "Ingeniería en Pesquerías",
+                    "author": "Ivana Paola Diaz Sagredo",
+                    "description": "Simulador donde el jugador investiga prácticas de pesca sostenible e identifica problemas ambientales.",
+                    "htmlFile": "ingeniería en pesquerías/juegos/pesca_detective.html",
+                    "keywords": ["investigación", "sostenibilidad", "pesca"]
+                },
+                {
+                    "id": 4,
+                    "title": "Pesca Sustentable",
+                    "program": "Ingeniería en Pesquerías",
+                    "author": "Carolina Martinez Ulloa",
+                    "description": "Juego donde los jugadores deben mantener el equilibrio entre la explotación de recursos pesqueros y su conservación.",
+                    "htmlFile": "ingeniería en pesquerías/juegos/pesca_sustentable.html",
+                    "keywords": ["conservación", "recursos", "pesca"]
+                },
+                {
+                    "id": 5,
+                    "title": "Pesquería UABCS",
+                    "program": "Ingeniería en Pesquerías",
+                    "author": "Ricardo Daniel Olachea Carrasco",
+                    "description": "Simulador basado en casos reales de pesquerías locales de Baja California Sur.",
+                    "htmlFile": "ingeniería en pesquerías/juegos/pesqueria_uabcs.html",
+                    "keywords": ["BCS", "pesquería", "local"]
+                },
+                {
+                    "id": 6,
+                    "title": "Simulador de Pesca",
+                    "program": "Ingeniería en Pesquerías",
+                    "author": "Angel Cordero Arce",
+                    "description": "Simulador interactivo que modela dinámicas de pesca con variables ambientales y económicas.",
+                    "htmlFile": "ingeniería en pesquerías/juegos/simulador_pesca.html",
+                    "keywords": ["simulación", "dinámica", "pesca"]
+                },
+                {
+                    "id": 7,
+                    "title": "Simulador Biodiverso Premium",
+                    "program": "Ingeniería en Pesquerías",
+                    "author": "Victor Hugo Javier Hernandez",
+                    "description": "Versión avanzada del simulador de pesca que incluye modelos de biodiversidad marina.",
+                    "htmlFile": "ingeniería en pesquerías/juegos/simulador_pesca_biodiverso_premium%20hugo%20juego.html",
+                    "keywords": ["biodiversidad", "simulación", "pesca"]
+                },
+                {
+                    "id": 8,
+                    "title": "Simulador Pesca Pro Elaborado",
+                    "program": "Ingeniería en Pesquerías",
+                    "author": "Eber Eliu Ceseña Olachea",
+                    "description": "Simulador profesional de pesca con mecánicas avanzadas y realismo mejorado.",
+                    "htmlFile": "ingeniería en pesquerías/juegos/simulador_pesca_pro_elaborado%20(1).html",
+                    "keywords": ["profesional", "realismo", "pesca"]
+                },
+                {
+                    "id": 9,
+                    "title": "Simulador Pesca Sustentable",
+                    "program": "Ingeniería en Pesquerías",
+                    "author": "Josue Sanchez Mendez",
+                    "description": "Simulador enfocado en estrategias de pesca sostenible a largo plazo.",
+                    "htmlFile": "ingeniería en pesquerías/juegos/simulador_pesca_sustentable%20(1).html",
+                    "keywords": ["sostenibilidad", "largo plazo", "pesca"]
+                },
+                {
+                    "id": 10,
+                    "title": "Bosque Incendio",
+                    "program": "Ingeniería en Prevención de Desastres",
+                    "author": "NOMBRE DEL ESTUDIANTE",
+                    "description": "Juego donde controlas la propagación de un incendio forestal y trabajas en su contención.",
+                    "htmlFile": "ingeniería en prevensión de desastres naturales y protección civil/juegos/bosque_incendio.html",
+                    "keywords": ["incendios", "bosque", "control"]
+                },
+                {
+                    "id": 11,
+                    "title": "Juego de Incendios en México",
+                    "program": "Ingeniería en Prevención de Desastres",
+                    "author": "NOMBRE DEL ESTUDIANTE",
+                    "description": "Simulador con datos reales sobre incendios forestales en México y estrategias de prevención.",
+                    "htmlFile": "ingeniería en prevensión de desastres naturales y protección civil/juegos/juego_incendios_mexico.html",
+                    "keywords": ["México", "incendios", "estadísticas"]
+                },
+                {
+                    "id": 12,
+                    "title": "Simulador Dispersión UABCS",
+                    "program": "Ingeniería en Prevención de Desastres",
+                    "author": "NOMBRE DEL ESTUDIANTE",
+                    "description": "Simulador de dispersión de incendios con datos y características locales de Baja California Sur.",
+                    "htmlFile": "ingeniería en prevensión de desastres naturales y protección civil/juegos/simulador_dispersion_incendio_uabcs.html",
+                    "keywords": ["dispersión", "BCS", "incendios"]
+                },
+                {
+                    "id": 13,
+                    "title": "Simulador de Dispersión (v2)",
+                    "program": "Ingeniería en Prevención de Desastres",
+                    "author": "NOMBRE DEL ESTUDIANTE",
+                    "description": "Segunda versión del simulador de dispersión de incendios con mejoras en física y gráficos.",
+                    "htmlFile": "ingeniería en prevensión de desastres naturales y protección civil/juegos/simulador_dispersion_incendios(1).html",
+                    "keywords": ["dispersión", "versión 2", "incendios"]
+                },
+                {
+                    "id": 14,
+                    "title": "Simulador de Dispersión",
+                    "program": "Ingeniería en Prevención de Desastres",
+                    "author": "NOMBRE DEL ESTUDIANTE",
+                    "description": "Simulador que modela la dispersión espacial y temporal de incendios forestales.",
+                    "htmlFile": "ingeniería en prevensión de desastres naturales y protección civil/juegos/simulador_dispersion_incendios.html",
+                    "keywords": ["dispersión", "espacial", "temporal"]
+                },
+                {
+                    "id": 15,
+                    "title": "Simulador Incendios BCS v4",
+                    "program": "Ingeniería en Prevención de Desastres",
+                    "author": "NOMBRE DEL ESTUDIANTE",
+                    "description": "Cuarta versión del simulador de incendios específico para Baja California Sur.",
+                    "htmlFile": "ingeniería en prevensión de desastres naturales y protección civil/juegos/simulador_incendios_bcs_4.html",
+                    "keywords": ["BCS", "versión 4", "incendios"]
+                },
+                {
+                    "id": 16,
+                    "title": "Simulador Incendios Brigadistas",
+                    "program": "Ingeniería en Prevención de Desastres",
+                    "author": "NOMBRE DEL ESTUDIANTE",
+                    "description": "Simulador que enfatiza el rol de los brigadistas en la contención y extinción de incendios.",
+                    "htmlFile": "ingeniería en prevensión de desastres naturales y protección civil/juegos/simulador_incendios_brigadistas.html",
+                    "keywords": ["brigadistas", "extinción", "incendios"]
+                },
+                {
+                    "id": 17,
+                    "title": "Simulador Incendios Forestales",
+                    "program": "Ingeniería en Prevención de Desastres",
+                    "author": "NOMBRE DEL ESTUDIANTE",
+                    "description": "Simulador integral de incendios forestales con variables ecológicas y climáticas realistas.",
+                    "htmlFile": "ingeniería en prevensión de desastres naturales y protección civil/juegos/simulador_incendios_forestales.html",
+                    "keywords": ["ecología", "clima", "incendios"]
+                }
+            ]
+        };
+
+        // Cargar datos de juegos
+        function loadGamesData() {
+            renderPrograms(gamesData.games);
         }
 
         function renderPrograms(games) {
@@ -491,11 +639,6 @@
             section.appendChild(stats);
 
             return section;
-        }
-
-        function renderStaticContent() {
-            // Fallback si el JSON no carga
-            console.log('Usando contenido estático');
         }
 
         // Cargar datos cuando el DOM esté listo
