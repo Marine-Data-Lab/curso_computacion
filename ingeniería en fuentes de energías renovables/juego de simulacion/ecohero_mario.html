@@ -74,6 +74,23 @@ canvas{display:block;image-rendering:pixelated;}
 #hint{position:absolute;bottom:48px;left:50%;transform:translateX(-50%);font-size:6px;color:#334;letter-spacing:2px;z-index:15;pointer-events:none;}
 /* damage flash */
 #df{position:absolute;inset:0;background:transparent;pointer-events:none;z-index:35;transition:background .07s;}
+/* Controles móviles */
+#mob-ctrl{position:fixed;bottom:0;left:0;right:0;height:145px;pointer-events:none;z-index:500;display:none;background:linear-gradient(to top,rgba(5,10,16,0.72),transparent);}
+.mob-dpad{position:absolute;bottom:10px;left:10px;display:grid;grid-template-columns:repeat(3,54px);grid-template-rows:repeat(2,54px);gap:5px;}
+.mob-actions{position:absolute;bottom:10px;right:10px;display:flex;gap:6px;align-items:flex-end;}
+.mob-powers{position:absolute;bottom:14px;right:165px;display:flex;gap:5px;align-items:flex-end;}
+.mb{pointer-events:all;width:54px;height:54px;background:rgba(5,26,14,0.82);border:2px solid rgba(68,255,136,0.45);border-radius:8px;color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center;user-select:none;-webkit-user-select:none;touch-action:manipulation;font-family:'Press Start 2P',monospace;}
+.mb:active{background:rgba(68,255,136,0.22);border-color:rgba(68,255,136,0.9);}
+.mb.jump{background:rgba(5,14,26,0.82);border-color:rgba(68,170,255,0.5);width:66px;height:66px;font-size:14px;flex-direction:column;gap:1px;}
+.mb.jump span{font-size:6px;color:rgba(68,170,255,0.8);}
+.mb.jump:active{background:rgba(68,170,255,0.22);}
+.mb.atk{background:rgba(26,5,5,0.82);border-color:rgba(255,68,68,0.5);width:60px;height:60px;font-size:20px;flex-direction:column;gap:1px;}
+.mb.atk span{font-size:6px;color:rgba(255,68,68,0.8);}
+.mb.atk:active{background:rgba(255,68,68,0.22);}
+.mb.pw{width:40px;height:40px;font-size:11px;border-color:rgba(255,221,0,0.4);flex-direction:column;gap:0;}
+.mb.pw span{font-size:5px;color:rgba(255,221,0,0.7);}
+.mb.pw:active{background:rgba(255,221,0,0.22);}
+@media(hover:none)and(pointer:coarse){#mob-ctrl{display:block;}#hint{display:none;}}
 </style>
 </head>
 <body>
@@ -136,6 +153,28 @@ canvas{display:block;image-rendering:pixelated;}
 
   <div id="df"></div>
   <div id="hint">← → MOVERSE | ↑/Z SALTAR | X ATACAR | 1-4 PODERES</div>
+</div>
+
+<!-- Controles móviles -->
+<div id="mob-ctrl">
+  <div class="mob-dpad">
+    <div></div>
+    <div></div>
+    <div></div>
+    <div class="mb" ontouchstart="K['ArrowLeft']=K['a']=true" ontouchend="K['ArrowLeft']=K['a']=false" ontouchcancel="K['ArrowLeft']=K['a']=false">◄</div>
+    <div></div>
+    <div class="mb" ontouchstart="K['ArrowRight']=K['d']=true" ontouchend="K['ArrowRight']=K['d']=false" ontouchcancel="K['ArrowRight']=K['d']=false">►</div>
+  </div>
+  <div class="mob-powers">
+    <div class="mb pw" ontouchstart="selPower(0)"><span>1</span>🌿</div>
+    <div class="mb pw" ontouchstart="selPower(1)"><span>2</span>☀️</div>
+    <div class="mb pw" ontouchstart="selPower(2)"><span>3</span>🌀</div>
+    <div class="mb pw" ontouchstart="selPower(3)"><span>4</span>⚡</div>
+  </div>
+  <div class="mob-actions">
+    <div class="mb atk" ontouchstart="K['x']=K[' ']=true" ontouchend="K['x']=K[' ']=false" ontouchcancel="K['x']=K[' ']=false">⚔️<span>ATAQUE</span></div>
+    <div class="mb jump" ontouchstart="K['ArrowUp']=K['z']=true" ontouchend="K['ArrowUp']=K['z']=false" ontouchcancel="K['ArrowUp']=K['z']=false">▲<span>SALTAR</span></div>
+  </div>
 </div>
 
 <script>

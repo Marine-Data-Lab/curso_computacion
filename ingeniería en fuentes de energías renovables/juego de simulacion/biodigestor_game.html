@@ -16,7 +16,18 @@
     display:block;
     border:4px solid #2e7d32;
     box-shadow:0 0 40px rgba(76,175,80,0.6),0 0 80px rgba(76,175,80,0.2);
+    touch-action:none;
   }
+  /* Controles móviles */
+  #mob-ctrl{position:fixed;bottom:0;left:0;right:0;height:145px;pointer-events:none;z-index:500;display:none;background:linear-gradient(to top,rgba(10,26,10,0.75),transparent);}
+  .mob-dpad{position:absolute;bottom:10px;left:10px;display:grid;grid-template-columns:repeat(3,54px);grid-template-rows:repeat(2,54px);gap:5px;}
+  .mob-actions{position:absolute;bottom:10px;right:10px;display:flex;gap:6px;align-items:flex-end;}
+  .mb{pointer-events:all;width:54px;height:54px;background:rgba(10,26,10,0.85);border:2px solid rgba(76,175,80,0.5);border-radius:8px;color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center;user-select:none;-webkit-user-select:none;touch-action:manipulation;font-family:'Press Start 2P',monospace;}
+  .mb:active{background:rgba(76,175,80,0.25);border-color:rgba(76,175,80,0.95);}
+  .mb.jump{background:rgba(10,26,10,0.85);border-color:rgba(100,220,255,0.5);width:70px;height:70px;font-size:14px;flex-direction:column;gap:1px;}
+  .mb.jump span{font-size:5px;color:rgba(100,220,255,0.8);}
+  .mb.jump:active{background:rgba(100,220,255,0.22);}
+  @media(hover:none)and(pointer:coarse){#mob-ctrl{display:block;}}
 </style>
 </head>
 <body>
@@ -789,6 +800,36 @@ canvas.addEventListener('click',e=>{
 });
 
 requestAnimationFrame(ts=>{ lastT=ts; loop(ts); });
+
+// ── CONTROLES MÓVILES ────────────────────────────────────────────────────────
+function mobJump() {
+  if (state === 'playing' && player.jc < 1) {
+    player.vy = -340; player.jc++; player.onGround = false;
+  }
+}
+function mobLeft(active) {
+  keys['ArrowLeft'] = active; keys['a'] = active; keys['A'] = active;
+  if (active && state === 'sorting') sortAnswer('organic');
+}
+function mobRight(active) {
+  keys['ArrowRight'] = active; keys['d'] = active; keys['D'] = active;
+  if (active && state === 'sorting') sortAnswer('inorganic');
+}
 </script>
 </body>
+
+<!-- Controles móviles -->
+<div id="mob-ctrl">
+  <div class="mob-dpad">
+    <div></div>
+    <div></div>
+    <div></div>
+    <div class="mb" ontouchstart="mobLeft(true)" ontouchend="mobLeft(false)" ontouchcancel="mobLeft(false)">◄</div>
+    <div></div>
+    <div class="mb" ontouchstart="mobRight(true)" ontouchend="mobRight(false)" ontouchcancel="mobRight(false)">►</div>
+  </div>
+  <div class="mob-actions">
+    <div class="mb jump" ontouchstart="mobJump()">▲<span>SALTAR</span></div>
+  </div>
+</div>
 </html>

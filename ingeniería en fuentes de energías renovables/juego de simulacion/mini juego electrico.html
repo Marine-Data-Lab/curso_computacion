@@ -84,6 +84,19 @@ canvas{display:block;}
 #lvlov h2{font-family:'Orbitron',monospace;font-size:1.5rem;color:var(--sy);text-shadow:0 0 30px rgba(255,214,0,.7);animation:blink 1s infinite;}
 #lvlov p{font-size:.82rem;color:var(--tx);}
 #lvlov button{padding:11px 30px;background:var(--eb);color:#000;border:none;border-radius:6px;font-family:'Orbitron',monospace;font-size:.78rem;cursor:pointer;}
+/* Controles móviles */
+#mob-ctrl{position:fixed;bottom:52px;left:0;right:0;height:130px;pointer-events:none;z-index:500;display:none;}
+.mob-dpad{position:absolute;bottom:5px;left:8px;display:grid;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(2,52px);gap:4px;}
+.mob-actions{position:absolute;bottom:5px;right:8px;display:flex;gap:6px;align-items:flex-end;}
+.mb{pointer-events:all;width:52px;height:52px;background:rgba(13,20,34,0.88);border:2px solid rgba(0,229,255,0.4);border-radius:7px;color:var(--tx);font-size:20px;display:flex;align-items:center;justify-content:center;user-select:none;-webkit-user-select:none;touch-action:manipulation;font-family:'Share Tech Mono',monospace;}
+.mb:active{background:rgba(0,229,255,0.18);border-color:rgba(0,229,255,0.9);}
+.mb.jump{border-color:rgba(0,230,118,0.45);width:60px;height:60px;font-size:14px;flex-direction:column;gap:1px;}
+.mb.jump span{font-size:8px;color:rgba(0,230,118,0.8);}
+.mb.jump:active{background:rgba(0,230,118,0.18);}
+.mb.interact{border-color:rgba(255,214,0,0.5);background:rgba(26,20,0,0.88);width:64px;height:64px;font-size:22px;flex-direction:column;gap:0;}
+.mb.interact span{font-size:8px;color:rgba(255,214,0,0.8);font-family:'Orbitron',monospace;}
+.mb.interact:active{background:rgba(255,214,0,0.18);border-color:rgba(255,214,0,0.9);}
+@media(hover:none)and(pointer:coarse){#mob-ctrl{display:block;}#ctrl-hint{display:none;}}
 </style>
 </head>
 <body>
@@ -859,6 +872,25 @@ setInterval(loop,1000/60);
 log('i','> ← → mover | ESPACIO saltar | E interactuar | 1-6 herramienta');
 log('w','> ¡Selecciona la herramienta correcta antes de interactuar!');
 log('i','> Bienvenido, Técnico Eléctrico Solar 🧑‍🔧⚡');
+
+// ── CONTROLES MÓVILES ────────────────────────────────────
+function mobInteract(){if(G.nearObj)interactWith(G.nearObj);}
 </script>
+
+<!-- Controles móviles -->
+<div id="mob-ctrl">
+  <div class="mob-dpad">
+    <div></div>
+    <div></div>
+    <div></div>
+    <div class="mb" ontouchstart="G.keys['ArrowLeft']=G.keys['KeyA']=true" ontouchend="G.keys['ArrowLeft']=G.keys['KeyA']=false" ontouchcancel="G.keys['ArrowLeft']=G.keys['KeyA']=false">◄</div>
+    <div></div>
+    <div class="mb" ontouchstart="G.keys['ArrowRight']=G.keys['KeyD']=true" ontouchend="G.keys['ArrowRight']=G.keys['KeyD']=false" ontouchcancel="G.keys['ArrowRight']=G.keys['KeyD']=false">►</div>
+  </div>
+  <div class="mob-actions">
+    <div class="mb interact" ontouchstart="mobInteract()">🔧<span>USAR (E)</span></div>
+    <div class="mb jump" ontouchstart="G.keys['Space']=G.keys['ArrowUp']=true" ontouchend="G.keys['Space']=G.keys['ArrowUp']=false" ontouchcancel="G.keys['Space']=G.keys['ArrowUp']=false">▲<span>SALTAR</span></div>
+  </div>
+</div>
 </body>
 </html>
