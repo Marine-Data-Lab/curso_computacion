@@ -732,29 +732,44 @@
                 programs[game.program].push(game);
             });
 
-            // Crear secciones
-            const pesqueriaGames = games.filter(g => g.program === 'Ingeniería en Pesquerías');
-            const desastresGames = games.filter(g => g.program === 'Ingeniería en Prevención de Desastres');
+            // Configuración de iconos y descriptores para cada programa
+            const programConfig = {
+                'Ingeniería en Fuentes de Energías Renovables': {
+                    icon: '⚡',
+                    cssClass: 'energy',
+                    subtitle: 'Simuladores de gestión y aprovechamiento de energías renovables'
+                },
+                'Ingeniería en Pesquerías': {
+                    icon: '🌊',
+                    cssClass: 'fisheries',
+                    subtitle: 'Simuladores de gestión sostenible de recursos pesqueros'
+                },
+                'Ingeniería en Prevención de Desastres Naturales y Protección Civil': {
+                    icon: '🔥',
+                    cssClass: 'prevention',
+                    subtitle: 'Simuladores de gestión de incendios forestales'
+                }
+            };
 
-            if (pesqueriaGames.length > 0) {
-                container.appendChild(createProgramSection(
-                    'Ingeniería en Pesquerías',
-                    '🌊',
-                    'fisheries',
-                    'Simuladores de gestión sostenible de recursos pesqueros',
-                    pesqueriaGames
-                ));
-            }
+            // Renderizar todas las carreras en orden
+            const programOrder = [
+                'Ingeniería en Fuentes de Energías Renovables',
+                'Ingeniería en Pesquerías',
+                'Ingeniería en Prevención de Desastres Naturales y Protección Civil'
+            ];
 
-            if (desastresGames.length > 0) {
-                container.appendChild(createProgramSection(
-                    'Ingeniería en Prevención de Desastres',
-                    '🔥',
-                    'prevention',
-                    'Simuladores de gestión de incendios forestales',
-                    desastresGames
-                ));
-            }
+            programOrder.forEach(programName => {
+                if (programs[programName] && programs[programName].length > 0) {
+                    const config = programConfig[programName];
+                    container.appendChild(createProgramSection(
+                        programName,
+                        config.icon,
+                        config.cssClass,
+                        config.subtitle,
+                        programs[programName]
+                    ));
+                }
+            });
         }
 
         function createProgramSection(title, icon, cssClass, subtitle, games) {
