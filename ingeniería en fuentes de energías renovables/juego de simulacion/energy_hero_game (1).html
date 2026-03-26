@@ -330,6 +330,21 @@
     font-family: 'Orbitron', sans-serif;
     pointer-events: none;
   }
+
+  /* Controles móviles */
+  #mob-ctrl{position:fixed;bottom:0;left:0;right:0;height:145px;pointer-events:none;z-index:500;display:none;background:linear-gradient(to top,rgba(6,13,26,0.7),transparent);}
+  .mob-dpad{position:absolute;bottom:10px;left:10px;display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(2,56px);gap:5px;}
+  .mob-actions{position:absolute;bottom:10px;right:10px;display:flex;flex-direction:column;gap:6px;align-items:center;}
+  .mob-powers{position:absolute;bottom:12px;right:100px;display:flex;gap:5px;align-items:flex-end;}
+  .mb{pointer-events:all;width:56px;height:56px;background:rgba(6,13,26,0.82);border:2px solid rgba(0,255,136,0.45);border-radius:10px;color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;user-select:none;-webkit-user-select:none;touch-action:manipulation;}
+  .mb:active{background:rgba(0,255,136,0.25);border-color:rgba(0,255,136,0.9);}
+  .mb.fire{background:rgba(26,13,6,0.82);border-color:rgba(255,200,0,0.5);width:72px;height:72px;font-size:26px;flex-direction:column;gap:1px;}
+  .mb.fire span{font-size:9px;color:rgba(255,200,0,0.8);letter-spacing:1px;font-family:'Orbitron',sans-serif;}
+  .mb.fire:active{background:rgba(255,200,0,0.25);border-color:rgba(255,200,0,0.9);}
+  .mb.pw{width:44px;height:44px;font-size:12px;border-color:rgba(0,207,255,0.4);flex-direction:column;gap:0;}
+  .mb.pw span{font-size:8px;color:rgba(0,207,255,0.7);font-family:'Orbitron',sans-serif;}
+  .mb.pw:active{background:rgba(0,207,255,0.25);}
+  @media(hover:none)and(pointer:coarse){#mob-ctrl{display:block;}.controls-hint{display:none;}}
 </style>
 </head>
 <body>
@@ -414,6 +429,27 @@
   </div>
 
   <div class="controls-hint">← → MOVER | ESPACIO DISPARAR | 1-4 PODERES ESPECIALES</div>
+</div>
+
+<!-- Controles móviles -->
+<div id="mob-ctrl">
+  <div class="mob-dpad">
+    <div></div>
+    <div class="mb" ontouchstart="keys['ArrowUp']=keys['w']=true" ontouchend="keys['ArrowUp']=keys['w']=false" ontouchcancel="keys['ArrowUp']=keys['w']=false">▲</div>
+    <div></div>
+    <div class="mb" ontouchstart="keys['ArrowLeft']=keys['a']=true" ontouchend="keys['ArrowLeft']=keys['a']=false" ontouchcancel="keys['ArrowLeft']=keys['a']=false">◄</div>
+    <div class="mb" ontouchstart="keys['ArrowDown']=keys['s']=true" ontouchend="keys['ArrowDown']=keys['s']=false" ontouchcancel="keys['ArrowDown']=keys['s']=false">▼</div>
+    <div class="mb" ontouchstart="keys['ArrowRight']=keys['d']=true" ontouchend="keys['ArrowRight']=keys['d']=false" ontouchcancel="keys['ArrowRight']=keys['d']=false">►</div>
+  </div>
+  <div class="mob-powers">
+    <div class="mb pw" ontouchstart="selectPower(0)"><span>1</span>☀️</div>
+    <div class="mb pw" ontouchstart="selectPower(1)"><span>2</span>🌿</div>
+    <div class="mb pw" ontouchstart="selectPower(2)"><span>3</span>⚡</div>
+    <div class="mb pw" ontouchstart="selectPower(3)"><span>4</span>🌀</div>
+  </div>
+  <div class="mob-actions">
+    <div class="mb fire" ontouchstart="keys[' ']=keys['Space']=true" ontouchend="keys[' ']=keys['Space']=false" ontouchcancel="keys[' ']=keys['Space']=false">🔥<span>FUEGO</span></div>
+  </div>
 </div>
 
 <script>
